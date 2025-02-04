@@ -1,0 +1,2025 @@
+define([
+    "Util", 'crossAPI',"jquery", "protocolcheck",'dialog',"js/knowledge/dialog", 'js/constants/constants','js/knowledge/search/knowledgeSearch', 'js/constants/kmUtil', 'text!modules/knowledgeAppNew/knowledgeRecentCollected.tpl',
+    'text!modules/knowledgeAppNew/knowledgeRecentViewed.tpl', 'text!modules/knowledgeAppNew/knowledgeInfoAttr.tpl',
+    'js/personalCenterNew/favKlgAdd', 'js/personalCenter/MyAlert', 'js/knowledgeAppNew/archive', 'js/personalCenterNew/klgFdbkSend',
+    'js/knowledgeAppNew/contentSelect', 'js/knowledgeAppNew/clickProcess', 'js/knowledge/messageSendNew', 'js/knowledge/conMethod','js/knowledge/content/content',
+    'text!modules/knowledgeAppNew/concatFaqContent.tpl',
+    'text!modules/knowledgeAppNew/concatFaqExceptNew.tpl','text!modules/knowledgeAppNew/concatFaqExcept.tpl',"crossAPI",'text!modules/knowledgeAppNew/knowledgeDetailScenes.tpl','text!modules/knowledgeManage/knwledgeBusiness.tpl'
+], function (Util, crossAPI, $, Protocolcheck,Dialog,dialog, Constants,knowledgeSearch, kmUtil, knowledgeRecentCollected, klgInfoRecentViewed, klgInfoAttr, favKlgAddModal,
+             myAlert, archive, klgFdbkSend, ContentSelect, clickProcess, msgSd, conMethod,content, concatFaqContentTpl,concatFaqExceptNewTpl,concatFaqExceptTpl,CrossAPI,knowledgeDetailScenes,knwledgeBusiness) {
+    var $detailTop = $(".detail-top");
+    var searchClick = $detailTop.find("#searchClick");
+    var recentCollect = $detailTop.find("#recentCollect");
+    var dialogcopy = $detailTop.find(".dialogcopy");
+    var goIndex = $detailTop.find("#goIndex");
+    var favKlgAddEle = $detailTop.find("#favKlgAdd");
+    var messageSendTop = $detailTop.find("#messageSendTop");
+    var copyvalue = $("#copyvalue");
+    var $detailRight = $(".detail-right");
+    var $detailLeft = $(".detail-left");
+    var leftConWrap = $detailLeft.find(".left-content-wrap");
+    var $layout = $("#layout");
+    var $rtlAtomIDFQA = {};//FQA原子dom对象
+    var $KnowledgeAttributes = $detailRight.find("#KnowledgeAttributes");
+    // var knwlgId = kmUtil.getUrlParamter("knwlgId");//知识id
+    // var verNo = kmUtil.getUrlParamter("verNo");
+    //引入地图对象
+    var point;
+    var excpNum = 0;
+    var sysCode = kmUtil.getUrlParamter("sysCode"); //外系统编码
+    var knwlgNM = null;//知识标题
+    var fdbkSend = null;
+    var klgFdbFun = null;
+    var serviceReq = null;
+    var serviceTab = null;
+    var _clickProcess = null;
+    var tmpltId = null; //模板id
+    var tmpltNm = null; //模名称
+    var gisParam = [];
+    var orgCode = '';
+    var noQueueNumber = '<span class="line-up-num">目前排队人数：<em id="businessHallQueue">未知</em><a id="queueRefresh" class="inline-img-btn" href="javascript:void(0);"><img class="inline-img1" src="'+url_prefix+'/assets/img/km-fresh-icon-blue01.gif" alt=""><img class="inline-img2" src="'+url_prefix+'/assets/img/km-fresh-icon-blue02.gif" alt=""></a></span>';
+    var queueInitFlag = true;
+    var unRichObj=[];
+    var preEditCode="";
+    var regnIdCode="";
+    var province;
+    //同屏卡片地址
+    var screCardProductUrl = "";
+    var screCardTestUrl = "";
+    var httpType = window.location.protocol;
+    if ('https:' == httpType) {
+        screCardProductUrl = "https://ngcard.cs.cmos:443/ngcardma/v2/dist/sameScreen.html?";
+        screCardTestUrl = "https://ngcard-test.cmos:443/ngcardma/v2/dist/sameScreen.html?";
+    }else {
+        screCardProductUrl = "http://ngcard.cs.cmos:31213/ngcardma/v2/dist/sameScreen.html?";
+        screCardTestUrl = "http://ngcard-test.cmos:8080/ngcardma/v2/dist/sameScreen.html?";
+    }
+
+    var serialNumber = '';//接触流水号
+
+
+    //点击发送短信事件
+    $detailTop.find("#messageSendTop").click(function () {
+        var mo = $detailTop.find("#messageSendTop").attr("mo");
+        msgSd.buildShortUrl(gisParam);
+        msgSd.refresh();
+        msgSd.detailMsgButtonClickTime(Date.parse(new Date()), '知识详情页',mo);
+    }).hover(function (e) {
+        e = e || window.event;
+        var noticeHtml = '<div class="noticeHtml" style="\
+        position: fixed;\
+        width: 240px;\
+        padding: 6px;\
+        top: '+(e.pageY+15)+'px;\
+        left: '+(e.pageX-10)+'px;\
+        right: -1px;\
+        background-color: #fff;\
+        border: 1px solid #DFDFDF;\
+        z-index: 1000;\
+        -webkit-box-shadow: 0 2px 6px #ccc;\
+        box-shadow: 0 2px 6px #ccc;\
+        ">\
+        <div style="width: 0;\
+            height: 0;\
+            border: 8px solid #fff;\
+            border-top: 8px solid transparent;\
+            border-right: 8px solid transparent;\
+            border-left: 8px solid transparent;\
+            position: absolute;\
+            top: -14px;\
+            left: 13px"></div>\<span>可通过点击</span>\
+        <span style="\
+                display: inline-block;\
+                width: 26px;\
+                height: 16px;\
+                background-repeat: no-repeat;\
+                background-position: center 0px;\
+                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAQCAYAAADj5tSrAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAt5JREFUOMudlEtME1EUhsdF2YCorCS6wJhIdMHC10ZNTAyCxgVsjRGNiVtFSTTujDERWsKzRsAABkFeYgjRIkhEKCACERARyvRJobSFFlpo6fP33GkGIS1YvcmfSe6cc79z/jlzOQAcE5evFpVIGokv0S7vKY1eccXaZcqrIUnEszbODoPk8umna40wr/mxvB6A2xeE2x9Z6yQXvWdxUzYvYos1bk6qjv875BmfdrnFBHGNWz0YtXgwFkFsf8buFeIYbG+pdoWT8rE7Q6R8OvdE1Z/21hRkiVZXABea5nG8ZhanXhv/iDo9Sc+U6llkKSxgwQ5PALtLtAHuqaqBk6mPRYZI+TuHXuqR+c6ESy0mv9gJs8ThDWB1k5ykNW9QeHr8Qj1YcvtxoEznu91hCSbItVay7UQ4JJcfY1XmD9mR0bogJHoDQdxotyCteR7MQlGpDXOQj65g82KdJFcZ0Klz4TAVy+Xx8jBITJH25/kmM+IKtThSacCc0yckf9K70DjtRLNqdUMNU058N3u2QL6a3Ngl43GwwoCUmjmQXYoIEM1EvcaHWrUXZ+pNSHqhQ/nY1mojLTtN1qOeJewr1eJKqxXvjX48HHCAnPkQBpEUaiYqpz0YtgPKReDx0CqSygw4V2dE96wrIqBu0oHkCj2OVhlR9MONwSWAuZjdu7IzpI8A3RZg0AZ8pCHL6rQhQa7DdYUZBkfIwuGFdaQ2ziPxuR45Sge+UPwAAbrNwDfKu6eMAvLZHFKPNZRUy3txtmkBSVT1RRrp/WRlRtsi2owB4T2DiDkhiGCXIiqIKLbHKpWNunCtw4byKY9wWK81PJbt3+/bHjJZrYoMYWJW9BOIJnzbGBHyYMDJIO3h/0keP5JNXrKBYof8r8YdwK0uO0Fm3kT647Po5kUOtfqKOqpimo5ezAVm912aLHYOJ+Mzt7u7blJHSkmB5lcMfSPJP0iIL9BMUn4XnXN18931Gz2i0iukRc4pAAAAAElFTkSuQmCC);\
+                "></span>\
+        <span style="\
+        display: inline-block;\
+        width: 26px;\
+        height: 16px;\
+        background-repeat: no-repeat;\
+        background-position: center 0px;\
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAQCAYAAADj5tSrAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAzdJREFUOMudlEtMU1EQhtm4MnFvjDtBRV0oC0XciCai0cRHYnygWAEViW1IRAMoghqjWAyoaOJCQXzTFkoLLSqClAIFCqJ9yEtAlKdY2lLaQsvvnFtqiK3YeJs/t+ecmfnmzpxzggAEMZ0oXuPVYpKWL9swLpBvDFhnZOvHya+QtMAbyxs76E8ITxwSda36ICyOMUxOWWCfnoDDNQnH9CSNrTS2ecazYuvMbsjaAwLZ4yShi/4JiREt23a7LgFzH9uUGVbnT+7/DP0mnCYam2je8tvGSUkI5BHmWMnKhfNCYiWhUQdeLKnLUZ+cYY4sw4fNqcio3I0nrZehG6rF9ffREKp4yKo5iqtV+5GvvQiny05fagNfFu4+/Grpy3jJqlC/EMpAkFoRhTv1ichVn3IxiLLjIR40JnMlcc+4QHBo+stgHNV4yka6r0nCu+6ntO7GOeWW6cetGTNJ8ohRKluYD4QnCm67VnUQFR35yGvgYy6EBWNBjSMa1H8tBSsnC8rgHsgzzj79zS4YhuuRVrEdx8Ur8nwgidIwfbaah9PSMFx4vRMm+wiXfUFLOleWrJoYCGt43NswUo/C1kxkVu6ldwYH6DXpECdZhfPKrbhStQ/xktUKH8hp6Tpdy7AS2mEFbqiikayIhKpH5Gkq7SKz4wdpFC73NDfHxlMuB7frivW54MvDcVeTCMNPFUrac8EThZT7QBKka3UNAyX4ZjOg1/oBZZ33kKyMxPXqI+j80QJ/T2O/AinUxwtvd6Cq7ym+TnzCoL0dIsPN+SEM0G1pRr9Nh/bxBuR/SENSWQTtsjSMTQ7OlkaPbFUskso3cQG/WLTom/iILrPHLyBIl7mJ0xdLCznp0TxUDqE6hrLehluqeJxVbMb9JgH0YzVc0G6CeH04iFFIkOWKgCBesTmWaWVvAR61pkD9XcwF66Ek/rRl82Jj9l8hBs1gqV+IR83os7ZRz/Tz2HggJZ9zGETpA6F9rRUZsqhxHVyQ/9WQoxOFbZdwrCj4uQ+ETmgMX7YeEvpUzUApSQpWvkDltS+iROmipDMTusfv3UULvFjxiloqnTGBzg3rU+Di7A1UkUqKc2ju3fULqU6s8QpKbGsAAAAASUVORK5CYII=);\
+        "></span>\
+        <span>提前选中要发送的短信内容，再进行短信发送</span>\
+    </div>';
+        $("body").append(noticeHtml);
+    }, function () {
+        $('.noticeHtml').remove();
+    });
+    var addlisterner;
+    var activeBase64icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOCAYAAADwikbvAAAAAXNSR0IArs4c6QAAAKhJREFUOE9jZGi+/J+BFMDIcIShRtcWpIURrLlWl5Eo/S1XbRgY/rVTUTPj/3tE2fyPgYOBkZGT4T+LPQPT76UQZ7P8VyZK829GEwZGhhKG/yzJCM2k+vkfSxZ+zS2XKhj+M7bDXQSyABZgBDVj8wf1NZMS2kyM9xjgzm6/pERUSMMUMf35wfCTUxgSYOSApuu6qJpbLt0l2pz/DGwMjAzvETaT7Pz/vwA9O2UVBgZrUAAAAABJRU5ErkJggg==';
+    var defaultBase64icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOCAYAAADwikbvAAAAAXNSR0IArs4c6QAAAJJJREFUOE+tkbsJQkEQRc9NRGM70PhlhorFmBkb2IGVvE5sQ1swFZMrs7ALgugOvInnzP2MbJvcXCXtAlHAktTD294Cl+lg4N6jDMyBBbAHxmIbWHfCG+AEHBqczQwcf8K2z1FOdRQCtbC/8LcY08PJtuMzLfOqs+m69gSWpbAkWNZtDx+w7Vvi0Ax4NGXbWfuvN5fkYD6ZagxPAAAAAElFTkSuQmCC';
+    var addSameScreCardButt = function (knwlgId) {
+        //if (kmUtil.getOpenMode() == "2"){
+        Util.ajax.postJson(Constants.AJAXURL + '/knowledge/getSameScreCards', {knwlgId: knwlgId}, function(data){
+            if(data.returnCode == "0"){
+                var screCards = data.object;
+                province = data.beans[0].province;
+                var html = "";
+                if (screCards && screCards.length>0){
+                    $.each(screCards,function (index,item) {
+                        html += '<li style="padding-right: 50px; white-space: nowrap;"><span style="display:inline-block;font-weight: 800;width:260px;margin-right: 10px;text-overflow: ellipsis;white-space: nowrap;height: 17px;"title="' + item.cardId + '">' + item.cardName + '</span><a style="top: 4px;" id="' + item.cardId + '" cardName="' + item.cardName +'" href="#nogo" class="km-btn km-btn-green " linkType="showCard">预览</a></li>';
+                    })
+                }else {
+                    html = '<span style="color:#000;margin-left:5%;">无同屏卡片关联此知识<span>';
+                }
+                var sameScreCardButt = '<li class="article-operate">' +
+                    '<a href="#nogo"  id="sameScreCard" title="视频通话状态下，可选择卡片进行预览及同屏" ">'+
+                    '<i class="card-icon" style="background-image: url(' + defaultBase64icon +');width: 15px;display: inline-block;height: 14px;position: relative;top: 3px;right: 4px" class="icon"></i>同屏卡片<i class="icon km-xiajiantou-copy"></i>' +
+                    '</a>' +
+                    '<div class="sameScre-card" style="display: none; width:auto;" id="screCardList">' +
+                    '<ul class="sameScre-card-list">'+html+'</ul>'
+                '</div>' +
+                '</li>';
+                messageSendTop.parent(".article-operate").before(sameScreCardButt);
+                $("#sameScreCard").unbind("click").click(function () {
+                    if($("#screCardList").is(":visible")){
+                        $("#screCardList").hide();
+                    }else{
+                        $("#screCardList").show();
+                        if ($(".article-onekey") && $(".article-onekey").is(":visible")) {
+                            $(".article-onekey").hide();
+                        }
+                    }
+                    var click_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                    Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                        if (data.returnCode == 0 && data.object == "true") {
+                            if (sensorsdata) {
+                                sensorsdata.track("ngkm_detail_sameScreen_click", {
+                                    knwlg_id: knwlgId,
+                                    knwlg_name: knwlgNM,
+                                    click_time: click_time,
+                                    serialNumber:serialNumber
+                                });
+                            }
+                        }
+                    });
+                    return false;
+                })
+                $("body").click(function(){
+                    if(!$(this).parents("#screCardList").length){
+                        $("#screCardList").hide();
+                    }
+                });
+                $('#sameScreCard').mouseenter(function () {
+                    $(this).find('.card-icon').css('background-image','url('+ activeBase64icon +')');
+                })
+                $('#sameScreCard').mouseleave(function () {
+                    $(this).find('.card-icon').css('background-image','url('+ defaultBase64icon +')');
+                })
+
+                $("#screCardList").find("[linkType='showCard']").click(function () {
+                    var $_this = $(this);
+                    var cardId = $(this).attr("id");
+                    var cardName = $(this).attr("cardName");
+                    var busiNo = getMsgId();
+
+                    if (kmUtil.getOpenMode()=="1") {
+                        //open方式
+                        var callInfoResponse = JSON.parse(localStorage.getItem("ngkm_getProductResponse"));
+                        if (callInfoResponse && callInfoResponse.isCalling){
+                            if ((callInfoResponse.QASFlag && callInfoResponse.QASFlag == 8) || (callInfoResponse.mediaType && callInfoResponse.mediaType==7)){
+                                addlisterner = new Date().getTime();
+                                localStorage.setItem("ngkm_previewScreCard_data",JSON.stringify({busiNo:busiNo, cardId: cardId,province:province,screCardProductUrl:screCardProductUrl,screCardTestUrl:screCardTestUrl}));
+                                window.localStorage.setItem("ngkm_previewScreCard",addlisterner);
+                            }else {
+                                new Dialog({
+                                    mode: 'tips',
+                                    tipsType: 'error',
+                                    content: '语音通话不支持同屏卡片!'
+                                });
+                            }
+
+                        }else {
+                            /*new Dialog({
+                                mode: 'tips',
+                                tipsType: 'error',
+                                content: '暂无法预览,待后续优化后可预览!'
+                            });*/
+                            var localUrl;
+                            //测试
+                            var httpType2 = window.location.protocol;
+                            if(Constants.getEnvment() == Constants.NGKM_ENVIROMENT_TEST){
+                                if ("https:" == httpType2) {
+                                    localUrl = "https://ngcard-test.cmos:443/ngcardma/v2/dist/noCrossApiPreviewCard.html?cardId="+cardId;
+
+                                } else {
+                                    localUrl = "http://ngcard-test.cmos:8080/ngcardma/v2/dist/noCrossApiPreviewCard.html?cardId="+cardId;
+                                }
+                            }else{
+                                if ("https:" == httpType2) {
+                                    //灰度和生产
+                                    localUrl = "https://ngcard.cs.cmos:443/ngcardma/v2/dist/noCrossApiPreviewCard.html?cardId="+cardId;
+                                } else {
+                                    //灰度和生产
+                                    localUrl = "http://ngcard.cs.cmos:31213/ngcardma/v2/dist/noCrossApiPreviewCard.html?cardId="+cardId;
+                                }
+                            }
+                            window.open(localUrl);
+                        }
+
+
+                    }else {
+                        CrossAPI.getContact("getAgentState",Constants.PARAMJSONAGENT, function (agentState) {
+                            if(agentState && agentState.agentState == "7"){
+                                CrossAPI.getContact("getCallingInfo",Constants.PARAMJSONCALL, function(callingInfo) {
+                                    var acceptNum;
+                                    if (callingInfo) {
+                                        acceptNum = callingInfo.subsNumber;//受理号码；
+                                    }else{
+                                        acceptNum='0';
+                                    }
+                                    var param = {
+                                        busiNo:busiNo,
+                                        msisdn: acceptNum,
+                                        channelId: "ngkm",
+                                        busiClass: '',
+                                        busiType: '',
+                                        provCode: province,
+                                        cardId: cardId,
+                                        pageName:"18"
+                                    };
+                                    //测试
+                                    if(Constants.getEnvment() == Constants.NGKM_ENVIROMENT_TEST){
+                                        showDialogFunc(screCardTestUrl + buildParam(param));
+                                    }else{
+                                        //灰度和生产
+                                        showDialogFunc(screCardProductUrl + buildParam(param));
+                                    }
+                                });
+                            }else {
+                                CrossAPI.getContact("cross_data",Constants.PARAMJSONINDEX,function (info) {
+                                    CrossAPI.getContact("getClientBusiInfo", Constants.PARAMJSONBUSINFO, function (clientBusiInfo) {
+                                        var phoneNum = clientBusiInfo.bean.msisdn;
+                                        var lastSeriaNo = localStorage.getItem("ngkm_seriaNo") || "-1";
+                                        if (!phoneNum) {
+                                            phoneNum='0'
+                                        }
+                                        var param = {
+                                            busiNo:busiNo,
+                                            msisdn: phoneNum,
+                                            channelId: "ngkm",
+                                            busiClass: '',
+                                            busiType: '',
+                                            provCode: province,
+                                            cardId: cardId,
+                                            pageName:"18"
+                                        };
+                                        //测试
+                                        if(Constants.getEnvment() == Constants.NGKM_ENVIROMENT_TEST){
+                                            showDialogFunc(screCardTestUrl + buildParam(param));
+                                        }else{
+                                            //灰度和生产
+                                            showDialogFunc(screCardProductUrl + buildParam(param));
+                                        }
+                                    })
+                                });
+                            }
+                        });
+                    }
+                    // 预览埋点
+                    var click_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                    Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                        if (data.returnCode == 0 && data.object == "true") {
+                            if (sensorsdata) {
+                                sensorsdata.track("ngkm_detail_sameScreen_preview_click", {
+                                    knwlg_id: knwlgId,
+                                    knwlg_name: knwlgNM,
+                                    click_time: click_time,
+                                    serialNumber: serialNumber,
+                                    card_id:cardId,
+                                    card_name:cardName
+                                });
+                            }
+                        }
+                    })
+                })
+            }
+        });
+        //}
+
+    }
+    var buildParam = function(param){
+        var arr = [];
+        for(var key in param){
+            arr.push(key + "=" + param[key]);
+        }
+        return arr.join("&");
+    }
+    var showDialogFunc=function (paramUrl){
+        CrossAPI.destroyDialog("sameScreCard");
+        CrossAPI.showDialog({
+            id:"sameScreCard",        //弹框唯一键值
+            title:'',   //弹出窗标题
+            url:paramUrl ,
+            param:'',    //要传递的参数，可以是json对象
+            modal:false,  //定义弹框是否要遮罩，默认为false
+            width:0,  //对话框宽度
+            height:0,  //对话框高度
+            zIndex:-99999
+        });
+    }
+    function getMsgId() {
+        var CHARS='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+        var uuid = 'xxxxxx'.replace(/x/g,function () {
+            var index = (Math.random()*40)| 0;
+            return CHARS[index];
+        });
+        return getFormatTime() + uuid;
+    }
+    function getFormatTime() {
+        var date= new Date();
+        return date.getFullYear().toString()+format(date.getMonth()+1)+format(date.getDate())
+            +format(date.getHours())+format(date.getMinutes())+format(date.getSeconds());
+    }
+    function format(n) {
+        return n<10 ? '0'+n : n;
+    }
+    //顶部右侧收藏
+    function favKlgAdd(knwlgNM, knwlgId) {
+        favKlgAddEle.click(function () {
+            var iHtml;
+            var _this = $(this);
+            if (_this.find("i").hasClass("km-shoucang")) {
+                //收藏窗口已经弹出
+                if ($(".km-favorite-add").length > 0) {
+                    return;
+                }
+                favKlgAddModal(knwlgNM, knwlgId, _this);
+                _this.on("favrtResult", function (event1, result) {
+                    if (result === 0) {
+                        iHtml = '<i class="icon km-duduyinleappicon2201"></i>已收藏';
+                        _this.html(iHtml);
+                    }
+                });
+            } else {
+                //取消收藏
+                Util.ajax.postJson(Constants.AJAXURL + '/klgFavrtInfo/delete' + '/' + knwlgId, {}, function (result, isOk) {
+                    if (isOk === true) {
+                        // dialog.alert({ type: 'success', message: result.returnMessage });
+                        myAlert({'type': 'success', 'text': result.returnMessage});
+                        iHtml = '<i class="icon km-shoucang"></i>收藏';
+                        favKlgAddEle.html(iHtml);
+                    } else {
+                        if (result.returnCode === "-1") {
+                            myAlert({
+                                type: 'error',
+                                text: result.returnMessage,
+                                falseShow: false,
+                                trueName: '确定'
+                            });
+                            iHtml = '<i class="icon km-shoucang"></i>收藏';
+                            favKlgAddEle.html(iHtml);
+                        } else {
+                            myAlert({'type': 'success', 'text': result.returnMessage});
+                            // dialog.alert({ type: 'success', message: result.returnMessage });
+                        }
+                    }
+                });
+            }
+        });
+    }
+    // 顶部收藏夹
+    var recentCollected = function () {
+        var config = {
+            type: 'post',
+            url: Constants.AJAXURL + '/knowledge/getKmCollected', //Constants.AJAXURL + '/knowledge/getKmClick',    //接受请求的地址
+            data: {},  //要传递给url的数据
+            dataType: 'json', //返回值的数据类型
+            success: function (data, textStatus) {
+                if (textStatus !== "success") {
+
+                    return false;
+                }
+                if (data.returnCode !== '0') {
+
+                    return false;
+                }
+                if (data.object === null || data.object === undefined) {
+
+                    return false;
+                }
+                var viewedKmInfo = data.object.klgs;
+                Util.hdb.registerHelper("equal", function (v1, v2, options) {
+                    if (v1 === v2) {
+                        //满足添加继续执行
+                        return options.fn(this);
+                    }
+                });
+                var templateViews = Util.hdb.compile(knowledgeRecentCollected);
+                var viewedKnwlg = templateViews(viewedKmInfo);
+
+                recentCollect.append(viewedKnwlg);
+                recentCollect.on('click', '.collected', function () {
+                    var objs = $(this);
+                    conMethod.goKnowledgeDetail(objs.attr("title"), objs.attr("id"));
+                })
+                // eventAgent(recentCollect, 'class', 'collected', null, function (obj) {
+                //     // goKnowledgeDetail(obj.attr("title"), obj.attr("id"));
+                //     conMethod.goKnowledgeDetail(obj.attr("title"), obj.attr("id"));
+                // });
+
+                recentCollect.hover(function () {
+                    $(this).addClass("active");
+                }, function () {
+                    $(this).removeClass("active");
+                });
+                viewedKmInfo = null;
+                viewedKnwlg = null;
+                templateViews = null;
+            },  //url调用成功后执行的回调函数
+            error: function (jqXHR, textStatus) {
+
+            }  //url调用失败后执行的回调函数
+        };
+        Util.ajax.ajax(config);
+        config = null;
+    }; //recentCollected end
+
+    // 最近浏览
+    var recentViewed = function () {
+        var config = {
+            type: 'post',  //请求类型 '../../../views.json'
+            url: Constants.AJAXURL + '/knowledge/getKmClick', //Constants.AJAXURL + '/knowledge/getKmClick',    //接受请求的地址
+            data: {},  //要传递给url的数据
+            dataType: 'json', //返回值的数据类型
+            success: function (data, textStatus) {
+                var recentViewed = $detailTop.find("#recentViewed");
+                if (textStatus !== "success") {
+
+                    return false;
+                }
+                if (data.returnCode !== '0') {
+
+                    return false;
+                }
+                if (data.object === null || data.object === undefined) {
+
+                    return false;
+                }
+                var viewedKmInfo = data.object;
+                if (viewedKmInfo.length == 0) {
+                    var viewedKnwlgHtml = '<div class="dorpdown-layer view-list"><ul><li style="background-image:none;margin-left: 140px;">暂无最近浏览记录</li></ul></div>';
+                    recentViewed.append(viewedKnwlgHtml);
+                } else {
+                    Util.hdb.registerHelper("equal", function (v1, v2, options) {
+                        if (v1 === v2) {
+                            //满足添加继续执行
+                            return options.fn(this);
+                        }
+                    });
+                    var templateViews = Util.hdb.compile(klgInfoRecentViewed);
+                    var viewedKnwlg = templateViews(viewedKmInfo);
+                    recentViewed.append(viewedKnwlg);
+                    recentViewed.on('click', '.viewed', function () {
+                        var objt = $(this);
+                        conMethod.goKnowledgeDetail(objt.attr("title"), objt.attr("id"));
+                        return false;
+                    })
+                    // eventAgent(recentViewed, 'class', 'viewed', null, function (obj) {
+                    //     conMethod.goKnowledgeDetail(obj.attr("title"), obj.attr("id"));
+                    //     return false;
+                    // })
+                }
+            },  //url调用成功后执行的回调函数
+            error: function (jqXHR, textStatus) {
+
+            }  //url调用失败后执行的回调函数
+        };
+        Util.ajax.ajax(config);
+    }; //recentViewed end
+    /**
+     * 获取当前系统时间年月日时分秒
+     */
+    var getCurrentDate = function (date) {
+        var date = new Date();
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        var h = date.getHours();
+        var min = date.getMinutes();
+        var s = date.getSeconds();
+        var str = y + '年' + (m < 10 ? ('0' + m) : m) + '月' + (d < 10 ? ('0' + d) : d) + '日  ' + (h < 10 ? ('0' + h) : h) + ':' + (min < 10 ? ('0' + min) : min) + ':' + (s < 10 ? ('0' + s) : s);
+        return str;
+    }
+    //配置场景展示
+    function initScence(kmPersonalCfg) {
+        if (kmPersonalCfg && kmPersonalCfg.configVal) {
+            var goIndex = $("#goIndex");
+            goIndex.html('<i class="icon km-index"></i><p>首页</p><i class="icon km-xiajiantou-copy"></i>');
+            goIndex.parent("li").attr("id","scenes");
+            var configVal = kmPersonalCfg.configVal;
+            var items = (configVal+"").split(",");
+            var list = Constants.senceList;
+            var newArr = [{name:'业务树',id:'kmBusinessTree',url:'/src/modules/knowledgeAppNew/kmKnowledgeSecondListNew.html'}];
+            for(var i=0;i<items.length;i++){
+                newArr.push(list[items[i]-1]);
+            }
+            var scenes = $("#scenes");
+            var scenesViews = Util.hdb.compile(knowledgeDetailScenes);
+            var viewedKnwlg = scenesViews(newArr);
+            scenes.append(viewedKnwlg);
+            scenes.hover(function () {
+                $(this).addClass("active");
+            }, function () {
+                $(this).removeClass("active");
+            });
+            for (var i = 0;i<newArr.length;i++){
+                $("#"+newArr[i].id).click(function () {
+                    var me = $(this);
+                    //自身页面
+                    if(window.location.href.indexOf(me.attr("url")) > -1 && kmUtil.getOpenMode() == "1"){//
+                        location.reload();
+                        return;
+                    }else if(window.location.href.indexOf(me.attr("url")) > -1 && kmUtil.getOpenMode() == "2"){
+                        return;
+                    }
+                    var cname = me.attr("cname");
+                    var url = Constants.AJAXURL+me.attr("url");
+                    if(cname == "咨询表"){
+                        cname = "咨询表查询";
+                    }else if (cname == "业务树") {
+                        cname = "知识列表";
+                    }
+                    kmUtil.openTab(cname,url,{});//
+                    // 神策新增埋点-场景栏点击事件 NGKM2019-522 -begin
+                    Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                        if (data.returnCode == 0 && data.object == "true") {
+                            if (sensorsdata) {
+                                var clickSenceTime = getCurrentDate();
+                                sensorsdata.track("senceClickEvent", {
+                                    clickSenceTime: clickSenceTime,
+                                    clickSenceName: cname
+                                });
+                            }
+                        }
+                    });
+                    // 神策新增埋点-场景栏点击事件 NGKM2019-522 -end
+                });
+            }
+
+        }
+    }
+    // 处理知识路径
+    function businessPaths(businessPathData) {
+        dialogcopy.hide();
+        var businessTree = $detailTop.find('li#businessTree');
+        var path = businessTree.find("#path");
+        for (var i = 0; i < businessPathData.length; i++) {
+            var businessTreeData = businessPathData[i];
+            var html = '<li > <a class="copyIcon"></a> <div class="passCopy" >';
+            for (var k = 0; k < businessTreeData.length; k++) {
+                html += '<a href="javascript:void(0);" class="businessTreeClass" pId="' + businessTreeData[k].pId + '" id="' + businessTreeData[k].id + '">' + businessTreeData[k].name + '</a>';
+                if (k != businessTreeData.length - 1) {
+                    html += '/';
+                }
+            }
+            html += '</div></li>';
+            path.append(html);
+        }
+
+        //hover 事件
+        businessTree.hover(function () {
+            $(this).find('ul').find('li').removeClass("active");
+            $(this).addClass("active");
+        }, function () {
+            $(this).removeClass("active");
+        });
+
+        path.on('click','.businessTreeClass',function(){
+            var objo = $(this);
+            conMethod.goBusinessTree(objo.attr('id'));//跳转业务树
+            return false;
+        })
+        path.on('click','.copyIcon',function(){
+            var objl = $(this);
+            // 复制知识路径
+            objl.parent("li").addClass("active").siblings().removeClass("active");
+            var copyIcon = objl.parent().find("div").text();
+            copyvalue.show();
+            copyvalue[0].value = copyIcon; // 修改文本框的内容
+            copyvalue[0].select(); // 选中文本
+            document.execCommand("Copy");
+            dialogcopy.show();
+            copyvalue.hide();
+            //设置定时器
+            var srf = setInterval(function () {
+                dialogcopy.hide();
+                clearInterval(srf);
+            }, 2000);
+        })
+        // eventAgent(path, 'class', 'businessTreeClass', 'copyIcon', function (obj) {
+        //     // goBusinessTree(obj.attr('id'));//跳转业务树
+        //     conMethod.goBusinessTree(obj.attr('id'));//跳转业务树
+        //     return false;
+        // }, function (obj) {
+        //     // 复制知识路径
+        //     obj.parent("li").addClass("active").siblings().removeClass("active");
+        //     var copyIcon = obj.parent().find("div").text();
+        //     copyvalue.show();
+        //     copyvalue[0].value = copyIcon; // 修改文本框的内容
+        //     copyvalue[0].select(); // 选中文本
+        //     document.execCommand("Copy");
+        //     dialogcopy.show();
+        //     copyvalue.hide();
+        //     //设置定时器
+        //     var srf = setInterval(function () {
+        //         dialogcopy.hide();
+        //         clearInterval(srf);
+        //     }, 2000);
+        // })
+    }
+
+
+    // 事件代理
+    var eventAgent = function ($selector, attr, flagOne, flagTwo, callbackOne, callbackTwo) {
+        $selector.click(function (e) {
+            var event = e || window.event;
+            var target = event.target || event.srcElement;
+            var attrs = $(target).attr(attr);
+            if (flagTwo == null) {
+                if (attrs.indexOf(flagOne) !== -1) {
+                    callbackOne($(target));
+                    return false;
+                }
+            } else {
+                if (attrs.indexOf(flagOne) !== -1) {
+                    callbackOne($(target));
+                    return false;
+                } else if (attrs.indexOf(flagTwo) !== -1) {
+                    callbackTwo($(target));
+                    return false;
+                }
+            }
+        })
+    }
+
+    function initHeadEventRight() {
+        // 信息反馈
+        fdbkSend = new klgFdbkSend.feedbackSend(knwlgId, knwlgNM, '1');
+        //点选反馈
+        ContentSelect.defaultSelect(fdbkSend);
+        klgFdbFun = function () {
+            fdbkSend.open();
+        }
+        // 服务请求
+        /*serviceTab = new archive(knwlgId);
+        serviceReq = function () {
+            serviceTab.open();
+        }*/
+        //一键办理
+        _clickProcess = new clickProcess.initialize(knwlgId, true, false,null,knwlgName,tmpltNm);
+        var $operateBtns = $detailTop.find("li.article-operate");
+        $operateBtns.on('click', function (e) {
+            var event = e || window.event;
+            var target = event.target || event.srcElement;
+            var id = $(target).attr('id');
+            switch (id) {
+                /*case 'serviceBtn':
+                    serviceReq();//服务请求
+                    break;*/
+                case 'feedbackBtn'://信息反馈
+                    $(target).attr('taskSource',"1");//前台反馈
+                    klgFdbFun();
+                    break;
+                default:
+                    return
+            }
+        })
+    }
+    function initHeadEventLeft() {
+        var $operateBtns = $detailTop.find("#recentViewed");
+        $operateBtns.hover(function () {
+            $(this).addClass("active");
+            if ($(this).find("div").length == 0) {
+                recentViewed();//最近浏览
+            }
+        }, function () {
+            $(this).removeClass("active");
+        });
+    }
+    var faqQueation = function ($item,rltklg,atomId,rtlKlgId,type) {
+        Util.hdb.registerHelper("if_string", function (v1, options) {
+            if (v1 != "" && "string" == typeof(v1)) {
+                //满足添加继续执行
+                return options.fn(this);
+            } else {
+                //不满足条件执行{{else}}部分
+                return options.inverse(this);
+            }
+        });
+        var template = Util.hdb.compile(concatFaqContentTpl);
+        var templateExcept = Util.hdb.compile(concatFaqExceptNewTpl);
+        var faqHtml;
+        var faqHtmlPar;
+        var questionHtml = "" ;
+        var rltklgHtml = "";
+        var question;
+        var cntt;
+        for (var i=0;i<rltklg.length;i++){
+            faqHtml = template(rltklg[i]);
+            question = rltklg[i].question;
+            cntt = rltklg[i].cntt || rltklg[i].content;
+            if (question == undefined || question == 'undefined'){
+                question = "";
+            }
+            if (cntt == undefined || cntt == 'undefined'){
+                faqHtmlPar = templateExcept(rltklg[i]);
+            }else {
+                faqHtmlPar = templateExcept(rltklg[i])+'<a class="thumbnail-link FQA thumbnailPlus" sid="thumbnailLinkFQAMORENew"></a>';
+            }
+            rltklgHtml = '<div class="yuanzi-title-include" style="display: none;">'+faqHtml+'</div>';
+            questionHtml = questionHtml + '<div class="yuanzi-title"><a class="+rltklg[i].klgAttrAtomId+">'+ question +'</a>'+faqHtmlPar+''+rltklgHtml+'</div>';
+        }
+        if (type == "2"){
+            $item.find('.location').after(' <a  id="thumbnail_' + atomId + '_' + rtlKlgId + '" ' +
+                'class="thumbnail-link FQA thumbnailPlus open thumbnail_' + atomId + '_' + rtlKlgId + '" sid="thumbnailLinkFQAMORE"></a>');
+
+            $item.find('br').after('<div style="display:block" class="yuanzi-title-include moreQuestion">'+questionHtml+'</div>');
+        } else{
+            // faqHtmlPar = $item.parent();
+            $item.parent().append('<div style="display:block" class="yuanzi-title-include moreQuestion">'+questionHtml+'</div>');
+        }
+
+    };
+    //FQA
+    var handleThumbnailForFQA = function(atomId,scope,expLen){
+        //查找符合条件的原子
+        $rtlAtomIDFQA[atomId] = leftConWrap.find('div[atomid="'+atomId+'"]');
+        var $it = $rtlAtomIDFQA[atomId].find('.left-words[paratypecd="8"]');
+        //取关联类型的知识"口径内容"原子信息
+        var klgIds = [];
+        var $yuanziTitle = $it.find('.yuanzi-title');
+        var rgnIds;
+        var scopeArr = [];//例外地区编码串
+        var $li = $rtlAtomIDFQA[atomId].find('.inline-tab').find('li');
+        if($li.length > 0){//有例外
+            $yuanziTitle = $it.parent('div').find('.yuanzi-title');
+            var $arrScope = $it.find('.exception');
+            $.each($arrScope,function(i,it){
+                if(i > 0){
+                    scopeArr.push($(it).attr('regnid'));
+                }
+            });
+        }
+        if(scopeArr.length > 0){
+            rgnIds = scopeArr.join(',');
+        }
+        $.each($yuanziTitle,function(idx,ite){
+            var rtlKlgId = $(ite).find('a').attr('fileid');
+            klgIds.push(rtlKlgId);
+        });
+        var buildRegnMap = function(except, regnMap){
+            if(!except.regnId || !except.regnNm){
+                return;
+            }
+            var regnId = except.regnId.split(",");
+            var regnNm = except.regnNm.split(",");
+            for(var i = 0; i < regnId.length; i ++){
+                if(!regnMap[regnId[i]]){
+                    regnMap[regnId[i]] = regnNm[i];
+                }
+            }
+        };
+
+        var contansExcp = function(regnId, excpIds){
+            var regnIds = regnId.split(",");
+            var result = [];
+            for(var i = 0; i < regnIds.length; i ++){
+                for(var j = 0; j < excpIds.length; j ++){
+                    if(regnIds[i] == excpIds[j]){
+                        result.push(regnIds[i]);
+                    }
+                }
+            }
+            return result;
+        };
+
+        var concatRegnNm = function(regnIds, regnMap){
+            var result = [];
+            for(var i = 0; i < regnIds.length; i ++){
+                result.push(regnMap[regnIds[i]]);
+            }
+            return result.join(",");
+        };
+
+        /**
+         * 拼接例外内容
+         *
+         * @param obj
+         * @param excpIds
+         */
+        var buildExcpHtml = function(obj, excpIds){
+
+            var faqHtml = "";
+            var faqHtmlPar = "";
+            var faqAnnotation = "";
+
+            //首先拼接默认html内容
+            if(obj.content){
+                faqHtmlPar = "<li class='active'> <a href='javascript:void(0);' class='exceptionAfq' regnIdAfqs= '"+obj.regnId+"' title='"+obj.regnNm+"'>"+obj.regnNm+"</a></li>";
+                if (obj.annotation) {
+                    if (obj.isImport == 1) {
+                        faqAnnotation   = "<div class= 'left-words' style= 'margin-left:-57px'> " +
+                            "<span class= 'is-zhujie zhujie1' title= '重点注解' >：</span> " +
+                            "<div class= 'zhujie-con'> "+obj.annotation+" </div></div> ";
+                    }else{
+                        faqAnnotation = "<div class= 'left-words' style= 'margin-left:-57px' > " +
+                            "<span class= 'is-zhujie zhujie' title= '注解' >：</span> " +
+                            "<div class= 'zhujie-con'> "+obj.annotation+" </div></div> ";
+                    }
+                }
+                faqHtml = "<div class='left-explain exceptAfq'regnIdAfqs = '"+obj.regnId+"' > " +
+                    "<div class= 'as-inner-tag'  style= 'margin-left:-29px'>"+obj.content+"</div> " +
+                    " "+faqAnnotation+" </div>";
+            }
+            //处理例外内容
+            var regnMap = {};
+            var result = "";
+            var resultPar = "";
+            var resultMap = {};
+            excpIds = excpIds.split(",");
+            if(obj.except){
+                var hasExcpLength = 0;
+                for(var i = 0; i < obj.except.length; i ++){
+                    var regnId = obj.except[i].regnId;
+                    var cntt = obj.except[i].cntt;
+                    var regnIds = obj.except[i].regnIds;
+                    var annotation = obj.except[i].annotation;
+                    var faqAnnotationEx = "";
+                    if(regnId && cntt){
+                        buildRegnMap(obj.except[i], regnMap);
+                        var containsRegn = contansExcp(regnId, excpIds);
+                        hasExcpLength += containsRegn.length;
+                        //存在符合条件例外
+                        if(regnId && containsRegn.length > 0){
+                            resultPar += "<li> <a href='javascript:void(0);' class='exceptionAfq' regnIdAfqs= '"+regnIds+"' title='"+concatRegnNm(containsRegn, regnMap)+"'>"+concatRegnNm(containsRegn, regnMap)+"</a></li>";
+                            if (obj.annotation) {
+                                faqAnnotationEx = "<div class= 'left-words' style= 'margin-left:-57px' >" +
+                                    "<span class= 'is-zhujie zhujie' title= '注解' >：</span>" +
+                                    "<div class= 'zhujie-con'> "+annotation+"</div></div>";
+                            }
+                            result += "<div class='left-explain exceptAfq hide'regnIdAfqs = '"+regnIds+"'>";
+                            result += "<div class= 'as-inner-tag'  style= 'margin-left:-29px'>"+cntt+"</div>";
+                            result += ""+faqAnnotationEx+"</div>";
+                        }
+                    }
+                }
+                //判断是否需要将默认内容拼接到 result
+                if(hasExcpLength < excpIds.length){
+                    result = faqHtml + result;
+                    resultPar = faqHtmlPar + resultPar;
+                }
+            }else{
+                result += faqHtml + result;
+                resultPar += faqHtmlPar + resultPar;
+            }
+            resultMap.result = result;
+            resultMap.resultPar = resultPar;
+            return resultMap;
+        };
+
+        if(klgIds.length > 0){
+            Util.ajax.getJson(Constants.AJAXURL + '/knowledge/klgForFQA', {'rgnIds':rgnIds,'rtlId':klgIds.join(',')}, function (data, status) {
+                if (status) {
+                    if(data && data.object){
+                        Util.hdb.registerHelper("equal", function (v1, v2, options) {
+                            if (v1 === v2) {
+                                //满足添加继续执行
+                                return options.fn(this);
+                            }
+                        });
+                        Util.hdb.registerHelper("blank", function (items, options) {
+                            if (items.length !== 0) {
+                                //满足添加继续执行
+                                return options.fn(this);
+                            } else {
+                                //不满足条件执行{{else}}部分查
+                                return options.inverse(this);
+                            }
+                        });
+                        Util.hdb.registerHelper("if_string", function (v1, options) {
+                            if (v1 != "" && "string" == typeof(v1)) {
+                                //满足添加继续执行
+                                return options.fn(this);
+                            } else {
+                                //不满足条件执行{{else}}部分
+                                return options.inverse(this);
+                            }
+                        });
+                        var template = Util.hdb.compile(concatFaqContentTpl);
+                        var templateExcept = Util.hdb.compile(concatFaqExceptTpl);
+                        var faqHtml;
+                        var faqHtmlPar;
+                        if($li.length > 0){
+                            //按例外分区间处理
+                            //var $li = $rtlAtomIDFQA.find('.inline-tab').find('li');
+                            var $leftExplain = $rtlAtomIDFQA[atomId].find('.left-explain');
+                            $.each($leftExplain,function(indexLeft,itemLeft){
+                                var $itYuanziTitle = $(itemLeft).find('.yuanzi-title');
+                                //遍历每个例外区间的关联知识
+                                $.each($itYuanziTitle,function(idx,item){
+                                    var $item = $(item);
+                                    var rtlKlgId = $item.find('a').attr('fileid');
+                                    //加口径内容展示
+                                    if(data.object[rtlKlgId]){
+                                        if (data.object[rtlKlgId].length == 1){
+                                            var atomContentHtml = '<div id="thumbnail_' + atomId + "_" + rtlKlgId + '_div" class="yuanzi-title-inner thumbnailDivFQA thumbnail_' + atomId + "_" + rtlKlgId + '_div" style="border: 1px solid #acd1e7; background-color: #eef4f9; display: block;max-height: 100%">';
+                                            if(indexLeft == 0){//默认直接加内容
+                                                faqHtml = template(data.object[rtlKlgId][0]);
+                                                faqHtmlPar = templateExcept(data.object[rtlKlgId][0]);
+                                                atomContentHtml = atomContentHtml + '<div class="has-inner-tag" id="thumbnail_'+ atomId + "_" + rtlKlgId +'_' + scope + '"  style="display: none;">' + faqHtml + '</div>';
+                                            }else{
+                                                var resultapMap;
+                                                var excpRegnId = $($li[indexLeft]).find("a").attr("regnId");
+                                                resultapMap = buildExcpHtml(data.object[rtlKlgId][0], excpRegnId);
+                                                var result = resultapMap.result;
+                                                var resultPar =  resultapMap.resultPar;
+                                                faqHtmlPar = "<ul class='tab-inline' style='display: none;'>"+resultPar+"</ul>";
+                                                atomContentHtml += '<div class="has-inner-tag" id="thumbnail_' + atomId + '_' + rtlKlgId + '_' + excpRegnId + '" style="display:none;">';
+                                                atomContentHtml += ''+result+'</div>';
+                                            }
+                                            $item.find('br').after(atomContentHtml);
+                                            //加缩略图图标
+                                            $item.find('.location').after(faqHtmlPar+'<a id="thumbnail_' + atomId + '_' + rtlKlgId + '" ' +
+                                                'class="thumbnail-link FQA thumbnailPlus thumbnail_' + atomId + '_' + rtlKlgId + '" sid="thumbnailLinkFQA"></a>');
+                                            $item.find('#thumbnail_' + atomId + '_' + rtlKlgId + "_div").hide();
+                                        }else{
+                                            data.object[rtlKlgId].sort(function(a,b){
+                                                if (a.grpngNm !==  undefined) {
+                                                    return a.grpngNm.replace(/[^0-9]/ig,"")-b.grpngNm.replace(/[^0-9]/ig,"");
+                                                }
+                                            });
+                                            faqQueation($item,data.object[rtlKlgId],atomId,rtlKlgId,"2");
+                                        }
+
+                                    }
+                                });
+                            });
+                        }else{//根据地区按默认展示即可
+                            Util.hdb.registerHelper("if_string", function (v1, options) {
+                                if (v1 != "" && "string" == typeof(v1)) {
+                                    //满足添加继续执行
+                                    return options.fn(this);
+                                } else {
+                                    //不满足条件执行{{else}}部分
+                                    return options.inverse(this);
+                                }
+                            });
+                            var template = Util.hdb.compile(concatFaqContentTpl);
+                            var templateExcept = Util.hdb.compile(concatFaqExceptTpl);
+                            $.each($yuanziTitle,function(idx,item){
+                                var $item = $(item);
+                                var rtlKlgId = $item.find('a').attr('fileid');
+                                //加口径内容展示
+                                if(data.object[rtlKlgId]){
+                                    var rltklg = data.object[rtlKlgId];
+                                    if (rltklg.length == 0) {
+                                        faqHtml = template(rltklg[0]);
+                                        faqHtmlPar = templateExcept(rltklg[0]);
+                                        //加缩略图图标
+                                        $item.find('.location').after(faqHtmlPar +' <a  id="thumbnail_' + atomId + '_' + rtlKlgId + '" ' +
+                                            'class="thumbnail-link FQA thumbnailPlus thumbnail_' + atomId + '_' + rtlKlgId + '" sid="thumbnailLinkFQA"></a>');
+                                        //加口径内容
+                                        /*$item.find('br').after('<div id="thumbnail_' + atomId + '_' + rtlKlgId + '_div" class="yuanzi-title-inner thumbnailDivFQA thumbnail_' + atomId + '_' + rtlKlgId + '_div"style="border: 1px solid #acd1e7; background-color: #eef4f9; display: block;">'+
+                                            '<div class="has-inner-tag">' + faqHtml + '</div>'+
+                                            '</div>');
+                                        $item.find('#thumbnail_' + atomId + '_' + rtlKlgId + "_div").hide();*/
+                                    }else if (rltklg.length == 1){
+                                        faqHtml = template(rltklg[0]);
+                                        faqHtmlPar = templateExcept(rltklg[0]);
+                                        //加缩略图图标
+                                        $item.find('.location').after(faqHtmlPar +' <a  id="thumbnail_' + atomId + '_' + rtlKlgId + '" ' +
+                                            'class="thumbnail-link FQA thumbnailPlus thumbnail_' + atomId + '_' + rtlKlgId + '" sid="thumbnailLinkFQA"></a>');
+                                        //加口径内容
+                                        $item.find('br').after('<div id="thumbnail_' + atomId + '_' + rtlKlgId + '_div" class="yuanzi-title-inner thumbnailDivFQA thumbnail_' + atomId + '_' + rtlKlgId + '_div"style="border: 1px solid #acd1e7; background-color: #eef4f9; display: block;max-height: 100%">'+
+                                            '<div class="has-inner-tag">' + faqHtml + '</div>'+
+                                            '</div>');
+                                        $item.find('#thumbnail_' + atomId + '_' + rtlKlgId + "_div").hide();
+                                    } else{
+                                        rltklg.sort(function(a,b){
+                                            if (a.grpngNm !==  undefined) {
+                                                return a.grpngNm.replace(/[^0-9]/ig,"")-b.grpngNm.replace(/[^0-9]/ig,"");
+                                            }
+                                        });
+                                        faqQueation($item,rltklg,atomId,rtlKlgId,"2");
+
+                                    }
+
+                                }
+                            });
+                        }
+                        //search("handleThumbnailForFQA", atomId);//搜索高亮渲染
+                    }
+                }
+            })
+        }
+
+    };
+    var spliceAtomId = function (atomId,knwlgAttrAtomId) {
+        for(var a = 0;a<atomId.length;a++){
+            if(atomId[a] == knwlgAttrAtomId){
+                atomId.splice(a,1);
+                a--;
+            }
+        }
+        return atomId;
+    };
+    //关联知识、关联系列替换
+    var htmldivKnow = function(cntt,paraTypeCd){
+        var htmldiv = '';
+        if (paraTypeCd == "8"){
+            for (var m = 0; m < cntt.length; m++) {
+                htmldiv = htmldiv + '<div class="yuanzi-title">' + "" + cntt[m] + "" + '</div>';
+            }
+        }else{
+            for (var m = 0; m < cntt.length; m++) {
+                htmldiv = htmldiv + '<div class="yuanzi-con fujian-con">' + "" + cntt[m] + "" + '</div>';
+            }
+        }
+        return htmldiv;
+    };
+    //例外内容替换
+    var excepHtml = function (exception,excp,parHtatom,paraTypeCd) {
+        var excepDiv;
+        for(var i = 0 ;i<exception.length;i++){
+            var regnid = exception[i].regnId;
+            for(var n = 0 ;n<excp.length;n++){
+                var html = "";
+                excepDiv = parHtatom.find("div."+regnid +":first");
+                var excepValue = exception[i].excepValue;
+                excepDiv.html("");
+                html = htmldivKnow(excepValue,paraTypeCd);
+                excepDiv.html(html);
+            }
+        }
+    }
+    //处理关系类型faq及开通-自助办理原子内容
+    function handRelatypeAtoms(klgGroupItems){
+        //关系类型
+        var knwldgGroupItems = klgGroupItems.knwldgGroupItems;
+        var klgRegnId = klgGroupItems.klgRegnId;
+        var scope = klgGroupItems.scope;
+        var content = leftConWrap.find(".left-content");
+        var atomId = [];
+        var atoms = leftConWrap.find(".atoms");
+        var htmldiv = "";
+        var aht;
+        for(var i = 0 ; i < atoms.length; i++){
+            atomId.push(atoms[i].getAttribute('atomid'));
+        }
+        for(var l = 0;l<knwldgGroupItems.length;l++){
+            var atrrItems;
+            var knwldgGroupItems2 = knwldgGroupItems[l].knwldgGroupItems2;
+            if(knwldgGroupItems2.length == 0){
+                atrrItems = knwldgGroupItems[l].atrrItems;
+            }else{
+                atrrItems = knwldgGroupItems2[0].atrrItems;
+            }
+            var word = leftConWrap.find(".left-words[paraTypeCd = 8]");
+            if(content.length == 0 && word.length != 0 && atrrItems.length == 0 ){
+                word.find("div").find("div").eq(0).html("");
+            }
+            if(atrrItems != undefined && atrrItems.length != 0){
+                for (var j = 0;j<atrrItems.length;j++){
+                    var knwlgAttrAtomId = atrrItems[j].knwlgAttrAtomId;
+                    var paraNm = atrrItems[j].paraNm;
+                    var paraTypeCd = atrrItems[j].paraTypeCd;
+                    atomId = spliceAtomId(atomId,knwlgAttrAtomId);
+
+                    //NGKM2019-656 -begin
+                    if ('机构代码' == paraNm) {
+                        orgCode = atrrItems[j].cntt;
+                    }
+                    if("投诉处理指引" == paraNm&&"4"==paraTypeCd){
+                        //知识类型
+                        preEditCode= klgGroupItems.klgRegnId;
+                        regnIdCode = klgGroupItems.scope;
+                        var itemObj=[];
+                        itemObj[0]= atrrItems[j];
+                        unRichObj[0]=knwldgGroupItems[l];
+                        if(preEditCode=="000"&& regnIdCode!="000"){
+                            if(itemObj[0].exceptionMapList&&itemObj[0].exceptionMapList.length>0){
+                                itemObj[0].cntt=itemObj[0].exceptionMapList[0].excepValue;
+                            }
+                        }
+                        unRichObj[0].atrrItems=itemObj;
+
+                    }
+                    //NGKM2019-656 -end
+
+                    if (paraTypeCd == "8" || paraTypeCd == "15") {
+                        var cntt = "";
+                        var exception = atrrItems[j].exceptionMapList;
+                        var parHtatom = leftConWrap.find("div[atomId = " +knwlgAttrAtomId+ "]");
+                        var parentDiv = parHtatom.children(":first");
+                        if (atrrItems[j].cntt !== undefined){
+                            cntt = atrrItems[j].cntt;
+                        }
+                        var spanhtml;
+                        if (exception.length != 0){//处理例外
+                            if (klgRegnId == "000" && scope !== "000") {
+                                aht = parentDiv.children(":first").prop("outerHTML");
+                                var excepValue = exception[0].excepValue;
+                                parentDiv.html("");
+                                htmldiv = htmldivKnow(excepValue,paraTypeCd);
+                                spanhtml =  aht + '<span class="orange-line">'+paraNm+'：</span>';
+                                parentDiv.html(spanhtml+htmldiv);
+                            }else{
+                                parentDiv = parHtatom.find("div.moren:first");
+                                parentDiv.html("");
+                                htmldiv = htmldivKnow(cntt,paraTypeCd);
+                                parentDiv.html(htmldiv);
+                                var excp = atrrItems[j].excp;
+                                excepHtml(exception,excp,parHtatom,paraTypeCd);
+                            }
+                        }else{
+                            aht = parentDiv.children(":first").prop("outerHTML");
+                            parentDiv.html("");
+                            htmldiv = htmldivKnow(cntt,paraTypeCd);
+                            spanhtml =  aht + '<span class="orange-line">'+paraNm+'：</span>';
+                            parentDiv.html(spanhtml+htmldiv);
+                        }
+                        if (knwldgGroupItems[l] && paraTypeCd == "8"){
+                            handleThumbnailForFQA(knwlgAttrAtomId,scope,exception.length);
+                        }
+                    }
+
+                }
+            }//关系类型
+        }
+        //开通-自助办理原子显示内容优化
+        //不包含例外
+        //增加开通-自助办理原子
+        var $item_zzbl = leftConWrap.find("span:contains('开通-自助办理')").parent().parent();
+        $.each($item_zzbl,function (index,item) {
+            $(item).find("a.message").attr("title","短信内容包含：商品名称及自助办理链接").removeClass("normal-text").addClass("rich-text");
+            var $zzbl_atoms = $(item).find("div.yuanzi-con");
+            if($zzbl_atoms.length > 0){
+                $.each($zzbl_atoms,function () {
+                    var _self = $(this);
+                    var productId = $.trim(_self.text());
+                    var productName;
+                    if(productId){
+                        Util.ajax.getJson(
+                            Constants.AJAXURL + '/sendSms/getProductPageURLByProductCode',
+                            {productCode: productId},
+                            function (data) {
+                                if(data.returnCode == '0'){
+                                    productName = data.object.productName;
+                                }
+                                _self.attr("productid",productId);
+                                if(productName){
+                                    _self.text("可根据短信链接自助办理"+productName+"业务");
+                                }else{
+                                    _self.text("可根据短信链接自助办理业务");
+                                }
+                            }
+                        );
+                    }else{
+                        _self.attr("productid","");
+                    }
+                });
+            }
+        });
+
+        if (atrrItems != undefined  && atomId.length != 0){
+            for (var i = 0; i < atomId.length; i++){
+                // var parentDiv = $(".atoms[atomId = "+atomId[i]+"]");
+                var paraTypeCd = leftConWrap.find(".atoms[atomId = "+atomId[i]+"]").find("div").eq(0).attr('paraTypeCd');
+                if(paraTypeCd == 8 || paraTypeCd == 15){
+                    var ff = leftConWrap.find(".atoms[atomId = "+atomId[i]+"]");
+                    var hh = ff.parent().parent();
+                    ff.remove();
+                    if (hh.find("div.atoms").length === 0) {
+                        hh.remove();
+                        $("a[href='#" + hh.attr('id') + "']").parent().remove();
+                        $("a[href='#" + hh.find("a.para-title").attr('id') + "']").parent().remove();
+                    }
+                }
+            }
+        }
+        var orange = leftConWrap.find(".left-content-inner .orange-line");
+        if ("客服口径" == klgGroupItems.tmpltNm) {
+            for (var i = 0;i<orange.length;i++){
+                if("问题：" == $(orange[i])[0].outerText){
+                    $(orange[i]).parent().parent().find(".yuanzi-con").css("font-weight","bold");
+                }
+            }
+        }
+
+    }
+    // 知识详情页网点信息知识显示营业厅实时等待数 2020年3月30日17:27:49 -begin
+    var kmDetailQueueInit = function(knowledgeTmpltNm){
+        if("网点信息" == knowledgeTmpltNm){
+            Util.ajax.getJson(Constants.AJAXURL + "/knowledge/getAvailableProv?t=" + +new Date().getTime(), {}, function (data) {
+                if (data.returnCode == 0 && data.object == true) {
+                    Util.ajax.getJson(Constants.AJAXURL + "/knowledge/getAvailableProvCsfCode?t=" + +new Date().getTime(), {}, function (data) {
+                        var detailTitle = $(".detail-title");
+                        if(data.returnCode == 0 && data.object == true){
+                            if(orgCode == '' || orgCode == undefined || orgCode == null){
+                                var noOrgCodeQueueNumber = noQueueNumber
+                                detailTitle.find("h1").append(noOrgCodeQueueNumber);
+                            }else{
+                                var config = {
+                                    type: 'post',
+                                    url: Constants.AJAXURL + '/knowledge/getBusinessHallQueue',
+                                    data:{
+                                        orgCodes : orgCode
+                                    },
+                                    dataType: 'json',
+                                    success: function (data) {
+                                        if (data.returnCode == '0') {
+                                            // errorFlag = false;
+                                            var businessHallQueueNumber = data.beans[0].queueNum;
+                                            var businessHallQueueNumberSpan;
+                                            if(businessHallQueueNumber == '' || businessHallQueueNumber == null || businessHallQueueNumber == "null"){
+                                                businessHallQueueNumberSpan = noQueueNumber
+                                            }else if(businessHallQueueNumber>20 || businessHallQueueNumber==20 ){
+                                                businessHallQueueNumberSpan = '<span class="line-up-num">目前排队人数：<em id="businessHallQueue" class="very-much">' + businessHallQueueNumber + '</em><a id="queueRefresh" class="inline-img-btn" href="javascript:void(0);"><img class="inline-img1" src="'+url_prefix+'/assets/img/km-fresh-icon-blue01.gif" alt=""><img class="inline-img2" src="'+url_prefix+'/assets/img/km-fresh-icon-blue02.gif" alt=""></a></span>';
+                                            }else if(businessHallQueueNumber<20 || businessHallQueueNumber =='未配置' || businessHallQueueNumber =='未启用'){
+                                                businessHallQueueNumberSpan = '<span class="line-up-num">目前排队人数：<em id="businessHallQueue">' + businessHallQueueNumber + '</em><a href="javascript:void(0);" id="queueRefresh" class="inline-img-btn"><img class="inline-img1" src="'+url_prefix+'/assets/img/km-fresh-icon-blue01.gif" alt=""><img class="inline-img2" src="'+url_prefix+'/assets/img/km-fresh-icon-blue02.gif" alt=""></a></span>';
+                                            }
+                                            detailTitle.find("h1").append(businessHallQueueNumberSpan);
+                                            queueInitFlag = false;
+                                        }else{
+                                            if(!queueInitFlag){
+                                                /*new dialog({
+                                                    mode: 'tips',
+                                                    delayRmove:2, //延迟删除秒数设定 tips默认3秒,非tips默认不关闭。
+                                                    tipsType:'error',
+                                                    content: data.returnMessage
+                                                });*/
+                                                dialog.alert({type:'error',message:data.returnMessage});
+                                                var noOrgCodeQueueNumber = noQueueNumber
+                                                detailTitle.find("h1").append(noOrgCodeQueueNumber);
+                                            }else{
+                                                var noOrgCodeQueueNumber = noQueueNumber
+                                                detailTitle.find("h1").append(noOrgCodeQueueNumber);
+                                            }
+                                            queueInitFlag = false;
+                                            return false;
+                                        }
+                                    },
+                                    error: function (jqXHR, textStatus, errorThrown) {
+                                        dialog.alert({type:'error',message:errorThrown})
+                                        var noOrgCodeQueueNumber = noQueueNumber
+                                        detailTitle.find("h1").append(noOrgCodeQueueNumber);
+                                        queueInitFlag = false;
+                                    }
+                                };
+                                Util.ajax.ajax(config);
+                            }
+                        }else{
+                            var noOrgCodeQueueNumber = noQueueNumber
+                            detailTitle.find("h1").append(noOrgCodeQueueNumber);
+                        }
+
+                    });
+                }
+            });
+        }
+    };
+    $detailLeft.on("click", ".detail-title #queueRefresh", function () {
+        // $(".detail-title").on("click","#queueRefresh",function() {
+        Util.ajax.getJson(Constants.AJAXURL + "/knowledge/getAvailableProvCsfCode?t=" + +new Date().getTime(), {}, function (data) {
+            if(data.returnCode == 0 && data.object == true){
+                var $businessHallQueue = $("#businessHallQueue");
+                var $queueRefresh = leftConWrap.find("#queueRefresh");
+                if(orgCode == '' || orgCode == undefined || orgCode == null){
+                    if($businessHallQueue.hasClass("very-much")){
+                        $businessHallQueue.removeClass("very-much");
+                        document.getElementById("businessHallQueue").innerText = "未知";
+                    }else{
+                        document.getElementById("businessHallQueue").innerText = "未知";
+                    }
+                }else{
+                    var config = {
+                        type: 'post',
+                        url: Constants.AJAXURL + '/knowledge/getBusinessHallQueue',
+                        data:{
+                            orgCodes : orgCode
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            if (data.returnCode == '0') {
+                                var businessHallQueueNumber = data.beans[0].queueNum;
+                                var businessHallQueueNumberSpan;
+                                $queueRefresh.addClass('inline-img-rotating');
+                                if(businessHallQueueNumber == '' || businessHallQueueNumber == null){
+                                    if($businessHallQueue.hasClass("very-much")){
+                                        $businessHallQueue.removeClass("very-much");
+                                        document.getElementById("businessHallQueue").innerText = "未知";
+                                    }else{
+                                        document.getElementById("businessHallQueue").innerText = "未知";
+                                    }
+                                }else if(businessHallQueueNumber>20 || businessHallQueueNumber==20 ){
+                                    if($businessHallQueue.hasClass("very-much")){
+                                        document.getElementById("businessHallQueue").innerText = businessHallQueueNumber;
+                                    }else{
+                                        $businessHallQueue.addClass("very-much");
+                                        document.getElementById("businessHallQueue").innerText = businessHallQueueNumber;
+                                    }
+                                }else if(businessHallQueueNumber<20 || businessHallQueueNumber =='未配置' || businessHallQueueNumber =='未启用'){
+                                    if($businessHallQueue.hasClass("very-much")){
+                                        $businessHallQueue.removeClass("very-much");
+                                        document.getElementById("businessHallQueue").innerText = businessHallQueueNumber;
+                                    }else{
+                                        document.getElementById("businessHallQueue").innerText = businessHallQueueNumber;
+                                    }
+                                }
+                                /*new dialog({
+                                    mode: 'tips',
+                                    delayRmove: 2, //延迟删除秒数设定 tips默认3秒,非tips默认不关闭。
+                                    tipsType: 'success',
+                                    content: "排队人数已更新为最新数据"
+                                });*/
+                                dialog.alert({ type: 'success', message: "排队人数已更新为最新数据"});
+                                $queueRefresh.removeClass('inline-img-rotating');
+                            }else{
+                                $queueRefresh.addClass('inline-img-rotating');
+                                /*new dialog({
+                                    mode: 'tips',
+                                    delayRmove:2, //延迟删除秒数设定 tips默认3秒,非tips默认不关闭。
+                                    tipsType:'error',
+                                    content: data.returnMessage
+                                });*/
+                                dialog.alert({ type: 'error', message: data.returnMessage});
+                                $queueRefresh.removeClass('inline-img-rotating');
+                                return false;
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            /*new myAlert({
+                                'type': 'error',
+                                'text': errorThrown
+                            });*/
+                            dialog.alert({ type: 'error', message: errorThrown});
+                        }
+                    };
+                    Util.ajax.ajax(config);
+                }
+            }else{
+                document.getElementById("businessHallQueue").innerText = "未知";
+            }
+        });
+    });
+    //获取知识是否关联卡片标识
+    var getRelScreCardFlag = function (knwlgId) {
+        Util.ajax.postJson(Constants.AJAXURL + '/knowledge/getRelScreCardFlag', {knwlgId: knwlgId}, function(data){
+            if(data.returnCode == "0" && data.object == "1"){
+                addSameScreCardButt(knwlgId);
+            }
+        })
+    }
+    // 处理知识详情内容
+    function hdbKlgAttr(knowledgeAttr) {
+        var KnowledgeAttributes = $detailRight.find("#KnowledgeAttributes");
+        knwlgNM = knowledgeAttr.knwlgNM;
+        knwlgName = knowledgeAttr.knwlgNM;
+        knwlgId = knowledgeAttr.knwlgId;
+        initHeadEventLeft();//头部左侧
+        initHeadEventRight();//头部右侧事件
+        businessPaths(knowledgeAttr.businessTreePaths);//知识路径
+        if (knowledgeAttr.showCardFlage && knowledgeAttr.showCardFlage=="1"){
+            //展示同屏卡片按钮
+            getRelScreCardFlag(knwlgId);
+        }
+        initScence(knowledgeAttr.kmPersonalCfg);
+        favKlgAdd(knowledgeAttr.knwlgNM,knowledgeAttr.knwlgId);//顶部右侧收藏
+        //展示右边知识属性
+        var templateAttr = Util.hdb.compile(klgInfoAttr);
+        KnowledgeAttributes.html(templateAttr(knowledgeAttr));
+        if (knowledgeAttr.yunMEflag == "1") {
+            $('div.ngim').hide();
+        }
+        //展示知识业务分类
+        if (knowledgeAttr.busiCata) {
+            var busiCatas = knowledgeAttr.busiCata.split(",");
+            var knwledgeBusinessTpl = Util.hdb.compile(knwledgeBusiness);
+            knowledgeAttr.busiCatas = busiCatas;
+            leftConWrap.find("#authRegn").after(knwledgeBusinessTpl(knowledgeAttr));
+        }
+
+        if ('1' === knowledgeAttr.isFavorite) {
+            favKlgAddEle.html('<i class="icon km-duduyinleappicon2201"></i>已收藏');
+        }
+        $(".detail-title").find(".location").attr("title", knowledgeAttr.authRegnNm).text(knowledgeAttr.authRegnNm);
+        var knwlgNmSel = $("#knwlgNm");
+        if (knwlgNmSel.length > 0) {
+            //修改隐性详情页titile 提示 内部知晓，不对外/不主动对外宣传
+            if (knowledgeAttr.knwlgState == '0' && knowledgeAttr.recessivityFlag == '1') {
+                knwlgNmSel.after('<span class="status ready" title="未上线">未上线</span>' + '<span class="status implicit" title="内部知晓，不对外/不主动对外宣传">隐</span>');
+            } else if (knowledgeAttr.knwlgState == '1' && knowledgeAttr.recessivityFlag == '1') {
+                knwlgNmSel.css("color","rgb(128,128,128)");
+                knwlgNmSel.after('<span class="status dated" title="已下线">已下线</span>' + '<span class="status implicit" title="内部知晓，不对外/不主动对外宣传">隐</span>');
+            } else if (knowledgeAttr.knwlgState == '0') {
+                knwlgNmSel.after('<span class="status ready" title="未上线">未上线</span>');
+            } else if (knowledgeAttr.knwlgState == '1') {
+                knwlgNmSel.css("color","rgb(128,128,128)");
+                knwlgNmSel.after('<span class="status dated" title="已下线">已下线</span>');
+            } else if (knowledgeAttr.recessivityFlag == '1') {
+                knwlgNmSel.after('<span class="status implicit" title="内部知晓，不对外/不主动对外宣传">隐</span>');
+            }
+            //视频标识
+            if(knowledgeAttr.videoFlag == '1'){
+                knwlgNmSel.after('<em class="badge-newest" style="\n' +
+                    '    font-size: 16px;\n' +
+                    '    height: 25px;\n' +
+                    '    line-height: 25px;\n' +
+                    '    width: 25px;\n' +
+                    '    text-align:  center;position:relative;top:-2.5px;\n' +
+                    '" title="该知识包含相关视频介绍">视</em>');
+            }
+        } else {
+            setTimeout(function () {
+                if (knowledgeAttr.knwlgState == '0' && knowledgeAttr.recessivityFlag == '1') {
+                    knwlgNmSel.after('<span class="status ready" title="未上线">未上线</span>' + '<span class="status implicit" title="内部知晓，不对外/不主动对外宣传">隐</span>');
+                } else if (knowledgeAttr.knwlgState == '1' && knowledgeAttr.recessivityFlag == '1') {
+                    knwlgNmSel.after('<span class="status dated" title="已下线">已下线</span>' + '<span class="status implicit" title="内部知晓，不对外/不主动对外宣传">隐</span>');
+                } else if (knowledgeAttr.knwlgState == '0') {
+                    knwlgNmSel.after('<span class="status ready" title="未上线">未上线</span>');
+                } else if (knowledgeAttr.knwlgState == '1') {
+                    knwlgNmSel.after('<span class="status dated" title="已下线">已下线</span>');
+                } else if (knowledgeAttr.recessivityFlag == '1') {
+                    knwlgNmSel.after('<span class="status implicit" title=内部知晓，不对外/不主动对外宣传">隐</span>');
+                }
+                //视频标识
+                if(knowledgeAttr.videoFlag == '1'){
+                    knwlgNmSel.after('<em class="badge-newest" style="\n' +
+                        '    font-size: 16px;\n' +
+                        '    height: 25px;\n' +
+                        '    line-height: 25px;\n' +
+                        '    width: 25px;\n' +
+                        '    text-align:  center;position:relative;top:-2.5px;\n' +
+                        '" title="该知识包含相关视频介绍" >视</em>');
+                }
+            }, 200)
+        }
+        var keyWord = kmUtil.getUrlParamter("keyWord"); //关键词
+        keyWord = Constants.kmDecodeURl(decodeURIComponent(keyWord));
+        var light = kmUtil.getUrlParamter("light");//高亮设置
+        if (keyWord && keyWord != "null" && light === "0") {
+            knowledgeSearch.highlight($detailRight.find("#KnowledgeAttributes"), keyWord);
+        }
+
+        kmDetailQueueInit(knowledgeAttr.tmpltNm);
+    }
+
+    //点击跳转历史版本
+    $detailRight.on("click", "#history", function () {
+        kmUtil.openTab("历史版本", Constants.PREAJAXURL + Constants.ROOTURL + "/modules/knowledgeAppNew/kmKnowledgeHistoryVersionList.html", {klgId: knwlgId});
+    });
+    // 启动云ME href="ngim://ynt1015"
+    $detailRight.on("click", "div.ngim", function () {
+        Util.ajax.getJson(Constants.AJAXURL + "/user/session", {}, function (data) {
+            var staffCode = data.bean.staffCode;
+            protocolCheck($(this), staffCode);
+        });
+    })
+    var protocolCheck = function (params, staffCode) {
+        var env = Constants.getEnvment();
+        var href = 'ngim://'+ staffCode;
+        var downloadURL = '';//云ME下载链接
+        if (Constants.NGKM_ENVIROMENT_TEST == env) {
+            downloadURL = "http://172.22.245.211:51080//test-ngim/im/sr/file/ngimpc.msi";
+        } else if(Constants.NGKM_ENVIROMENT_PRODUCT == env){
+            downloadURL = 'http://ngim.cs.cmos/prd-ngim/im/sr/file/ngimpc.msi';
+        }
+
+        Protocolcheck(href, function () {
+            // 检查未安装云ME客户端的回调
+            // 弹窗提示下载
+            var config = {
+                mode: 'normal',
+                title: '系统提示',
+                content: '<span>检测到系统中未安装云ME客户端，请点击<a href="' + downloadURL + '">下载</a></span>',
+                ok: function () { },
+                okValue: '确定',
+                cancel: function () { },
+                cancelValue: '取消',
+                cancelDisplay: false,
+                width: 250,
+                height: 100,
+                fixed: false,
+                quickClose: true,
+                modal: true
+            }
+            new Dialog(config);
+        }, null, 1);
+    }
+    var createMap = function () {
+        var opts={
+            containerid:"allmap",
+            lng: 116.403972,
+            lat: 39.915125,
+            zoom:12,
+            clickcallback:function (rs) {
+
+            }
+        };
+        if(!CMap){
+            excpNum ++;
+            if(excpNum <= 20){
+
+                setTimeout(createMap,500);
+            }else{
+
+            }
+        }else{
+            point = CMap.createMap(opts);
+        }
+    };
+    if(document.documentMode !== 8 || document.documentMode == 8 && sysCode !== 'ngso'){
+        createMap();
+    }
+    /**
+     * 用于修剪字符串 兼容ie8
+     *
+     * @param str
+     * @returns {XML|string|void|*}
+     */
+    var trim = function (str) {
+        if (str) {
+            return str.replace(/(^\s*)|(\s*$)/g, "");
+        }
+    };
+
+    //查询知识属性
+    var getKnowledgeAttr= function () {
+        Util.ajax.ajax({
+            type: "post",
+            url: Constants.AJAXURL + '/knowledge/getKnowledgeAttr',
+            data: { knwldgeId: knwlgId, verNo: verNo },
+            dataType: 'json', //返回值的数据类型
+            success: function (data, textStatus) {
+                if (textStatus !== "success") {
+
+                    return false;
+                }
+                if (data.returnCode !== '0') {
+                    dialog.alert({ type: 'confirm', message: data.returnMessage, falseShow: false });
+                    return false;
+                }
+                if (!data.object) {
+                    dialog.alert({ type: 'confirm', message: data.returnMessage, falseShow: false });
+                    return false;
+                }
+                //知识详情
+                var knowledgeAttr = data.object;
+                //服务请求
+                var websiteAtomId = knowledgeAttr.websiteAtomId;
+                var serviceTab= new archive(knwlgId,knowledgeAttr.knwlgNM,tmpltId,websiteAtomId);
+                $detailTop.find("#serviceBtn").click(function () {
+                    //投诉处理指引原子
+                    if($("span:contains('投诉处理指引：')").length>0){
+                        var paratypecd="";
+                        var _this="";
+                        var $flag=false;
+                        $("span:contains('投诉处理指引：')").each(function(){
+                            if(!$flag){
+                                _this=  $(this);
+                                paratypecd= _this.parent().attr("paratypecd");
+                                if(paratypecd){
+                                    $flag=true;
+                                }
+                            }
+
+
+                        });
+                        if(paratypecd){
+                            if("1"==paratypecd) {
+                                if (_this.parent().find("div:last").html()) {
+                                    //无例外
+                                    serviceTab.open(trim( _this.parent().find("div:last").html()));
+                                } else if (_this.parent().next().find("div:last").html()) {
+                                    //有例外
+                                    serviceTab.open(trim(_this.parent().next().find("div:last").html()));
+                                }else{
+                                    serviceTab.open();
+                                }
+                            } else if("4"==paratypecd){
+                                var atom_id=_this.parent().children().last().siblings("a:first").attr("srctmpltattratomid");
+                                //非富化
+                                var groupData = JSON.stringify(unRichObj);
+                                if (groupData != "") {
+                                    Util.ajax.postJson(Constants.AJAXURL + '/knowledge/kmUnRichful', {
+                                        groupData: groupData,
+                                        knwlgId: knwlgId
+                                    }, function (data) {
+                                        if(data.beans&&data.beans.length>0){
+                                            for(var i=0;i<data.beans.length;i++){
+                                                for(var j=0;j<data.beans[i].atrrItems.length;j++){
+                                                    if(atom_id==data.beans[i].atrrItems[j].tmpltAtomId){
+                                                        var gudeText="";
+                                                        //预采编知识有例外，有例外优先展示例外
+                                                        if(preEditCode=="000"&&regnIdCode!="000"){
+                                                            //预采编知识
+                                                            if(data.beans[i].atrrItems[j].cntt){
+                                                                gudeText=data.beans[i].atrrItems[j].cntt;
+                                                            }
+                                                            if(data.beans[i].atrrItems[j].exceptionMapList[0]&&data.beans[i].atrrItems[j].exceptionMapList[0].excepValue){
+                                                                gudeText=data.beans[i].atrrItems[j].exceptionMapList[0].excepValue;
+                                                            }
+                                                        }else{
+                                                            //全国普通知识和省份普通知识展示默认
+                                                            if(data.beans[i].atrrItems[j].cntt){
+                                                                gudeText=data.beans[i].atrrItems[j].cntt;
+                                                            }
+                                                        }
+                                                        if(gudeText){
+                                                            if(unRichObj[0].atrrItems[0].cntt!=gudeText){
+                                                                serviceTab.open(gudeText)
+                                                            }else  if(_this.parent().find("div").text().indexOf(gudeText)!=-1){
+                                                                serviceTab.open(gudeText)
+                                                            }else{
+                                                                serviceTab.open("立单前请注意查阅详情页内投诉处理指引的信息");
+                                                            }
+                                                        }else{
+                                                            serviceTab.open();
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    })
+                                }
+                            }else{
+                                serviceTab.open();
+                            }
+                        }else{
+                            serviceTab.open();
+                        }
+                    }else{
+                        serviceTab.open();
+                    }
+                    var click_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                    Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                        if (data.returnCode == 0 && data.object == "true") {
+                            if (sensorsdata) {
+                                sensorsdata.track("ngkm_detail_serviceBtn_click", {
+                                    knwlg_id: knwlgId,
+                                    knwlg_name: knwlgNM,
+                                    click_serviceBtn_time:click_time
+                                });
+                            }
+                        }
+                    });
+                });
+                //营业厅模板知识
+                if (knowledgeAttr.isBusiHall && knowledgeAttr.point_info) {
+                    var gis = {};
+                    gis.endNm = knowledgeAttr.knwlgNM;
+                    var pointInfo = JSON.parse(knowledgeAttr.point_info);
+                    gis.bMLat = pointInfo.lat;
+                    gis.bMLng = pointInfo.lon;
+                    gis.aDDR = "";
+                    gis.gMLat;
+                    gis.gMLng;
+                    gisParam.push(gis);
+                    // 百度坐标转高德坐标
+                    var points = [gis.bMLng + "," + gis.bMLat];
+                    if (point) {
+                        Util.ajax.getJson(Constants.AJAXURL + '/businessHall/convertor', { "point": gis.bMLng + "," + gis.bMLat }, function (data) {
+                            if (data && data.returnCode == 0) {
+                                var locations = data.object;
+                                var arr = locations.split(",");
+                                console.info("web版:" + points[0] + "转换结果:[" + locations + "]");
+                                console.info("转换结果:经度" + arr[0] + ",纬度" + arr[1]);
+                                gis.gMLng = arr[0];
+                                gis.gMLat = arr[1];
+                                gisParam.push(gis);
+                                msgSd.buildShortUrl(gisParam);
+                                hdbKlgAttr(knowledgeAttr);
+                            } else {
+                                hdbKlgAttr(knowledgeAttr);
+
+                            }
+                        });
+                    } else {
+                        hdbKlgAttr(knowledgeAttr);
+                    }
+                } else {
+                    hdbKlgAttr(knowledgeAttr);
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                dialog.alert({ type: 'error', message: errorThrown, falseShow: false });
+            }
+        });
+    }
+    var getKlgGroupItems= function () {
+        Util.ajax.ajax({
+            type: "post",
+            url: Constants.AJAXURL + '/knowledge/getKlgGroupItems',
+            data: { knwldgeId: knwlgId, verNo: verNo },
+            dataType: 'json', //返回值的数据类型
+            success: function (data, textStatus) {
+                tmpltId = data && data.object && data.object.tmpltId;
+                tmpltNm = data && data.object && data.object.tmpltNm;
+                if (textStatus !== "success") {
+
+                    return false;
+                }
+                if (data.returnCode !== '0') {
+                    dialog.alert({ type: 'confirm', message: data.returnMessage, falseShow: false });
+                    return false;
+                }
+                if (!data.object) {
+                    dialog.alert({ type: 'confirm', message: data.returnMessage, falseShow: false });
+                    return false;
+                }
+                //知识详情
+                var klgGroupItems = data.object;
+                window.knwldgGroupItems = data.object.knwldgGroupItems;
+                //初始化发送短信内容
+                msgSd.messageSend(knwlgId, verNo, klgGroupItems.knwldgGroupItems, klgGroupItems.knwlgNM, null, tmpltId);
+                //处理关系类型faq及开通-自助办理原子内容
+                handRelatypeAtoms(klgGroupItems);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                dialog.alert({ type: 'error', message: errorThrown, falseShow: false });
+            }
+        });
+    }
+    //判断是否是联动原子组  现默认联动原子组是Q&A分组
+    var judgeQaAtom = function($obj){
+        if(tmpltId == Constants.NGKM_QA_TMPLT_ID){
+            var groupNm = $obj.parents(".left-content").find(".left-title").find("h2").text();
+            if(groupNm && groupNm.indexOf(Constants.NGKM_QA_TMPLT_GROUP_NM) == 0){
+                return true;
+            }
+        }
+    };
+    var getOther = function($obj, parentClass, otherClass, onlyTag){
+        var others = $obj.parents("." + parentClass).find("." + otherClass + ":visible");
+        if(others && others.length > 0){
+            var tag = $obj.attr(onlyTag);
+            for(var i = 0; i < others.length; i ++){
+                if($(others[i]).attr(onlyTag) == tag){
+                    others.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        return others;
+    };
+    //点击发送短信图标
+    var msgCount = function(obj,e){
+        var _this = obj;
+        var pop = $("#loadBox");
+        var isQAgroup = judgeQaAtom(_this);
+        //qa 且非trigger触发
+        if(isQAgroup && e.originalEvent){
+            var others = getOther(_this, "left-content", "attrData", "id");
+            if(others){
+                for(var i = 0; i < others.length; i ++){
+                    if (_this.hasClass("selected") && $(others[i]).hasClass("selected")) {
+                        $(others[i]).trigger("click");
+                    }else if (!_this.hasClass("selected") && !$(others[i]).hasClass("selected")) {
+                        $(others[i]).trigger("click");
+                    }
+                }
+            }
+        }
+        pop.show();
+        if (_this.hasClass("selected")) {
+            msgSd.changeAllItems(_this.attr("id"), "false");
+        } else {
+            // NGKM2019-629 知识详情页关联新电商发送短信优化 2020年3月21日09:48:29 -begin
+            if (_this.parent().children('span').first().text().indexOf("开通-自助办理") != -1) {
+                if (_this.parent().children('a').length == 1) {
+                    // var productCode = $.trim(_this.next().next().text());
+                    var productCode = _this.next().next().attr('productid');
+                    msgSd.detailNewBusiness(productCode, _this.attr("id"));
+                } else {
+                    // var productCode = $.trim(_this.parent().next().children("div").text());
+                    var productCode = _this.parent().next().children('div').attr('productid');
+                    msgSd.detailNewBusiness(productCode, _this.attr("id"));
+                }
+            } else {
+                msgSd.changeAllItems(_this.attr("id"), "true");
+            }
+            // NGKM2019-629 知识详情页关联新电商发送短信优化 2020年3月21日09:48:29 -end
+        }
+        pop.hide();
+    };
+
+    var getklgVerNo = function(){
+        Util.ajax.getJsonAsync(Constants.AJAXURL + '/knowledge/getklgVerNo', {"knwldgeId": knwlgId})
+            .done(function (data, state) {
+                if (state) {
+                    var displyFlag = data.bean.displyFlag;
+                    if (displyFlag == "0") {
+                        $detailLeft.css("right","");
+                        $detailRight.css("winth","");
+                        var closeRight = $detailLeft.find("#closeRight");
+                        $layout.addClass("close-view");
+                        closeRight.find("span").html("展开右侧");
+                        closeRight.find("i").removeClass("km-arrow_r").addClass("km-arrow_l");
+                    }
+                }
+            }).fail(function (data) {
+
+        });
+    }
+
+
+    function init() {
+        goIndex.click(function () {
+            kmUtil.openTab("知识首页New", Constants.PREAJAXURL + Constants.ROOTURL + "/modules/knowledgeAppNew/kmSecondHome.html?openMode=" + kmUtil.getOpenMode() + "&homeFrom=1", {});
+        });
+
+        // 神策新增埋点-获取接触流水号 NGKM2019-522 -begin
+        if ("2" == kmUtil.getOpenMode() && CrossAPI.url != undefined) {
+            CrossAPI.getContact("getClientBusiInfo", Constants.PARAMJSONBUSINFO, function (clientBusiInfo) {
+                // phoneNumber = clientBusiInfo.bean.msisdn || "";
+                CrossAPI.getContact("getSerialNo", function (serialNo) {
+                    if (serialNo) {
+                        serialNumber = serialNo;
+                    }
+                });
+            });
+        } else {
+            Util.ajax.getJson(Constants.AJAXURL + '/kmClient/getClientInfo' + "?t=" + new Date().getTime(), {}, function (data, state) {
+                if (state) {
+                    if (data.bean.serialNo) {
+                        serialNumber = data.bean.serialNo;
+                    }
+                }
+            })
+        }
+
+        //searchInit();
+        getKnowledgeAttr();
+        getKlgGroupItems();
+        recentCollected();//顶部收藏夹
+        // getklgVerNo();
+        getMenuList();
+    }
+    var getMenuList = function () {
+        var chnlCode = window.localStorage.getItem("channelCode");
+        Util.ajax.postJson(Constants.AJAXURL + '/knowledge/getMneuAuthByKnwlgId', { "knwlgId": knwlgId, "chnlCode": chnlCode}, function (data, status) {
+            if (data.returnCode == '0' && data.beans.length > 0) {
+                var btn = '<li class="detail-top-lk space-line" id="toolsFollwBtn-li" style="float: right;">\
+                <a href="javascript:void(0)" style="" id="toolsFollwBtn">\
+                    工具跟随\
+                </a>\
+                <div class="dorpdown-layer">\
+                    <ul>\
+                    </ul>\
+                </div>\
+            </li>';
+                $('.article-operate').eq(0).after(btn);
+                var li_list = "";
+                for (var i = 0; i < data.beans.length; i++) {
+                    var element = data.beans[i];
+                    li_list += '<li>\
+                        <a href="javascript:void(0);" linkType="relateTool" menuRelate="' + element.menuId + '_' + element.menuNm + '">' + element.menuNm + '</a>\
+                    </li>';
+                }
+                $('#toolsFollwBtn-li .dorpdown-layer').find('ul').append(li_list);
+                $('#toolsFollwBtn-li').hover(function () {
+                    $(this).addClass("active");
+                }, function () {
+                    $(this).removeClass("active");
+                });
+                $('#toolsFollwBtn-li .dorpdown-layer ul').on("click", "a[linkType = 'relateTool']",function () {
+                    var openMode = kmUtil.getOpenMode() || "1";
+                    
+                    var menuId = $(this).attr('menuRelate').split('_')[0];
+                    var menuName = $(this).attr('menuRelate').split('_')[1];
+                    Util.ajax.ajax({
+                        type: "POST",
+                        url: Constants.AJAXURL + "/knowledge/checkMneuAuthByStaffId",
+                        data: JSON.stringify({ "menuId": menuId }),
+                        dataType: "json",
+                        headers: {
+                            'Content-Type': 'application/json;charset=utf-8'
+                        },
+                        success: function (data) {
+                            if (data.returnCode == '0') {
+                                if (openMode == '1') {
+                                    window.localStorage.setItem('toolMenuInfo', JSON.stringify({ menuName: menuName, menuUrl: data.object }));
+                                    new myAlert({ type: 'error', text: "请前往一体化客服系统核实是否成功跳转至相应菜单工具。", falseShow: false, trueName: "知道了" });
+                                    return;
+                                } else {
+                                    crossAPI.createTab(menuName, data.object);
+                                    // 新增埋点 工具跟随跳转
+                                    var click_closebtn_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                                    Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                                        if (data.returnCode == 0 && data.object == "true") {
+                                            if (sensorsdata) {
+                                                sensorsdata.track("ngkm_knwlgDetail_toolMenuBtn_click", {
+                                                    click_btn_time: click_closebtn_time,
+                                                    knwlg_id: knwlgId,
+                                                    knwlg_name: knwlgNM,
+                                                    menuId: menuId,
+                                                    menuName: menuName,
+                                                    ifjump: "是"
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+                                
+                            } else {
+                                new myAlert({ type: 'error', text: data.returnMessage, falseShow: false, trueName: "知道了" });
+                                // 新增埋点 工具跟随跳转
+                                var click_closebtn_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                                Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                                    if (data.returnCode == 0 && data.object == "true") {
+                                        if (sensorsdata) {
+                                            sensorsdata.track("ngkm_knwlgDetail_toolMenuBtn_click", {
+                                                click_btn_time: click_closebtn_time,
+                                                knwlg_id: knwlgId,
+                                                knwlg_name: knwlgNM,
+                                                menuId: menuId,
+                                                menuName: menuName,
+                                                ifjump: "否"
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    return false;
+                })
+            } else {
+                // new myAlert({ type: 'error', text: status.returnMessage, falseShow: false, trueName: "知道了" });
+            }
+        });
+        // $('#toolsFollwBtn').show();
+        // $('#toolsFollwBtn-li').hover(function () {
+        //     $(this).addClass("active");
+        // }, function () {
+        //     $(this).removeClass("active");
+        // });
+    }
+    // 释放内存
+    function freeMemory() {
+        fdbkSend = null;
+        serviceTab = null;
+        _clickProcess = null;
+        $detailTop = null;
+        dialogcopy = null;
+        goIndex = null;
+        recentCollect = null;
+        copyvalue = null;
+        favKlgAddEle = null;
+        klgFdbFun = null;
+        serviceReq = null;
+        leftConWrap = null;
+        searchClick = null;
+        excpNum = null;
+        $detailRight = null;
+        $detailLeft = null;
+        $layout = null;
+        $rtlAtomIDFQA = null;
+        $KnowledgeAttributes = null;
+        point = null;
+        sysCode = null;
+        knwlgNM = null;
+        tmpltId = null;
+        gisParam = null;
+        orgCode = null;
+        noQueueNumber = null;
+        queueInitFlag = null;
+        favKlgAdd = null;
+        recentCollected = null;
+        recentViewed = null;
+        businessPaths = null;
+        eventAgent = null;
+        initHeadEventRight = null;
+        initHeadEventLeft = null;
+        faqQueation = null;
+        handleThumbnailForFQA = null;
+        spliceAtomId = null;
+        htmldivKnow = null;
+        excepHtml = null;
+        handRelatypeAtoms = null;
+        kmDetailQueueInit = null;
+        hdbKlgAttr = null;
+        createMap = null;
+        getKnowledgeAttr = null;
+        getKlgGroupItems = null;
+        judgeQaAtom = null;
+        getOther = null;
+        msgCount = null;
+        // getklgVerNo = null;
+        init = null;
+        unRichObj=null;
+        preEditCode=null;
+        regnIdCode=null;
+    }
+    init();
+    return {
+        msgCount:msgCount,
+        freeMemory: freeMemory
+    };
+});

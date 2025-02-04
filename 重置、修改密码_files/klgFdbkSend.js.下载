@@ -1,0 +1,1527 @@
+/**
+ * @Description: 反馈发起弹框页面
+ * @Date:2018/1/2
+ * @Author: fxx
+ */
+define(['Util','pagination','text!modules/personalCenterNew/klgFdbkSend.tpl','js/constants/constants','js/personalCenter/MyAlert','js/personalCenterNew/klgfdbk-list-component','upload','dialog','checkboxes','loading','js/constants/kmUtil','crossAPI'],
+    function(Util,Pagination,tpl,Constants,MyAlert,KlgfdbkListComponent,Upload,Dialog,Checkboxes,Loading,KmUtil,CrossAPI){
+
+        var isLoad = false;
+        // var selectInfo;
+        var $el = null;
+        var klg_id;//知识id
+        var fdbkTitleNm;//知识标题
+        var fdbkType;//反馈类型（目前只有知识反馈）
+        var feedbackTpl = null;//用于保存获取到的默认模板信息
+        var isFirstShow = true;//用于判断是否是首次加载反馈发起弹框
+        var total = 0;//总条数
+        var limit = 10;//每页显示条数
+        var page = 1;//当前页码
+        var pageClick;
+        var fdbkStatus = "";
+        var dsps_sts_cd_code = 'NGKM.FDBK.DSPS.TYPE';//反馈处理状态对应的ngmtt中的code
+        var upload_component;
+        var _key = "NGKM_FILE_ATTACH";
+        var fileId;
+        var fileNm;
+        var authRegnNo;//授权地市
+        var checkboxes=null;
+        var myDate;
+        var checkIs = 0;
+        var myfdbkBtn = false;
+        var fdbkChannel="0";
+        var isCheckboxe=null;
+        var isCheck =function(){
+            var checkboxesConfigs = {
+                el:'#isCheck',      //要绑定的容器
+                className:'box',    //组件外围的className,默认横向|all-width纵向
+                disabled:0,     //是否禁用，1禁用|0不禁用
+                defaultValue:'1',   //默认选中项（对应复选框的value值组成的字符串）
+                disabledValue:'',//初始化默认禁用指定复选框
+                items:[
+                    {
+                        className:'quanxuan',
+                        label:'剔除已过期回复',
+                        value:'1',
+                        click:function(e,itemData){
+                            pageClickInit();
+                        }
+                    }
+                ]
+            };
+            isCheckboxe = new Checkboxes(checkboxesConfigs);
+        }
+
+
+        var loadingConfig = {
+            el:'#container',                  //组件要绑定的容器，默认为body（此项可不配置或留空）
+            //className:'ke-screen-loading',           //组件外围的className*/
+            position:'center',      //提示信息位置，顶部top|默认center中央
+            width:'300',      //loading的宽度,非必须，默认300
+            height:'auto',      //loading的宽度,非必须，默认auto
+            mask:1,                 //是否显示遮罩， 0不显示|默认1显示
+            animate:0,              //是否显示动画效果， 0不显示|默认1显示
+            mode:'layer',     //展示方式 loadingLine线条方式|默认layer弹层方式
+            text:'搜索结果加载中...',
+            icon:'dotCycle',  //文字前面的gif动画， 默认dotCycle有点组成的圈|cmcc移动图标|cmccLarge大的移动图标
+        }
+
+        var getSession = function () {
+            var result = {};
+            return Util.ajax.getJsonAsync(Constants.AJAXURL+'/user/session',{}).then(function(data, status){
+                if (status){
+                    result = data.bean;
+                    return result;
+                }else{
+
+                    return result;
+                }
+            }).then(function (data) {
+                return data;
+            });
+        };
+        var defaultTpl = function(){
+            var defer = $.Deferred();
+            Util.ajax.ajax({
+                url:Constants.AJAXURL+'/klgfdbk/getDefaultFdbkTpl?fdbkTypeCd='+fdbkType+'&klgId='+klg_id+'&time='+new Date().getTime(),
+                success:function(data){
+                    defer.resolve(data);
+                },
+                error:function(){
+                    return;
+                },
+                dataType:'json',
+                timeout:30000,
+                type:'get'
+            });
+            return defer.promise();
+        };
+
+        //判断当前用户是否已关注此反馈信息 true 已关注
+        var checkCurUserAttnFdbk = function (fdbkId,ifList) {
+            var result = false;
+            return Util.ajax.getJsonAsync(Constants.AJAXURL+'/klgfdbk/checkCurUserAttnFdbk',{fdbkId:fdbkId}).then(function(data){
+                if (data){
+                    result = data.object;
+                    var attentFdbkfdbkId = $(".attentFdbk[fdbkId = "+fdbkId+"]");
+                    if(ifList && result){
+                        if(!attentFdbkfdbkId.html()){
+                            $(".fdbkDsps[fdbkId = "+fdbkId+"] div:first").addClass("link");
+                            attentFdbkfdbkId.append('<a class="attentFdbk handle-tag unfocus" fdbkId="'+fdbkId+'">+关注</a>');
+                            attentFdbkfdbkId.on("click",attnBtn);
+                        }
+                        attentFdbkfdbkId.removeClass("unfocus");
+                        attentFdbkfdbkId.addClass("focus");
+                    }
+                }
+                return result;
+            }).then(function (data) {
+                return data;
+            });
+        };
+
+        var getFeedBackList = function(klg_id,fdbkStatus,checkBoxValue){
+            var defer = $.Deferred();
+            var result;
+            Util.ajax.ajax({
+                url:Constants.AJAXURL+'/klgfdbk/searchfdbksByKnwlgId?time='+new Date().getTime(),
+                success:function(data){
+                    result = data;
+                    defer.resolve(result);
+                },
+                error:function(){
+                    return;
+                },
+                data:{'page':page,'limit':limit,'klgId':klg_id,'dspsStsCd':fdbkStatus,"searchKey":$("#fdbkSearchBox #fdbkSearchKey").val().trim(),'myfdbkBtn':myfdbkBtn,'checkBoxValue':checkBoxValue},
+                dataType:'json',
+                timeout:30000,
+                type:'get'
+            });
+            return defer.promise();
+        };
+
+        //获取当前用户手机号
+        var getRcvTelNum = function () {
+            return Util.ajax.getJsonAsync(Constants.AJAXURL+'/user/session',{}).then(function(data){
+                if (data && data.bean){
+                    var mobilePhone = data.bean.mobilePhone;
+                    if(mobilePhone){
+                        $("#rcvTelNum").val(mobilePhone);
+                        $("#rcvTelNum").attr("telnum",mobilePhone);
+                        //加一键删除样式
+                        // $('#rcvTelNumClear').addClass('show');
+                    }
+                }
+            }).fail(function () {
+
+            });
+        };
+
+        /**
+         * 获取用户来电信息并执行相关回调
+         * @param succCallbk 成功回调
+         * @param errCallbk 失败回调 无则传 null
+         * @param finallyCallbk 最后总是执行的回调
+         */
+        var getClentPhoneInfo = function (succCallbk, errCallbk, finallyCallbk) {
+            var openMode = KmUtil.getOpenMode() || "1";
+            if ("2" == openMode && CrossAPI.url != undefined) {//内嵌,且可以获取到url时从左侧客户信息栏获取
+                CrossAPI.getContact("getClientBusiInfo", Constants.PARAMJSONBUSINFO, function (clientBusiInfo) {
+
+                    if (clientBusiInfo && clientBusiInfo.bean && clientBusiInfo.bean.msisdn) {
+                        succCallbk(clientBusiInfo.bean.msisdn);
+                    }
+                    if (typeof(finallyCallbk) == "function") {
+                        finallyCallbk();
+                    }
+                });
+            } else {//从后台获取
+                var result = localStorage.getItem("ngkm_call");
+                if (result) {
+                    var phoneNum = result.split("_")[1];
+                    succCallbk(phoneNum);
+                }else {
+                    if (typeof(errCallbk) == "function") {
+                        errCallbk();
+                    }
+                }
+                if (typeof(finallyCallbk) == "function") {
+                    finallyCallbk();
+                }
+            }
+        };
+        var getAcceptTelNum = function () {
+            getClentPhoneInfo(function (msisdn) {
+                $("#acceptTelNum").val(msisdn);
+            });
+            /* //内嵌
+             if(KmUtil.getOpenMode() == "2"){
+                 CrossAPI.getContact("getAgentState", function (agentState) {
+                     if(agentState && agentState.agentState == "7"){
+                         CrossAPI.getContact("getCallingInfo", function(callingInfo) {
+                             var acceptTelNum;
+                             if (callingInfo) {
+                                 acceptTelNum = callingInfo.subsNumber;//受理号码
+                             }
+                             if(acceptTelNum){
+                               $("#acceptTelNum").val(acceptTelNum);
+                             }else{
+                                 $("#acceptTelNum").val("");
+                             }
+                         });
+                     }else{
+                         //获取非通话中接续侧手机号
+                         CrossAPI.getIndexInfo(function(info){
+                             CrossAPI.getContact("getClientBusiInfo", "",function(clientBusiInfo){
+                                  acceptTelNum = clientBusiInfo.bean.msisdn;
+                                  if(acceptTelNum){
+                                      $("#acceptTelNum").val(acceptTelNum);
+                                  }else{
+                                      $("#acceptTelNum").val("");
+                                  }
+                             });
+                         });
+                     }
+                 });
+             }else{
+                 //open
+                 KmUtil.getSerialNo("3",function (data) {
+                     if(data){
+                         if(data.acceptNum){
+                             acceptTelNum = data.acceptNum;
+                             if(acceptTelNum){
+                                 $("#acceptTelNum").val(acceptTelNum);
+                             }
+                         }
+                     }
+                 });
+             }
+     */
+        }
+
+        var statusTabInit=function (callback) {
+            var url= Constants.AJAXURL+'/kmConfig/getDataByCode?codeTypeCd='+dsps_sts_cd_code+'&time='+new Date().getTime();
+            Util.ajax.ajax({
+                type: "GET",
+                url: url,
+                async: true,
+                success:function (data) {
+                    if (data.returnCode == 0) {
+                        if (data.beans && data.beans != "null") {
+                            var tabContent=" <ul><li class=\"active\" status=''><a href='javascript:void(0);'>全部</a></li>";
+                            for(var i=0;i<data.beans.length;i++){
+                                var name = data.beans[i].name;
+                                if(data.beans[i].value == "9"){
+                                    continue;
+                                }
+                                if(data.beans[i].value == "7"){
+                                    data.beans[i].name = "已失效";
+                                    data.beans[i].value = "7,9";
+                                    name = "已失效";
+                                }
+                                if (name !== "已删除" && name !== "彻底删除" ){
+                                    tabContent=tabContent+" <li status='"+data.beans[i].value+"'><a href='javascript:void(0);'>"+name+"</a></li>"
+                                }
+                            }
+
+                            tabContent=tabContent+"</ul>";
+                            $(".km-tab").html(tabContent);
+                            $(".km-tab li").on("click",function () {
+                                $(".km-tab li").removeClass("active");
+                                var thisKm = $(this);
+                                thisKm.addClass("active");
+                                if(thisKm.attr("status")==""||thisKm.attr("status")==null||thisKm.attr("status")==undefined){
+                                    fdbkStatus="";
+                                }else{
+                                    fdbkStatus=thisKm.attr("status");
+                                }
+                                myfdbkBtn = false;
+                                pageClickInit();
+                            });
+                        }
+                    }
+                    callback();
+                }
+            });
+
+        }
+
+        //关注按钮
+        var attnBtn = function () {
+            var fdbkId = $(this).attr("fdbkId");
+            checkCurUserAttnFdbk(fdbkId).then(function (hasAttnFdbk) {
+                if(hasAttnFdbk){
+                    new MyAlert({
+                        type: 'error',
+                        text:'此反馈已关注!',
+                        falseShow:false,
+                        trueName:"知道了"
+                    });
+                }else{
+                    Util.ajax.postJsonAsync(Constants.AJAXURL+'/klgfdbk/addFdbkAttent',{"fdbkId":fdbkId}).then( function (data) {
+                        if(data.returnCode == '0'){
+                            new MyAlert({
+                                type: 'success',
+                                text:'关注成功！'
+                            });
+                            $(".attentFdbk[fdbkId = "+fdbkId+"]").removeClass("unfocus");
+                            $(".attentFdbk[fdbkId = "+fdbkId+"]").addClass("focus");
+                        }
+                    }).fail(function (data) {
+                        new MyAlert({
+                            type: 'error',
+                            text:data.returnMessage
+                        });
+                    });
+                }
+            });
+
+        };
+
+        var uploadEventInit = function () {
+            upload_component.on("done",function(e, data){
+                if(data && data.result && data.result.returnCode == 0 && data.result.object && data.result.object[0]){
+                    fileId = data.result.object[0].fileId;
+                    fileNm = data.result.object[0].fileName;
+                    new Dialog({
+                        mode: 'tips',
+                        delayRmove: 3,
+                        tipsType: 'success',
+                        content: '上传成功!'
+                    });
+                }
+            });
+
+            upload_component.on("fail", function(e,data){
+                $('.files').children('.sn-upload-fail').empty();
+                if(data.result==undefined){
+                    new Dialog({
+                        mode: 'tips',
+                        content: '请检查文件大小是否超过51200K！'
+                    });
+                }else{
+                    new Dialog({
+                        mode: 'tips',
+                        tipsType:'error',
+                        content: data && data.result && data.result.returnMessage ? data.result.returnMessage : '上传失败'
+                    });
+                }
+            });
+
+            upload_component.on("submit", function(e, data){
+                data.formData = {key: _key};
+            });
+
+            upload_component.on("remove",function (e, data) {
+                var param = {};
+                param.key = _key;
+                param.fileId = fileId;
+                Util.ajax.postJsonAsync(Constants.AJAXURL+'/file/delFile',param).then(function(data){
+                    if(data.returnCode == 0){
+                        new Dialog({
+                            mode: 'tips',
+                            delayRmove: 3,
+                            content: '删除成功!'
+                        });
+                    }
+                });
+            });
+
+            //给上传按钮绑定对象  只能上传一个文件
+            $("input[name='fileupload']").click(function(){
+                if($(".upload-filename").find("a").length){
+                    new Dialog({
+                        mode: 'tips',
+                        delayRmove: 3,
+                        content: '多个文件请压缩后上传!'
+                    });
+                    return false;
+                }
+            });
+        };
+
+        var uploadInit = function () {
+            //上传组件配置
+            var uploadConfig = {
+                el: '#fdbkUploadFileDiv',
+                paramName: 'fileupload',
+                url:Constants.AJAXURL+'/file/customUploadWithView'
+            };
+            //上传文件组件初始化
+            upload_component = new Upload(uploadConfig);
+            $("#fdbkUploadFileDiv").find("input").removeAttr("multiple");
+            uploadEventInit();
+        };
+
+        var getfdbHtml = function (fdbInfo) {
+            // 追加反馈附件
+            var addatachHtml='';
+            var addatachId = fdbInfo.appendAtachId;
+            var addatachNm = fdbInfo.appendAtachNm;
+            var addatachTypeNm = "追加附件：";
+            var addsufix = "";
+            if (addatachNm) {
+                addsufix = addatachNm.substr(addatachNm.lastIndexOf(".") + 1, addatachNm.length - 1);
+            }
+            var addpreviewHtml = "";//附件预览
+            if (addsufix && (addsufix == "doc" || addsufix == "docx" || addsufix == "xls" || addsufix == "xlsx")) {
+                addpreviewHtml = '                    <span class="fj-preview" title="预览">\n' +
+                    '                      <a href="javascript:void(0)" id="viewFile.html?fileId=' + addatachId + '&key=NGKM_FILE_ATTACH&fileSufix=' + addsufix + '"></a>\n' +
+                    '                    </span>\n';
+            }
+            var addatachNmUrl = Constants.AJAXURL + "/file/download?fileId=" + addatachId + "&fileName=" + addatachNm + "&key=NGKM_FILE_ATTACH";
+            var addatachNmHref = '<a target="_self" class="link-blue" href="' + addatachNmUrl + '" atachId="' + addatachId + '" atachNm="' + addatachNm + '">' + addatachNm + '</a>';
+            addatachHtml = '<div class="left-explain add-Enclosure">\n' +
+                addatachTypeNm + '\n' +
+                ' <div class="yuanzi-con fujian-con fujian-inline">\n' +
+                addatachNmHref +
+                addpreviewHtml +
+                ' </div>\n' +
+                '</div>';
+            return addatachHtml;
+        }
+
+        var createFbList = function(data){
+            //获取搜索关键词
+            var searchKey = $("#fdbkSearchBox #fdbkSearchKey").val().trim();
+            //清空反馈历史
+            $("#sendFeedback .fb-list").html('');
+            var html = "";//用于保存动态生成的html代码
+            var length =0;
+            var feedbackList ="";
+            total = data.bean.total;
+            length = data.beans.length;
+            feedbackList = data.beans;
+            var atachHtml = "";
+            var atachId = "";
+            var atachNm = "";
+            var atachTypeNm = "";
+            var commentCnttHtml = "";
+            var commentCnttHighlight = "";
+            // 追加反馈附件
+            var addatachHtml = "";
+            var addatachId = "";
+            var addatachNm = "";
+            var addatachTypeNm = "";
+            getSession().then(function (userSession) {
+                for(var i=0;i<length;i++){
+                    var taskFlag = feedbackList[i].taskFlag;//知识优改标识
+                    var fdbkReply = feedbackList[i].fdbkReplyList;
+
+                    $("#sendFeedback .total-pages").html("共<span>"+total+"</span>条，"+Math.ceil(total/limit)+"页");
+                    if(feedbackList[i].dspsStsCd == '5' || feedbackList[i].dspsStsCd == '25'){
+                        html = '<li class="accept">';
+                    }else{
+                        html = '<li>';
+                    }
+                    var optCntt = feedbackList[i].optCntt;
+                    if(optCntt == null || optCntt == ''){
+                        optCntt = '此反馈模板已被删除';
+                    }
+
+                    var atachHtmlParam = "";
+                    var addatachHtmlParam = '';//追加反馈
+
+                    if(feedbackList[i].atachId){
+                        atachId = feedbackList[i].atachId;
+                        atachNm = feedbackList[i].atachNm;
+                        var sufix = "";
+                        if(atachNm){
+                            sufix = atachNm.substr(atachNm.lastIndexOf(".")+1,atachNm.length-1);
+                        }
+                        var previewHtml = "";//附件预览
+                        if(sufix && (sufix == "doc" || sufix == "docx" || sufix == "xls" ||sufix == "xlsx")){
+                            previewHtml ='                    <span class="fj-preview" title="预览">\n' +
+                                '                      <a href="javascript:void(0)" id="viewFile.html?fileId='+atachId+'&key=NGKM_FILE_ATTACH&fileSufix='+sufix+'"></a>\n' +
+                                '                    </span>\n' ;
+                        }
+                        atachTypeNm = "问题附件：";
+                        var atachNmUrl = Constants.AJAXURL + "/file/download?fileId=" + atachId + "&fileName=" + atachNm + "&key=NGKM_FILE_ATTACH";
+                        var atachNmHref =  '<a target="_self" class="link-blue" href="' + atachNmUrl + '" atachId="'+atachId+'" atachNm="'+atachNm+'">' + atachNm + '</a>';
+                        atachHtml = '<div class="left-explain add-Enclosure">\n' +
+                            atachTypeNm +'\n' +
+                            ' <div class="yuanzi-con fujian-con fujian-inline">\n' +
+                            atachNmHref +
+                            previewHtml+
+                            ' </div>\n' +
+                            '</div>';
+                        atachHtmlParam = atachHtml;
+                    }
+                    var acceptTelNumShow = feedbackList[i].acceptTelNum != "" && typeof feedbackList[i].acceptTelNum != "undefined"? '【受理号码：' + feedbackList[i].acceptTelNum + '】': "";
+
+                    html += '<div class="fb-userhead">'+
+                        '<img src="/ngkm/src/assets/img/user_default_0'+(parseInt(2*Math.random())+1)+'.png" alt="">'+
+                        '</div>'+
+                        '<div class="fb-content">'+
+                        '<div class="main-info">'+
+                        '<span>'+feedbackList[i].fdbkPrsnNm+'</span>'+
+                        '发表于 '+feedbackList[i].crtTime.substring(0,16)+
+                        '<em></em>'+
+                        '问题类别：'+optCntt+
+                        '</div>'+
+                        atachHtmlParam +
+                        '<p class="word-break">'+ acceptTelNumShow +feedbackList[i].fdbkCntt+'</p>';
+
+                    if(fdbkReply != null && fdbkReply.length > 0 && (feedbackList[i].dspsStsCd == '2' || feedbackList[i].dspsStsCd == '20' || feedbackList[i].dspsStsCd == '21'
+                        || feedbackList[i].dspsStsCd == '3' || feedbackList[i].dspsStsCd == '22'  || feedbackList[i].dspsStsCd == '23' || feedbackList[i].dspsStsCd == '24'
+                        || feedbackList[i].dspsStsCd == '4' || feedbackList[i].dspsStsCd == '26' || feedbackList[i].dspsStsCd == '5' || feedbackList[i].dspsStsCd == '25')){
+                        var recNum = 0;
+                        var num = 0;
+                        for(var j = 0;j < fdbkReply.length;j++){
+                            if(fdbkReply[j].dspsStsCd == '7') {
+                                recNum = j + 1;
+                                continue;
+                            }
+
+                            if(j == recNum && recNum > 0){
+                                continue;
+                            }
+                            num = j;
+                        }
+                        atachId = fdbkReply[num].atachId;
+                        atachNm = fdbkReply[num].atachNm;
+                        atachTypeNm = "回复附件：";
+                        // atachHtmlParam = "";
+                        var sufix = "";
+                        if(atachNm){
+                            sufix = atachNm.substr(atachNm.lastIndexOf(".")+1,atachNm.length-1);
+                        }
+                        var previewHtml = "";//附件预览
+                        if(sufix && (sufix == "doc" || sufix == "docx" || sufix == "xls" ||sufix == "xlsx")){
+                            previewHtml ='                    <span class="fj-preview" title="预览">\n' +
+                                '                      <a href="javascript:void(0)" id="viewFile.html?fileId='+atachId+'&key=NGKM_FILE_ATTACH&fileSufix='+sufix+'"></a>\n' +
+                                '                    </span>\n' ;
+                        }
+                        var atachNmUrl = Constants.AJAXURL + "/file/download?fileId=" + atachId + "&fileName=" + atachNm + "&key=NGKM_FILE_ATTACH";
+                        var atachNmHref =  '<a target="_self" class="link-blue" href="' + atachNmUrl + '" atachId="'+atachId+'" atachNm="'+atachNm+'">' + atachNm + '</a>';
+                        atachHtml = '<div class="left-explain add-Enclosure">\n' +
+                            atachTypeNm +'\n' +
+                            ' <div class="yuanzi-con fujian-con fujian-inline">\n' +
+                            atachNmHref +
+                            previewHtml+
+                            ' </div>\n' +
+                            '</div>';
+                        atachHtmlParam = atachHtml;
+                        if (fdbkReply[num].rplCntt != '') {
+                            html += '<div class="reply">'+
+                                '<span>回复：</span>'+
+                                fdbkReply[num].rplCntt+
+                                '<em>' + fdbkReply[num].rplTime.substring(0, 16) +'</em>'+(fdbkReply[num].overdueFlag=='0'?'<span style="color: red; margin-left: 20px;">已过期</span>':'')+
+                                atachHtmlParam +
+                                '</div>';
+                        }
+                    }
+                    var fdbkAppend = feedbackList[i].fdbkAppendList;
+                    if(fdbkAppend != null && (feedbackList[i].dspsStsCd == '2' || feedbackList[i].dspsStsCd == '20' || feedbackList[i].dspsStsCd == '21'
+                        || feedbackList[i].dspsStsCd == '3' || feedbackList[i].dspsStsCd == '22'  || feedbackList[i].dspsStsCd == '23' || feedbackList[i].dspsStsCd == '24'
+                        || feedbackList[i].dspsStsCd == '4' || feedbackList[i].dspsStsCd == '26' || feedbackList[i].dspsStsCd == '5' || feedbackList[i].dspsStsCd == '25')){
+                        for(var j=0;j<fdbkAppend.length;j++){
+                            atachId = fdbkAppend[j].atachId;
+                            atachNm = fdbkAppend[j].atachNm;
+                            atachTypeNm = "回复附件：";
+                            var sufix = "";
+                            if(atachNm){
+                                sufix = atachNm.substr(atachNm.lastIndexOf(".")+1,atachNm.length-1);
+                            }
+                            var previewHtml = "";//附件预览
+                            if(sufix && (sufix == "doc" || sufix == "docx" || sufix == "xls" ||sufix == "xlsx")){
+                                previewHtml ='                    <span class="fj-preview" title="预览">\n' +
+                                    '                      <a href="javascript:void(0)" id="viewFile.html?fileId='+atachId+'&key=NGKM_FILE_ATTACH&fileSufix='+sufix+'"></a>\n' +
+                                    '                    </span>\n' ;
+                            }
+                            var atachNmUrl = Constants.AJAXURL + "/file/download?fileId=" + atachId + "&fileName=" + atachNm + "&key=NGKM_FILE_ATTACH";
+                            var atachNmHref =  '<a target="_self" class="link-blue" href="' + atachNmUrl + '" atachId="'+atachId+'" atachNm="'+atachNm+'">' + atachNm + '</a>';
+                            atachHtml = '<div class="left-explain add-Enclosure">\n' +
+                                atachTypeNm +'\n' +
+                                ' <div class="yuanzi-con fujian-con fujian-inline">\n' +
+                                atachNmHref +
+                                previewHtml+
+                                ' </div>\n' +
+                                '</div>';
+                            atachHtmlParam = atachHtml;
+                            if (!taskFlag) {
+                                if (j == 0 && typeof(fdbkReply) != undefined) {
+                                    if (fdbkReply[fdbkReply.length-1].commentCntt != '') {
+                                        commentCnttHighlight = fdbkReply[fdbkReply.length-1].commentCntt.replaceAll(searchKey,'<span class="keywords">'+ searchKey +'</span>');
+                                        commentCnttHtml = '<span>追加反馈：</span>'+ commentCnttHighlight +
+                                            '<em>'+fdbkReply[fdbkReply.length-1].commentTime.substring(0,16)+'</em>' + getfdbHtml(fdbkReply[fdbkReply.length-1]);
+                                    }
+                                }
+
+                                if (j > 0 && typeof(fdbkAppend) != undefined) {
+                                    if (fdbkAppend[j-1].commentCntt != '') {
+                                        commentCnttHighlight = fdbkAppend[j-1].commentCntt.replaceAll(searchKey,'<span class="keywords">'+ searchKey +'</span>');
+                                        commentCnttHtml = '<span>追加反馈：</span>'+ commentCnttHighlight +
+                                            '<em>'+fdbkAppend[j-1].commentTime.substring(0,16)+'</em>' + getfdbHtml(fdbkAppend[j-1]);
+                                    }
+                                }
+                                if (typeof(fdbkAppend) != undefined && fdbkAppend[j].opinCntt) {
+                                    html += '<div class="reply">'+ commentCnttHtml +
+                                        '<span>追加回复：</span>'+
+                                        fdbkAppend[j].opinCntt+
+                                        '<em>'+fdbkAppend[j].crtTime.substring(0,16)+'</em>'+(fdbkAppend[j].overdueFlag=='0'?'<span style="color: red; margin-left: 20px;">已过期</span>':'')+
+                                        atachHtmlParam +
+                                        '</div>';
+                                }
+
+                                if (j + 1 == fdbkAppend.length && fdbkAppend[j].commentCntt != '') {
+                                    commentCnttHighlight = fdbkAppend[j].commentCntt.replaceAll(searchKey,'<span class="keywords">'+ searchKey +'</span>');
+                                    commentCnttHtml = '<span>追加反馈：</span>'+ commentCnttHighlight +
+                                        '<em>'+fdbkAppend[j].commentTime.substring(0,16)+'</em>' + getfdbHtml(fdbkAppend[j]);
+                                    html += '<div class="reply">'+ commentCnttHtml + '</div>';
+                                }
+                            }else {
+                                //知识优改走新逻辑
+                                if (fdbkAppend[j].commentCntt != '') {
+                                    commentCnttHighlight = fdbkAppend[j].commentCntt.replaceAll(searchKey,'<span class="keywords">'+ searchKey +'</span>');
+                                    commentCnttHtml = '<span>追加反馈：</span>'+ commentCnttHighlight +
+                                        '<em>'+fdbkAppend[j].commentTime.substring(0,16)+'</em>' + getfdbHtml(fdbkAppend[j]);
+                                }
+                                if (fdbkAppend[j].opinCntt != '') {
+                                    html += '<div class="reply">'+ commentCnttHtml +
+                                        '<span>追加回复：</span>'+
+                                        fdbkAppend[j].opinCntt+
+                                        '<em>'+fdbkAppend[j].crtTime.substring(0,16)+'</em>'+(fdbkAppend[j].overdueFlag=='0'?'<span style="color: #ff0000; margin-left: 20px;">已过期</span>':'')+
+                                        atachHtmlParam +
+                                        '</div>';
+                                }
+
+                                if (j + 1 == fdbkAppend.length && fdbkAppend[j].commentCntt != '' &&　!fdbkAppend[j].opinCntt) {
+                                    commentCnttHighlight = fdbkAppend[j].commentCntt.replaceAll(searchKey,'<span class="keywords">'+ searchKey +'</span>');
+                                    commentCnttHtml = '<span>追加反馈：</span>'+ commentCnttHighlight +
+                                        '<em>'+fdbkAppend[j].commentTime.substring(0,16)+'</em>' + getfdbHtml(fdbkAppend[j]);
+                                    html += '<div class="reply">'+ commentCnttHtml + '</div>';
+                                }
+                            }
+
+
+                            commentCnttHtml = "";
+                            commentCnttHighlight = "";
+                        }
+                    }
+                    if(fdbkAppend == null && (feedbackList[i].dspsStsCd == '2' || feedbackList[i].dspsStsCd == '20' || feedbackList[i].dspsStsCd == '21')) {
+                        if (!taskFlag) {
+                            if (fdbkReply != null){
+                                atachId = fdbkReply[fdbkReply.length-1].appendAtachId;
+                                atachNm = fdbkReply[fdbkReply.length-1].appendAtachNm;
+                            } else {
+                                atachId = "";
+                                atachNm = "";
+                            }
+
+                            atachTypeNm = "追加附件：";
+                            var sufix = "";
+                            if(atachNm){
+                                sufix = atachNm.substr(atachNm.lastIndexOf(".")+1,atachNm.length-1);
+                            }
+                            var previewHtml = "";//附件预览
+                            if(sufix && (sufix == "doc" || sufix == "docx" || sufix == "xls" ||sufix == "xlsx")){
+                                previewHtml ='                    <span class="fj-preview" title="预览">\n' +
+                                    '                      <a href="javascript:void(0)" id="viewFile.html?fileId='+atachId+'&key=NGKM_FILE_ATTACH&fileSufix='+sufix+'"></a>\n' +
+                                    '                    </span>\n' ;
+                            }
+                            var atachNmUrl = Constants.AJAXURL + "/file/download?fileId=" + atachId + "&fileName=" + atachNm + "&key=NGKM_FILE_ATTACH";
+                            var atachNmHref =  '<a target="_self" class="link-blue" href="' + atachNmUrl + '" atachId="'+atachId+'" atachNm="'+atachNm+'">' + atachNm + '</a>';
+                            atachHtml = '<div class="left-explain add-Enclosure">\n' +
+                                atachTypeNm +'\n' +
+                                ' <div class="yuanzi-con fujian-con fujian-inline">\n' +
+                                atachNmHref +
+                                previewHtml+
+                                ' </div>\n' +
+                                '</div>';
+                            atachHtmlParam = atachHtml;
+
+                            if (fdbkReply != null && fdbkReply[fdbkReply.length-1].commentCntt != '') {
+                                commentCnttHighlight = fdbkReply[fdbkReply.length-1].commentCntt.replaceAll(searchKey,'<span class="keywords">'+ searchKey +'</span>');
+                                commentCnttHtml = '<span>追加反馈：</span>'+ commentCnttHighlight +
+                                    '<em>'+fdbkReply[fdbkReply.length-1].commentTime.substring(0,16)+'</em>' + atachHtmlParam;
+                                html += '<div class="reply">'+ commentCnttHtml + '</div>';
+                            }
+                        }
+                        commentCnttHtml = "";
+                        commentCnttHighlight = "";
+                    }
+
+                    html +=  '</div>';
+                    html +='<div class="fdbkDsps feed-btn-list" fdbkId="'+feedbackList[i].fdbkId+'">';
+
+                    var dspsNoAttentHtml = '<a class="handle-tag second">';
+                    var dspsAttentHtml = '<a class="handle-tag link">';
+                    var dspsHtml = dspsNoAttentHtml;
+                    var attentHtml = '<a class="attentFdbk handle-tag unfocus" fdbkId="'+feedbackList[i].fdbkId+'">+关注</a>';
+                    if(!jQuery.isEmptyObject(userSession) && feedbackList[i].fdbkPrsnId != userSession.staffCode && feedbackList[i].dspsStsCd !='4' && feedbackList[i].dspsStsCd !='26' && feedbackList[i].dspsStsCd !='5' && feedbackList[i].dspsStsCd !='25' && feedbackList[i].dspsStsCd !='6'){
+                        dspsHtml = dspsAttentHtml;
+                    }
+                    //反馈状态兼容知识优改
+                    if(feedbackList[i].dspsStsCd == '6'){
+                        //html += dspsHtml+'驳回</a>';
+                        html += dspsHtml+'审核驳回</a>';
+                    }
+                    if(feedbackList[i].dspsStsCd == '5' || feedbackList[i].dspsStsCd == '25'){
+                        html += '<a class="handle-tag accepted second">已采纳</a>';
+                    }
+                    if(feedbackList[i].dspsStsCd == '4' || feedbackList[i].dspsStsCd == '26'){
+                        html += '<a class="handle-tag second">未采纳</a>';
+                    }
+                    if(feedbackList[i].dspsStsCd == '3' || feedbackList[i].dspsStsCd == '22' || feedbackList[i].dspsStsCd == '23' || feedbackList[i].dspsStsCd == '24'){
+                        html += dspsHtml+'确认中</a>';
+                    }
+                    if(feedbackList[i].dspsStsCd == '2' || feedbackList[i].dspsStsCd == '20' || feedbackList[i].dspsStsCd == '21'){
+                        //html += dspsHtml+'未处理</a>';
+                        html += dspsHtml+'审核通过,未处理</a>';
+                    }
+                    if(feedbackList[i].dspsStsCd == '1'){
+                        html += dspsHtml+'待审核</a>';
+                    }
+                    if(feedbackList[i].dspsStsCd == '7' || feedbackList[i].dspsStsCd == '9'){
+                        html += dspsHtml+'已失效</a>';
+                    }
+                    if(!jQuery.isEmptyObject(userSession) && feedbackList[i].fdbkPrsnId != userSession.staffCode && feedbackList[i].dspsStsCd !='4' && feedbackList[i].dspsStsCd !='26' && feedbackList[i].dspsStsCd !='5'&& feedbackList[i].dspsStsCd !='25' && feedbackList[i].dspsStsCd !='6'){
+                        html += attentHtml;
+                    }
+                    html +='</div>';
+                    html += '</li>';
+                    $("#sendFeedback .fb-list").append(html);
+
+                    checkCurUserAttnFdbk(feedbackList[i].fdbkId,true);
+
+                }
+                //反馈关注
+                $(".attentFdbk").on("click",attnBtn);
+                // 附件预览
+                // KlgfdbkListComponent.fjPreview($('.fj-preview a'));
+                annexPreview($('.fj-preview a'));
+
+            });
+        }
+        var annexPreview = function (fjPreviewDom) {
+            //附件预览
+            fjPreviewDom.unbind();
+            fjPreviewDom.click(function () {
+                var href = $(this).attr("id");
+                if(href) {
+                    var hrefArr = href.split("?")
+                    if(hrefArr && hrefArr.length == 2) {
+                        var params = hrefArr[1];
+                        Util.ajax.getJsonAsync(Constants.AJAXURL + "/file/getFileSize?"+params,{}).then(function (data) {
+                            if(data.returnCode == "0"){
+                                //    var  hrefNew = "../knowledgeManage/"+href;
+                                var  hrefNew = url_prefix + '/modules/knowledge/' + href;
+                                window.open(hrefNew);
+                            }else if(data.returnCode == "BIG_FILE"){
+                                new myAlert({type: 'error', text: "您预览的文件过大，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                            } else if(data.returnCode == "MORE_SHEET_FILE"){
+                                new myAlert({type: 'error', text: "您预览的文件sheet页过多，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                            }else {
+                                new MyAlert({'type': 'error', 'text': data.returnMessage});
+                            }
+                        }).then(function (data) {
+                            return data;
+                        }).fail(function (data) {
+                            if(data && data.returnCode == 'BIG_FILE') {
+                                new myAlert({type: 'error', text: "您预览的文件过大，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                            }else if(data.returnCode == "MORE_SHEET_FILE"){
+                                new myAlert({type: 'error', text: "您预览的文件sheet页过多，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                            } else {
+                                new Dialog({
+                                    mode: 'tips',
+                                    tipsType:'error',
+                                    content: data.returnMessage
+                                });
+                            }
+                        });
+                    }
+                }
+
+            });
+        }
+
+        var loading = null;
+        //初始化分页组件
+        function pageClickInit(){
+            loading = null;
+            var sendFeedbackfeedlist = $("#sendFeedback .feedback-show .fb-list");
+            var sendFeedbackpage =  $("#sendFeedback .feedback-page");
+            // var sendFeedbackloading = $("#sendFeedback #feedback-loading");
+            var sendFeedbackedit =  $('#sendFeedback #editFdbk');
+            var sendFeedbackcancle = $('#sendFeedback #cancel');
+            sendFeedbackfeedlist.hide();
+            sendFeedbackpage.hide();
+            // sendFeedbackloading.show();
+            loading = new Loading(loadingConfig);
+
+            var config = {
+                el:$('.page1',$el),
+                items_per_page:limit,
+                current_page:page,
+                limited_width: true,
+                callback:function(opt,done){
+                    page = opt.page;
+                    var checkBoxValue =isCheckboxe.get();
+                    $.when(getFeedBackList(klg_id,fdbkStatus,checkBoxValue)).done(function(result){
+                        if (isLoad) {
+                            // sendFeedbackloading.hide();
+                            callBackFun();
+                            return;
+                        }
+                        var json = result;
+                        if(json.returnCode == '0'){
+                            done({
+                                beans:[{}],
+                                totalNum:json.bean.total
+                            });
+                            total = json.bean.total;
+                            $("#sendFeedback .total-pages").html("共<span>"+total+"</span>条，"+Math.ceil(total/limit)+"页");
+                            if(total == 0){
+                                // sendFeedbackfeedlist.html(Constants.EMPTY_HTML);
+                                sendFeedbackfeedlist.html('<div class="km-norecord"><img src="/ngkm/src/assets/img/km-norecord@2x.png" alt=""><p>暂无数据</p></div>');
+                                $("#sendFeedback .total-pages").html("共<span>"+total+"</span>条，"+Math.ceil(total/limit)+"页");
+                                sendFeedbackpage.hide();
+                                sendFeedbackedit.hide();
+                                sendFeedbackcancle.hide();
+                                // sendFeedbackloading.hide();
+                                callBackFun();
+                                sendFeedbackfeedlist.show();
+                                return;
+                            }
+                        }else{
+                            // sendFeedbackfeedlist.html(Constants.BADREQ_HTML);
+                            sendFeedbackfeedlist.html('<div class="km-norecord"><img src="/ngkm/src/assets/img/km-norecord@2x.png" alt=""><p>获取数据失败</p></div>');
+                            sendFeedbackedit.hide();
+                            sendFeedbackcancle.hide();
+                            // sendFeedbackloading.hide();
+                            callBackFun();
+                            sendFeedbackfeedlist.show();
+                            sendFeedbackpage.show();
+                            return;
+                        }
+                        createFbList(json);
+                        // sendFeedbackloading.hide();
+                        callBackFun();
+                        sendFeedbackfeedlist.show();
+                        sendFeedbackedit.show();
+                        sendFeedbackcancle.show();
+                        sendFeedbackpage.show();
+                    });
+
+                }
+            }
+            var callBackFun = function () {
+                loading.destroy();
+            }
+            if(pageClick){
+                pageClick.reset();
+            }else{
+                pageClick = new Pagination(config);
+            }
+
+        }
+
+
+        var dataInit = function(){
+            $("#sendFeedback .tipsw-cont").hide();
+            $("#sendFeedback #feedback-loading").show();
+            $.when(defaultTpl()).done(function(data){
+                feedbackTpl = data.object.tKmFeedbackInfos;
+                if(feedbackTpl == null || feedbackTpl.tKmFeedbackTypes == null){
+                    new MyAlert({
+                        type:'error',
+                        text:'获取反馈默认模板失败，请联系相关人员维护！',
+                        falseShow:false,
+                        trueName:'确定'
+                    });
+                    return;
+                }
+                authRegnNo = data.object.districtConfig;
+                if(authRegnNo == null ) {
+                    new MyAlert({
+                        type: 'error',
+                        text: '获取授权地市失败！',
+                        falseShow: false,
+                        trueName: '确定'
+                    });
+                }
+                var checkboxesItems = new Array();
+                var authRegnNoLength = authRegnNo.length;
+                if (authRegnNo[authRegnNoLength-1].regnNm == "全选"){
+                    checkboxesItems.push({label:"全选",value:authRegnNo[authRegnNoLength-1].regnId,click:function(e,itemData){
+                            removeListTel();
+                        }});
+                    checkIs = 1;
+                    authRegnNoLength--;
+                }
+                for(var i=0;i<authRegnNoLength;i++){
+                    var checkboxesItemsStr = {label:authRegnNo[i].regnNm,value:authRegnNo[i].regnId, click:function(e,itemData){
+                            removeListTel();
+                        }};
+                    checkboxesItems.push(checkboxesItemsStr);
+                }
+                var checkboxesConfig = {
+                    el:'#authorizCity',      //要绑定的容器
+                    className:'box',    //组件外围的className,默认横向|all-width纵向
+                    disabled:0,     //是否禁用，1禁用|0不禁用
+                    defaultValue:'',   //默认选中项（对应复选框的value值组成的字符串）
+                    disabledValue:'',//初始化默认禁用指定复选框
+                    items:checkboxesItems
+                };
+                checkboxes = new Checkboxes(checkboxesConfig);
+                checkboxes.checkAll();
+                isFirstShow = false;
+                //设置知识ID与知识标题
+                $("#phonen-umber").attr('data-id',klg_id);
+                $("#phonen-umber").val(fdbkTitleNm);
+                //填充反馈类型与反馈选项
+                var fdbkTypeQ = $("#fdbkType");
+                var fdbkOption = $("#fdbkOption");
+                fdbkTypeQ.html("");
+                fdbkOption.html("");
+                for(var i=0;i<feedbackTpl.tKmFeedbackTypes.length;i++){
+                    if(i == 0){
+                        fdbkTypeQ.append('<li class="current"><a href="javascript:void(0)" id="fdbkType-'+feedbackTpl.tKmFeedbackTypes[i].typeId+'">'+feedbackTpl.tKmFeedbackTypes[i].typeNm+'</a></li>');
+                        fdbkOption.append('<div id="option-fdbkType-'+feedbackTpl.tKmFeedbackTypes[i].typeId+'">');
+                    }else{
+                        fdbkTypeQ.append('<li><a href="javascript:void(0)" id="fdbkType-'+feedbackTpl.tKmFeedbackTypes[i].typeId+'">'+feedbackTpl.tKmFeedbackTypes[i].typeNm+'</a></li>');
+                        fdbkOption.append('<div id="option-fdbkType-'+feedbackTpl.tKmFeedbackTypes[i].typeId+'" style="display:none"></div>');
+                    }
+                    for(var j=0;j<feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions.length;j++){
+                        if(feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optId != null && feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optNm != null){
+                            if(feedbackTpl.tKmFeedbackTypes[i].isMulti == 1){
+                                $('#option-fdbkType-'+feedbackTpl.tKmFeedbackTypes[i].typeId).append('<span class="tipw-check"><input type="checkbox" id="check-style-'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optId+'" name="check-style" data-id="'+feedbackTpl.tmpltId+'|'+feedbackTpl.tKmFeedbackTypes[i].typeId+'|'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optId+'" />\n<label for="check-style-'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optId+'">'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optNm+'</label></span>');
+                            }else{
+                                $('#option-fdbkType-'+feedbackTpl.tKmFeedbackTypes[i].typeId).append('<span class="tipw-check"><input type="radio" id="check-style-'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optId+'" name="check-style'+feedbackTpl.tKmFeedbackTypes[i].typeId+'" data-id="'+feedbackTpl.tmpltId+'|'+feedbackTpl.tKmFeedbackTypes[i].typeId+'|'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optId+'" />\n<label for="check-style-'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optId+'">'+feedbackTpl.tKmFeedbackTypes[i].feedbackTplOptions[j].optNm+'</label></span>');
+                            }
+                        }
+                    }
+                }
+                $("#sendFeedback #feedback-loading").hide();
+                $("#sendFeedback .tipsw-cont").show();
+                optionClickInit();
+            });
+        };
+
+
+        var removeListTel = function () {
+            var authorizParent = $("#authorizDiv").parent();
+            if (authorizParent.hasClass("list-tel-warn")) {
+                $("#authorizDiv .popup-warning").css("display","none");
+                authorizParent.removeClass("list-tel-warn");
+            }
+        };
+
+        // 获取是否反馈标识
+        var feedbackFlag = 0;
+        var fdbkId='';
+        var getFdbkId = function () {
+            return fdbkId;
+        }
+        var getFeedBackFlag = function () {
+            return feedbackFlag;
+        }
+        //新增反馈
+        var createFeedback = function(param){
+            return Util.ajax.postJsonAsync(Constants.AJAXURL+'/klgfdbk/addKMOptimizeTask',param).then( function (data) {
+                if(data.returnCode == '0'){
+                    fdbkId=data.object.fdbkId;
+                    feedbackFlag = 1;
+                    new MyAlert({
+                        type: 'success',
+                        text:'反馈成功！'
+                    });
+                    $('#createFdbk').removeClass('km-btn-disabled');
+                    var fdbk = $("#sendFeedback");
+                    fdbk.hide();
+                    $("#fdbkCntt").val("");
+                    fdbk.find('input[name="check-style"]:checked').each(function(){
+                        $(this).attr('checked',false);
+                    });
+                    $('input[type="radio"]:checked').each(function(){
+                        $(this).attr('checked',false);
+                    });
+                    $('#fdbkCntt').val('');
+                    $("#fdbkOption").parent().removeClass("list-tel-warn");
+                    $("#fdbkCntt").parent().removeClass("list-tel-warn");
+                    $("#rcvTelNum").parent().removeClass("list-tel-warn");
+                    $("#fdbkCnttDiv .popup-warning").eq(0).css("display","");
+                    $("#fdbkCnttDiv .popup-warning").eq(1).css("display","none")
+                    KlgfdbkListComponent.fdbkSendMsg(data.object.fdbkId,data.object.dspsStsCd,false,null);
+                    fileId = "";
+                    fileNm = "";
+                    $("#fdbkUploadFileDiv .files").empty();
+                    return true;
+                }
+                /*new MyAlert({
+                    type:'error',
+                    //text:data.returnMessage,
+                    text:'因系统或网络原因导致提交失败',
+                    cancelShow:false,
+                    ok:function (){
+                        fdbkCommit()
+                    },
+                    cancel: function() {
+                        $('#createFdbk').removeClass('km-btn-disabled');
+                    }
+                });*/
+                new Dialog({
+                    mode: 'tips',
+                    delayRmove: 3,
+                    tipsType: 'error',
+                    content: '反馈失败,请重新提交!'
+                });
+                $('#createFdbk').removeClass('km-btn-disabled');
+                return false;
+            }).fail(function (data) {
+                /*new MyAlert({
+                    type: 'error',
+                    //text:data.returnMessage
+                    text:'因系统或网络原因导致提交失败',
+                    cancelShow:false,
+                    ok:function (){
+                        fdbkCommit()
+                    },
+                    cancel: function() {
+                        $('#createFdbk').removeClass('km-btn-disabled');
+                    }
+                });*/
+                new Dialog({
+                    mode: 'tips',
+                    delayRmove: 3,
+                    tipsType: 'error',
+                    content: '反馈失败,请重新提交!'
+                });
+                $('#createFdbk').removeClass('km-btn-disabled');
+            });
+        };
+
+        var confirmTel_same = function (confirmCommit,param) {
+            new MyAlert({
+                type:'confirm',
+                text:'是否将反馈结果发送至'+$("#rcvTelNum").val()+'手机号码？',
+                ok:function(){
+                    confirmCommit(param);
+                },
+                cancel:function () {
+                    $('#createFdbk').removeClass('km-btn-disabled');
+                }
+            });
+        }
+
+        var fdbkCommit = function(){
+            // window.autoFdbkFlag=true;
+            var klg_id = $('#phonen-umber').attr('data-id');
+            var fdbkTitleNm = $('#phonen-umber').val();
+            var optCntt = '';
+            var  authoriz = $("#authorizCity").find("div .checked");
+            var isAll = $($("#authorizCity .box").find("div")[0]).hasClass("checked");
+            var authRegnCity;//所属地市
+            if (authoriz && authoriz.length != 0) {
+                if (isAll && checkIs == 1){
+                    authRegnCity =authoriz.parent().find("input").attr("value");
+                }else{
+                    authRegnCity = checkboxes.get();
+                }
+            }else{
+                $("#authorizDiv .popup-warning").css("display","");
+                $("#authorizDiv").parent().addClass("list-tel-warn");
+                return false;
+            }
+
+            $('#sendFeedback').find("#fdbkOption :checked").each(function(){
+                optCntt += $(this).attr('data-id')+',';
+            });
+            var rcvTelNumQ = $("#rcvTelNum");
+            var acceptTelNum = $("#acceptTelNum").val().trim();
+            var fdbkCntt = $('#fdbkCntt').val().trim();
+            var rcvTelNum = rcvTelNumQ.val().trim();
+            if(optCntt == ""){
+                setTimeout(function(){
+                    $("#fdbkOption").parent().addClass("list-tel-warn");
+                },0);
+                return false;
+            }
+            if(rcvTelNum != ""){
+                if(!(/^[1][3-9][0-9]{9}$/.test(rcvTelNum))) {
+                    setTimeout(function () {
+                        if (!(/^[1][3-9][0-9]{9}$/.test(rcvTelNum))) {
+                            rcvTelNumQ.parent().find("div:first").html("手机号码格式有误，请重新输入");
+                            rcvTelNumQ.parent().addClass("list-tel-warn");
+                            return false;
+                        }
+                        // if (!Constants.NGKM_CM_PHONE_REGEX.test(rcvTelNum)) {
+                        //     rcvTelNumQ.parent().find("div:first").html("非中国移动号码，请重新输入");
+                        //     rcvTelNumQ.parent().addClass("list-tel-warn");
+                        //     return false;
+                        // }
+                        rcvTelNumQ.parent().removeClass("list-tel-warn");
+                    }, 0);
+                    return false;
+                }
+            }
+            if(acceptTelNum != ""){
+                if(!(/^[1][3-9][0-9]{9}$/.test(acceptTelNum))) {
+                    setTimeout(function () {
+                        if (!(/^[1][3-9][0-9]{9}$/.test(acceptTelNum))) {
+                            $("#acceptTelNum").parent().find("div:first").html("手机号码格式有误，请重新输入");
+                            $("#acceptTelNum").parent().addClass("list-tel-warn");
+                            return false;
+                        }
+                        // if (!Constants.NGKM_CM_PHONE_REGEX.test(rcvTelNum)) {
+                        //     rcvTelNumQ.parent().find("div:first").html("非中国移动号码，请重新输入");
+                        //     rcvTelNumQ.parent().addClass("list-tel-warn");
+                        //     return false;
+                        // }
+                        $("#acceptTelNum").parent().removeClass("list-tel-warn");
+                    }, 0);
+                    return false;
+                }
+            }
+            if(fdbkCntt == "" || fdbkCntt == '可自行输入或鼠标点选复制知识详情页文字进行反馈，禁止输入"</>"'){
+                $("#fdbkCnttDiv .popup-warning").eq(0).css("display","");
+                $("#fdbkCnttDiv .popup-warning").eq(1).css("display","none");
+                setTimeout(function(){
+                    $("#fdbkCntt").parent().addClass("list-tel-warn");
+                },0);
+                $('#fdbkCntt').val("可自行输入或鼠标点选复制知识详情页文字进行反馈，禁止输入\"</>\"");
+                return false;
+            }
+            if(fdbkCntt.indexOf('<') >= 0 || fdbkCntt.indexOf('>') >= 0){
+                $("#fdbkCnttDiv .popup-warning").eq(0).css("display","");
+                $("#fdbkCnttDiv .popup-warning").eq(1).css("display","none");
+                setTimeout(function(){
+                    $("#fdbkCntt").parent().addClass("list-tel-warn");
+                },0);
+                return false;
+            }
+            if(fdbkCntt.length >= 400){
+                $("#fdbkCnttDiv .popup-warning").eq(0).css("display","none");
+                $("#fdbkCnttDiv .popup-warning").eq(1).css("display","");
+                setTimeout(function(){
+                    $("#fdbkCntt").parent().addClass("list-tel-warn");
+                },0);
+                return false;
+            }
+            var param = {'knwlgId':klg_id,
+                'fdbkTitleNm':fdbkTitleNm,
+                'optCntt':optCntt.substring(0,optCntt.length-1),
+                'fdbkCntt':fdbkCntt,
+                'fdbkTypeCd':fdbkType,
+                'atachId':fileId,
+                'atachNm':fileNm,
+                'rcvAlertNum':rcvTelNumQ.val().trim(),
+                'authRegnNo':authRegnCity,
+                'fdbkChannel':fdbkChannel,
+                'acceptTelNum':acceptTelNum,
+                'taskSource':$('#feedbackBtn').attr("taskSource")
+            };
+            $('#createFdbk').addClass('km-btn-disabled');
+            if(rcvTelNumQ.val().trim()=="" || rcvTelNumQ.attr("telnum").trim() == rcvTelNumQ.val().trim()){
+                createFeedback(param);
+            }else{
+                //不一致
+                confirmTel_same(createFeedback,param);
+            }
+        }
+
+        //修复ie8下不支持trim()
+        String.prototype.trim = function () {
+            return this .replace(/^\s\s*/, '' ).replace(/\s\s*$/, '' );
+        }
+
+        var eventInit = function(){
+            //获取受理号码
+            getAcceptTelNum();
+             isCheck();
+            // 关闭弹出层
+            $("#fdbkTitle > a,#cancelFdbk").on('click',function(){
+                window.autoFdbkFlag = false;
+                $("#sendFeedback").hide();
+
+            });
+            //提交
+            $('#createFdbk').on('click',function(){
+                fdbkCommit();
+            });
+            var sendFeedbacktip =  $('#sendFeedback .feedback-page');
+            var feedbackIcon = $('#sendFeedback .tipsw-cont');
+            //填写反馈按钮
+            $('#editFdbk').on('click',function(){
+                fileId = "";
+                fileNm = "";
+                $("#fdbkUploadFileDiv .files").empty();
+                if(!upload_component){
+                    uploadInit();
+                }
+                getRcvTelNum();
+                $('#sendFeedback .feedback-show').hide();
+                $('#sendFeedback .popup-title ul li.active').removeClass('active');
+                $('#sendFeedback .popup-title ul li:eq(0)').addClass('active');
+
+                $('#sendFeedback #editFdbk').hide();
+                $('#sendFeedback #createFdbk').show();
+                $('#sendFeedback #cancel').hide();
+                if(isFirstShow){
+                    sendFeedbacktip.hide();
+                    dataInit(klg_id,fdbkTitleNm,fdbkType);
+                }else{
+                    sendFeedbacktip.hide();
+                    feedbackIcon.show();
+                }
+                $("#fdbkSearchBox").css("display","none");
+            });
+            //反馈记录和反馈发起tab切换
+            $('#sendFeedback #feedback-tab li').on('click',function(){
+                var thisQ =$(this);
+                if(thisQ.hasClass('active')){return}
+                $('#sendFeedback .popup-title ul li.active').removeClass('active');
+                $(this).addClass('active');
+                if($("select[name='feadbackStatus']").length > 0){
+                    fdbkStatus = $("select[name='feadbackStatus']").val();
+                }
+                $("#fdbkSearchBox #fdbkSearchKey").val("");
+                if(thisQ.index() == 1){
+                    isLoad = false;
+                    feedbackIcon.hide();
+                    $("#sendFeedback .feedback-show").show();
+                    $('#sendFeedback #createFdbk').hide();
+                    sendFeedbacktip.show();
+                    $("#fdbkSearchBox").css("display","");
+                    //初次加载则加载状态筛选条件
+                    if($('.feedback-show').find('.km-tab').html() == ''){
+                        var callback = function () {
+                            if(!$(this).attr("status")){
+                                fdbkStatus="";
+                            }else{
+                                fdbkStatus=$(this).attr("status");
+                            }
+                            myfdbkBtn = false;
+                            pageClickInit();
+                        }
+                        statusTabInit(callback);
+                    }else{
+                        myfdbkBtn = false;
+                        pageClickInit();
+                    }
+
+                }else if(thisQ.index() == 0){
+                    isLoad = true;
+                    fileId = "";
+                    fileNm = "";
+                    $("#fdbkUploadFileDiv .files").empty();
+                    if(!upload_component){
+                        uploadInit();
+                    }
+                    getRcvTelNum();
+                    getAcceptTelNum();
+                    $('#sendFeedback .feedback-show').hide();
+                    feedbackIcon.show();
+                    $('#sendFeedback #editFdbk').hide();
+                    $('#sendFeedback #createFdbk').show();
+                    $('#sendFeedback #cancel').hide();
+                    sendFeedbacktip.hide();
+                    if(isFirstShow){
+                        dataInit(klg_id,fdbkTitleNm,fdbkType);
+                    }else{
+                        feedbackIcon.show();
+                    }
+                    $("#fdbkSearchBox").css("display","none");
+                }
+            });
+            //补充描述变更
+            var fdbkCnttQ = $("#fdbkCntt");
+            fdbkCnttQ.unbind('focus').bind('focus',function(){
+                var contentVal = $.trim(fdbkCnttQ.val());
+                if(contentVal == '可自行输入或鼠标点选复制知识详情页文字进行反馈，禁止输入"</>"'){
+                    fdbkCnttQ.val('');
+                    fdbkCnttQ.css('color','');
+                }
+            });
+            fdbkCnttQ.unbind('blur').bind('blur',function(){
+                var contentVal = $.trim(fdbkCnttQ.val());
+                if(contentVal == ''){
+                    fdbkCnttQ.css('color','#999');
+                    fdbkCnttQ.val('可自行输入或鼠标点选复制知识详情页文字进行反馈，禁止输入"</>"');
+                    var fdbkCnttDivpopwaring = $("#fdbkCnttDiv .popup-warning");
+                    fdbkCnttDivpopwaring.eq(1).css("display","none");
+                    fdbkCnttDivpopwaring.eq(0).css("display","");
+                    fdbkCnttQ.parent().removeClass("list-tel-warn");
+                }
+            });
+            fdbkCnttQ.keyup(function(){
+                var fdbkCnttDivpopwaring = $("#fdbkCnttDiv .popup-warning");
+                if(fdbkCnttQ.val().trim() != '' && fdbkCnttQ.val().indexOf('<') < 0 && fdbkCnttQ.val().indexOf('>') < 0){
+                    fdbkCnttDivpopwaring.eq(1).css("display","none");
+                    fdbkCnttDivpopwaring.eq(0).css("display","");
+                    fdbkCnttQ.parent().removeClass("list-tel-warn");
+                }
+                if(fdbkCnttQ.val().indexOf('<') >= 0 || fdbkCnttQ.val().indexOf('>') >= 0){
+                    fdbkCnttDivpopwaring.eq(1).css("display","none");
+                    fdbkCnttDivpopwaring.eq(0).css("display","");
+                    setTimeout(function(){
+                        fdbkCnttQ.parent().addClass("list-tel-warn");
+                    },0);
+                }
+                if(fdbkCnttQ.val().trim().length >= 400){
+                    fdbkCnttDivpopwaring.eq(0).css("display","none");
+                    fdbkCnttDivpopwaring.eq(1).css("display","");
+                    setTimeout(function(){
+                        fdbkCnttQ.parent().addClass("list-tel-warn");
+                    },0);
+                }
+            });
+            //手机号校验
+            var rcvTelNumQ = $("#rcvTelNum");
+            rcvTelNumQ.keyup(function(){
+                var rcvTelNum = rcvTelNumQ.val().trim();
+                var $clear = rcvTelNumQ.next();
+                if(rcvTelNum != ''){
+                    $clear.addClass('show');
+                }else{
+                    $clear.removeClass('show');
+                }
+                setTimeout(function(){
+                    if(rcvTelNum == ""){
+                        rcvTelNumQ.parent().removeClass("list-tel-warn");
+                    }else{
+                        if (!(/^[1][3-9][0-9]{9}$/.test(rcvTelNum))) {
+                            rcvTelNumQ.parent().find("div:first").html("手机号码格式有误，请重新输入");
+                            rcvTelNumQ.parent().addClass("list-tel-warn");
+                            return false;
+                        }
+                        // if (!Constants.NGKM_CM_PHONE_REGEX.test(rcvTelNum)) {
+                        //     rcvTelNumQ.parent().find("div:first").html("非中国移动号码，请重新输入");
+                        //     rcvTelNumQ.parent().addClass("list-tel-warn");
+                        //     return false;
+                        // }
+                        rcvTelNumQ.parent().removeClass("list-tel-warn");
+                    }
+                },0);
+
+            });
+            //手机号增加一键删除
+            var $clear = rcvTelNumQ.next();
+            $clear.unbind('click').bind('click',function(){
+                $(this).removeClass('show');
+                rcvTelNumQ.val('');
+                rcvTelNumQ.parent().removeClass("list-tel-warn");
+            });
+            var acceptTelNumQ = $("#acceptTelNum");
+            acceptTelNumQ.keyup(function(){
+                var acceptTelNum1 = acceptTelNumQ.val().trim();
+                var $acceptclear = acceptTelNumQ.next();
+                if(acceptTelNum1 != ''){
+                    $acceptclear.addClass('show');
+                }else{
+                    $acceptclear.removeClass('show');
+                }
+                setTimeout(function(){
+                    if(acceptTelNum1 == ""){
+                        acceptTelNumQ.parent().removeClass("list-tel-warn");
+                    }else{
+                        if (!(/^[1][3-9][0-9]{9}$/.test(acceptTelNum1))) {
+                            acceptTelNumQ.parent().find("div:first").html("手机号码格式有误，请重新输入");
+                            acceptTelNumQ.parent().addClass("list-tel-warn");
+                            return false;
+                        }
+                        // if (!Constants.NGKM_CM_PHONE_REGEX.test(rcvTelNum)) {
+                        //     rcvTelNumQ.parent().find("div:first").html("非中国移动号码，请重新输入");
+                        //     rcvTelNumQ.parent().addClass("list-tel-warn");
+                        //     return false;
+                        // }
+                        acceptTelNumQ.parent().removeClass("list-tel-warn");
+                    }
+                },0);
+
+            });
+            /* var $acceptclear = acceptTelNumQ.next();
+             $acceptclear.unbind('click').bind('click',function(event){
+                 $(this).removeClass('show');
+                 acceptTelNumQ.val('');
+                 acceptTelNumQ.parent().removeClass("list-tel-warn");
+             });*/
+            //搜索
+            $("#searchBtnFdbk").on("click",function () {
+                myfdbkBtn = false;
+                pageClickInit();
+            });
+            //我的反馈
+            $("#myFdbk").on("click",function () {
+                myfdbkBtn = true;
+                pageClickInit();
+            });
+
+            //清空按钮
+            $(document,this.$el).on("click","#clearFdbkBtn",function(e){
+                var e =e || window.event;
+                e.stopPropagation();
+                $("#fdbkSearchBox #fdbkSearchKey").val("");
+                $(this).prev().focus().val("");
+            })
+
+            //搜索框获取失去焦点
+            var fdbkBoxClearVtn =  $("#fdbkSearchBox #clearFdbkBtn");
+            $("#fdbkSearchKey").blur(function () {
+                if ($(this).val().trim() === "") {
+                    fdbkBoxClearVtn.removeClass("show");
+                    fdbkBoxClearVtn.addClass("hide");
+                }
+            }).bind('input propertychange', function () {
+                var thisQ = $(this);
+                if (thisQ.val() === null || thisQ.val() === undefined || thisQ.val() === "") {
+                    fdbkBoxClearVtn.removeClass("show");
+                    fdbkBoxClearVtn.addClass("hide");
+                } else {
+                    fdbkBoxClearVtn.removeClass("hide");
+                    fdbkBoxClearVtn.addClass("show");
+                }
+            }).bind('keypress', function (event) {
+                fdbkBoxClearVtn.removeClass("hide");
+                fdbkBoxClearVtn.addClass("show");
+            });
+
+        };
+
+        var optionClickInit = function(){
+            //反馈类型切换
+            $(".tipsw-cont li a").on('click',function(){
+                if( $(this).attr('id') == 'rcvTelNumClear'){
+                    return false;
+                }
+                $(".tipsw-cont li[class='current']").each(function(){
+                    $(this).removeClass("current");
+                });
+                $(this).parent().addClass('current');
+                $("#fdbkOption div").each(function(){
+                    $(this).css('display','none');
+                });
+                $('#option-'+$(this).attr('id')).css('display','block');
+            });
+            //反馈选项变更
+            $("#fdbkOption input").on('click',function(){
+                $("#fdbkOption").parent().removeClass("list-tel-warn");
+            });
+        }
+        /**
+         * 监听受理号码变更
+         */
+        var initListener = function(){
+            if(window.addEventListener){
+                var currCallNum = localStorage.getItem("ngkm_call") || "0_0";
+                window.addEventListener("storage",function (e) {
+                    var targetCallNum = localStorage.getItem("ngkm_call") || "0_0";
+                    if (currCallNum != targetCallNum) {
+                        //存在校验
+                        if (KmUtil.getFocusFalg()) {
+                            getAcceptTelNum();
+                        }
+                        currCallNum = targetCallNum;
+                    }
+                });
+            }else {//IE8
+                var currCallNum = localStorage.getItem("ngkm_call") || "0_0";
+                $(document).on("storage", function () {
+                    var targetCallNum = localStorage.getItem("ngkm_call") || "0_0";
+                    if (targetCallNum && currCallNum != targetCallNum) {
+                        //存在校验
+                        if (KmUtil.getFocusFalg()) {
+                            getAcceptTelNum();
+                        }
+                        currCallNum = targetCallNum;
+                    }
+                });
+            }
+        };
+
+        //需传入知识ID、知识名称、反馈类型(1:知识反馈，2：搜索反馈)
+        var feedbackSend = function(klgId,fdbk_titleNm,fdbkTypeCd){
+            $el = $(tpl);
+            if (fdbkTypeCd == '3'){
+                isFirstShow = true;
+                fdbkTypeCd = '1';
+            }
+            fdbkType = fdbkTypeCd;
+            klg_id = klgId;
+            fdbkTitleNm = fdbk_titleNm;
+            $("#sendFeedback").remove();
+            $("body").append($el);
+            $("#sendFeedback").hide();
+            $("#clearFdbkBtn").css("visibility","hidden");
+            // 增加事件处理，可以和外部交互
+            Util.eventTarget.call(this);
+            eventInit();
+            this.$el = $("body");
+            initListener();//监听手机号变更
+        };
+
+        $.extend(feedbackSend.prototype, Util.eventTarget.prototype,{
+            open:function(){
+                $("#sendFeedback").show();
+                $('#sendFeedback #feedback-tab li').eq(0).trigger("click");
+                //补充描述设置默认提示
+                // $('#fdbkCntt').val('可自行输入或鼠标点选复制知识详情页文字进行反馈，禁止输入"</>"');
+                $('#fdbkCntt').css('color','#999');
+                /*if($('#sendFeedback .popup-title ul li.active').index($('#sendFeedback .popup-title ul li')) == 0){
+                    var callback = function () {
+                        if(!$(this).attr("status")){
+                            fdbkStatus="";
+                        }else{
+                            fdbkStatus=$(this).attr("status");
+                        }
+                        pageClickInit();
+                    }
+                    statusTabInit(callback);
+
+                }*/
+            },
+            close:function(){
+
+                $("#sendFeedback").hide();
+                $("#fdbkCntt").val("");
+            }
+        });
+
+        return {
+            feedbackSend:feedbackSend,
+            getAcceptPhoneNum:getClentPhoneInfo,
+            getFeedBackFlag:getFeedBackFlag,
+            getFdbkId:getFdbkId
+        }
+    })

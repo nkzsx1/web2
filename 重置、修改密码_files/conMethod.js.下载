@@ -1,0 +1,109 @@
+define(['Util',
+    'js/knowledge/dialog',
+    'js/constants/constants',
+    'js/constants/kmUtil',
+], function (Util, dialog, Constants, kmUtil) {
+    //跳转知识详情页
+    var goKnowledgeDetail = function (knwlgNm, knwlgId, atomId) {
+        // 先获取预采编知识
+        Util.ajax.ajax({
+            type: "GET",
+            url: Constants.AJAXURL + "/knowledge/getKlgCaChe?knwlgId=" + knwlgId + "&v=" + new Date().getTime(),
+            async: true,
+            success: function (data) {
+                var klg_id = data && data.object && data.object.knwlgId || knwlgId;
+                var klg_nm = data && data.object && data.object.knwlgNm || knwlgNm;
+                //验证权限
+                Util.ajax.ajax({
+                    type: "POST",
+                    url: Constants.AJAXURL + "/knowledge/verifyPermission?knwlgId=" + klg_id,
+                    async: true,
+                    success: function (data) {
+                        if (data.object === true) {
+                            if (atomId) {
+                                kmUtil.openTab(klg_nm.replaceAll("&", "\&"), Constants.PREAJAXURL + Constants.ROOTURL + "/modules/knowledgeAppNew/knowledgeDetailNew.html", {
+                                    knwlgId: klg_id,
+                                    atomId: atomId
+                                });
+                            } else {
+                                kmUtil.openTab(klg_nm.replaceAll("&", "\&"), Constants.PREAJAXURL + Constants.ROOTURL + "/modules/knowledgeAppNew/knowledgeDetailNew.html", { knwlgId: klg_id });
+                            }
+                        } else {
+                            dialog.alert({ type: 'error', message: "抱歉，您无权限访问该知识!", falseShow: false, trueName: "知道了" })
+
+                        }
+                    },
+                    error: function () {
+                        return false;
+                    }
+                });
+            }
+        });
+    };
+    //跳转业务树初始化
+    var goBusinessTree = function (nodeId) {
+        Util.ajax.postJson(Constants.AJAXURL + '/knowledge/getBusinessTreePermissions', { "catlId": nodeId }, function (data, status) {
+            if (status) {
+                var flag = data.bean;
+                if (true === flag) {
+                    kmUtil.openTab("知识列表", Constants.PREAJAXURL + Constants.ROOTURL + "/modules/knowledgeAppNew/kmKnowledgeSecondListNew.html", { nodeId: nodeId });
+                } else {
+                    dialog.alert({ type: 'error', message: "抱歉，您无权限访问!", falseShow: false, trueName: "知道了" })
+                }
+            } else {
+
+            }
+        });
+    };
+    var objFunction = function(){
+        var atomsHeight = 0;
+        var bgTop = 0;
+        var atHt = 0;
+        obj = [];
+        var flag = false;
+        $(".arrow-left").parent("div").each(function(i){
+            var _this = $(this);
+            if(_this.find(".zhujie-con").attr("style") != undefined){
+                if(_this.find(".zhujie-con").attr("style").indexOf("display: none") == 0){
+                    return true;
+                }
+            }
+            atomsHeight = this.offsetTop;
+            if(_this.find(".above-arrow").attr("style") != undefined){
+                if(_this.find(".above-arrow").attr("style").indexOf("display: none") == 0){
+                    flag = true;
+                    _this.find(".above-arrow").attr("style","display: block");
+                }
+            }
+            if (_this.find(".above-arrow").attr("class") != undefined) {
+                if(_this.height() > 0){
+                    atHt = _this.height();
+                }
+                var gb = atomsHeight + 162;
+                if (gb > 0) {
+                    bgTop = gb;
+                }
+            }
+            if(bgTop!=0 &&  atHt!=0){
+                obj.push({"id": i, "offTop": atomsHeight, "height": atHt,"bgTop": bgTop});
+            }
+            if(flag){
+                flag = false;
+                _this.find(".above-arrow").attr("style","display: none");
+            }
+        });
+    }
+
+    function freeMemory(){
+        goKnowledgeDetail = null;
+        goBusinessTree = null;
+        objFunction = null;
+    }
+
+    return {
+        goKnowledgeDetail: goKnowledgeDetail,
+        goBusinessTree: goBusinessTree,
+        objFunction:objFunction,
+        freeMemory:freeMemory
+    };
+});

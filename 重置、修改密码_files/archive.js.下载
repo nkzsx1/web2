@@ -1,0 +1,1113 @@
+define([ 'Util','js/constants/constants','js/constants/kmUtil','js/personalCenter/MyAlert','text!modules/knowledgeAppNew/archive.tpl',
+        'crossAPI','dialog','assets/components/simpleTree/simpleTree','js/knowledgeAppNew/archiveSearch'],
+    function(Util,Constants,KmUtil,MyAlert,archive,CrossAPI,Dialog,simpleTree,archiveSearch){
+
+        var serialNum = '';
+        var phoneNumber = '';
+        var callNumber = '';
+        var staffId;//工号
+        var ticket;//加密信息
+        var srvReqstTypeId = "";//服务请求节点
+        var srvReqstTypeName;
+        var bizCntt = "";
+        var zTreeObj;
+        var nodeDate;
+        var knwlgNM;
+        var knwlg_id;
+        var tmpltId;//模板id
+        var atomId;//机构代码模板原子id
+        var click_serviceBtn_time;
+        var search_keyword;
+        var directReplyFlag = true;
+        Date.prototype.Format = function (fmt) {
+            var o = {
+                "M+": this.getMonth() + 1, //月份
+                "d+": this.getDate(), //日
+                "H+": this.getHours(), //小时
+                "m+": this.getMinutes(), //分
+                "s+": this.getSeconds(), //秒
+                "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+                "S": this.getMilliseconds() //毫秒
+            };
+            if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        };
+
+        // <editor-fold desc="前端埋点神策 SDK 初始化">
+        var sensorsDataInit = function () {
+            var env = Constants.getEnvment();
+            var receiveUrl = 'http://sensors.ipaas.cmos/sa?project=production';
+            if (Constants.NGKM_ENVIROMENT_DEV == env) {
+                receiveUrl = Constants.getSensorsTestEnvReceiveUrl();
+            } else if (Constants.NGKM_ENVIROMENT_TEST == env) {
+                receiveUrl = Constants.getSensorsTestEnvReceiveUrl();
+            } else {
+                var httpType = window.location.protocol;
+                if ('https:' == httpType) {
+                    receiveUrl = 'https://sensors.ipaas.cmos:20443/sa?project=production';
+                }else {
+                    receiveUrl = 'http://sensors.ipaas.cmos/sa?project=production';
+                }
+            }
+            (function (para) {
+                var p = para.sdk_url, n = para.name, w = window, d = document, s = 'script', x = null, y = null;
+                if (typeof(w['sensorsDataAnalytic201505']) !== 'undefined') {
+                    return false;
+                }
+                w['sensorsDataAnalytic201505'] = n;
+                w[n] = w[n] || function (a) {
+                    return function () {
+                        (w[n]._q = w[n]._q || []).push([a, arguments]);
+                    }
+                };
+                var ifs = ['track', 'quick', 'register', 'registerPage', 'registerOnce', 'clearAllRegister', 'trackSignup', 'trackAbtest', 'setProfile', 'setOnceProfile', 'appendProfile', 'incrementProfile', 'deleteProfile', 'unsetProfile', 'identify', 'login', 'logout', 'trackLink', 'clearAllRegister'];
+                for (var i = 0; i < ifs.length; i++) {
+                    w[n][ifs[i]] = w[n].call(null, ifs[i]);
+                }
+                if (!w[n]._t) {
+                    x = d.createElement(s), y = d.getElementsByTagName(s)[0];
+                    x.async = 1;
+                    x.src = p;
+
+                    w[n].para = para;
+                    y.parentNode.insertBefore(x, y);
+                }
+            })({
+                sdk_url: '../../js/sensorsdata.min.js',
+                name: 'sensorsdata',
+                // server_url: 'http://172.22.243.150:8107/index.html?project=production'//神策数据接收地址
+                server_url: receiveUrl,//神策数据接收地址
+                heatmap_url: "../../js/heatmap.min.js",
+                heatmap: {
+                    clickmap: 'default',
+                    scroll_notice_map: 'default',
+                    collect_elements: "all"
+                }
+            });
+
+            if (sensorsdata) {
+                Util.ajax.getJson(Constants.AJAXURL + '/user/session' + "?t=" + new Date().getTime(), {}, function (data, state) {
+                    if (state) {
+                        var provinceName = '';
+                        if (data && data.bean) {
+                            var superRrl2 = Constants.AJAXURL + '/kmConfig/getCacheCityByRegnId';
+                            Util.ajax.postJson(superRrl2, {regnId: data.bean.provnce}, function (json, status) {
+                                if (status) {
+                                    provinceName = json.bean.regnNm;
+                                    //神策用户关联的方法，其中 user_id 为用户的真实 id，字符串或者数值类型都可以。
+                                    sensorsdata.identify(data.bean.staffCode, true);
+                                    sensorsdata.registerPage({
+                                        staff_id: data.bean.staffCode,
+                                        staff_name: data.bean.staffName,
+                                        provnce: data.bean.provnce,
+                                        provinceName: provinceName,
+                                        login_system: '知识库系统'
+                                    });
+                                    sensorsdata.quick("autoTrack");
+                                } else {
+
+                                    //神策用户关联的方法，其中 user_id 为用户的真实 id，字符串或者数值类型都可以。
+                                    sensorsdata.identify(data.bean.staffCode, true);
+                                    sensorsdata.registerPage({
+                                        staff_id: data.bean.staffCode,
+                                        staff_name: data.bean.staffName,
+                                        provnce: data.bean.provnce,
+                                        provinceName: provinceName,
+                                        login_system: '知识库系统'
+                                    });
+                                    sensorsdata.quick("autoTrack");
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+        //</editor-fold>
+
+        var eventInit = function(){
+            // 关闭弹出层
+            $(".popup-title > a,#cancel,#serviceRest > .popup-overlay").click(function(){
+                $("#serviceRest").hide();
+                $("#serviceRest-has-check").find("input").parent().parent().remove();
+                zTreeInit(nodeDate);
+                $("#node").text("0");
+                $('#bizCntt').val("");
+            });
+            //选择框事件
+            //checkBox();
+
+            //填单
+            $("#fillBill").click(function () {
+                var srvReqstTypeFullName = "";
+                var inputPlan = $("input[name='true']");
+                var inputCheck = $("input[name='true']:checked");
+                var planMsg = inputPlan.length;
+                var checkedMsg = inputCheck.length;
+                if (planMsg == 1 || checkedMsg == 1) {
+                    if (planMsg == 1 && checkedMsg == 0) {
+                        srvReqstTypeId = inputPlan.attr("ObjId");
+                        srvReqstTypeName = inputPlan.parent().parent().find('p').text();
+                        srvReqstTypeFullName = inputPlan.parent().next().text();
+                    } else {
+                        srvReqstTypeId = inputCheck.attr("ObjId");
+                        srvReqstTypeName = inputCheck.parent().parent().find('p').text();
+                        srvReqstTypeFullName = inputCheck.parent().next().text();
+                    }
+                    bizCntt = $('#bizCntt').val();
+                    if (bizCntt.length > 4000){
+                        new Dialog({
+                            mode: 'tips',
+                            tipsType: 'error',
+                            content: '答复内容不能超过4000！',
+                            height: 20
+                        });
+                        return;
+                    }
+
+                    //获取填单信息  ?autoClose=1
+                    var config = {
+                        type: 'post',
+                        /**
+                         * 修改前 url: Constants.AJAXURL + '/knowledge/getFillMessage
+                         * 省份反馈，知识库详情页面点击服务请求按钮，弹出服务请求弹框。选择节点后点击填单
+                         * 跳转至服务请求侧填单页面，填写完内容后，点击提交/保存按钮，成功之后该页面不关闭
+                         * 知识库增加传参autoClose=1 页面自动关闭
+                         */
+                        url: Constants.AJAXURL + '/knowledge/getFillMessage?autoClose=1',
+                        dataType: 'json',
+                        success: function (data) {
+                            if (data.returnCode == '0') {
+                                var message = data.object;
+                                if(message){
+                                    staffId = message.staffId;
+                                    ticket = message.ticket;
+                                    //关闭页面
+                                    $("#cancel").trigger("click");
+                                    getSernoPhone("1");
+                                }
+                                // setTimeout(closeGuidang,1000);
+                            }else {
+                                var returnMessage;
+                                if (data.returnMessage == null){
+                                    returnMessage = "填单信息获取失败";
+                                } else{
+                                    returnMessage = data.returnMessage;
+                                }
+                                new Dialog({
+                                    mode: 'tips',
+                                    tipsType: 'error',
+                                    content: returnMessage,
+                                    height: 20
+                                });
+
+                                return false;
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            new MyAlert({'type': 'error', 'text': errorThrown});
+                        }
+                    };
+                    Util.ajax.ajax(config);
+                    //<editor-fold desc="ngkm_knwlgDetailService_click 详情页面服务请求功能点击事件">
+                    var click_fillBtn_replyBtn_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                    Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                        if (data.returnCode == 0 && data.object == "true") {
+                            if (sensorsdata) {
+                                sensorsdata.track("ngkm_knwlgDetailService_click", {
+                                    click_fillBtn_replyBtn_time: click_fillBtn_replyBtn_time,
+                                    click_node: srvReqstTypeFullName,
+                                    click_serviceBtn_time: click_serviceBtn_time,
+                                    knwlg_id: knwlg_id,
+                                    knwlg_name: knwlgNM,
+                                    search_keyword: search_keyword,
+                                    ngkm_service_button_name: '填单'
+                                });
+                            }
+                        }
+                    });
+                    //</editor-fold>
+                } else {
+                    new Dialog({
+                        mode: 'tips',
+                        tipsType: 'error',
+                        content: '已选择超过一条服务请求节点不能操作！',
+                        height: 20
+                    });
+                    return;
+                }
+
+
+            });
+            //直接答复
+            $("#directReply").click(function(){
+                getSernoPhone("0");
+            });
+
+            //清除内容
+            $("#clearKeyWord").click(function(){
+                $("#search-input").val("");
+            });
+
+            // 悬浮搜索按钮事件
+            $("#serviceRest-btn").hover(function(){
+                $("#searchBtn").removeClass();
+                $("#searchBtn").addClass("search-con");
+                if($("#search-input").val()=="未展开的节点不支持搜索，需全部展开后才能搜索"){
+                    $("#search-input").val("未展开的节点不支持搜索，需全部展开后才能搜索").css("color", "rgb(170, 170, 170)");
+                }
+            });
+
+            // 搜索输入框获取焦点事件
+            $("#search-input").focus(function(){
+                $("#searchBtn").removeClass();
+                $("#searchBtn").addClass("search-con search-typein");
+                $("#search-input").val("");
+                $("#search-input").removeAttr("style");
+            });
+
+            // 离开搜索区域事件
+            $("#searchBtn").mouseleave(function(){
+                $("#searchBtn").removeClass();
+                $("#searchBtn").addClass("search-con search-inactive");
+                $("#search-input").val("未展开的节点不支持搜索，需全部展开后才能搜索");
+            });
+
+            //搜索事件
+            $("#serviceRest-btn").click(function(){
+                if($("#search-input").val()=="未展开的节点不支持搜索，需全部展开后才能搜索"){
+                    doSearch("");
+                }else{
+                    doSearch($("#search-input").val());
+                }});
+            //删除已选
+            $("#serviceRest-delete").click(function(){
+                var $check = $("#serviceRest-has-check").find("input:checked");
+                if($check.length == 0){
+                    new Dialog({
+                        mode: 'tips',
+                        tipsType: 'error',
+                        content: '请选择要删除的节点!',
+                        height: 20
+                    });
+                }else{
+                    $check.each(function(){
+                        $(this).parent().parent().remove();
+                        $("#serviceRest-data").find("input[objid=" + $(this).attr("objid") + "]").trigger("click");
+                        var node = zTreeObj.getNodeByParam("srvReqTypeId",$(this).attr("objid"),null)
+                        zTreeObj.checkNode(node, !node.checked, true);
+                    });
+                }
+                var checkedMsg = $("#serviceRest-has-check").find(".feed-checkbox").length;
+                $("#node").text(checkedMsg);
+            });
+            $("#search-input").on("keydown", function(e){
+                if(e.keyCode == 13){
+                    doSearch($(this).val());
+                }
+            });
+        };
+
+        /*var checkBox = function () {
+            $(".feed-checkbox").unbind().click(function() {
+                var $this = $(this);
+                if ($this.prop("checked")){
+                    $this.prop("checked",true);
+                    $this.attr('name','true');
+                    addSelect($this);
+                }else{
+                    $this.prop("checked",false);
+                    $this.attr('name','false');
+                    deleteSelect($this.attr("objid"));
+                }
+                var checkedMsg = $("#serviceRest-has-check").find(".feed-checkbox").length;
+                if (checkedMsg > 5) {
+                    $this.prop("checked",false);
+                    $this.attr('name','false');
+                    deleteSelect($this.attr("objid"));
+                    new Dialog({
+                        mode: 'tips',
+                        tipsType: 'error',
+                        content: '每次最多允许选择5条节点！',
+                        height: 20
+                    });
+                    return;
+                }
+                $("#node").text(checkedMsg);
+            });
+        };*/
+        //搜索框事件
+        var doSearch = function(keyword){
+            search_keyword = keyword;
+            //<editor-fold desc="ngkm_knwlgDetailService_click 详情页面服务请求功能点击事件STEP1">
+            var ngkm_doSearchBtn_click_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+            Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                if (data.returnCode == 0 && data.object == "true") {
+                    if (sensorsdata) {
+                        sensorsdata.track("ngkm_knwlgDetailService_click", {
+                            knwlg_id: knwlg_id,
+                            knwlg_name: knwlgNM,
+                            search_keyword: search_keyword,
+                            ngkm_service_step1:"true",
+                            click_serviceBtn_time: click_serviceBtn_time,
+                            ngkm_doSearchBtn_click_time:ngkm_doSearchBtn_click_time
+                        });
+                    }
+                }
+            });
+            //</editor-fold>
+            //清空上次搜索结果
+            $(".km-srn-tree").find("span.ar-high").each(function () {
+                $(this).replaceWith($(this).html());
+            });
+            var $serviceRestData = $("#serviceRest-data");
+            if(!keyword){
+                $serviceRestData.find("li").show();
+                return;
+            }
+            // var stringNbsp = "&nbsp;";
+            $serviceRestData.find("li").hide();
+            $serviceRestData.find("li").each(function(){
+                //遍历获取一级树节点，判断是否有包含关键字的子节点
+                var oneNodeText = $(this).text();
+                if(oneNodeText && oneNodeText.indexOf(keyword) != -1){
+                    // if (stringNbsp.indexOf(keyword) !== -1) {
+                    //     //禁止搜索/&nbsp;及其子串
+                    //
+                    //     return;
+                    // }
+                    // keyword = keyword.replace(/([\^\$\*\+\?\.\\\|\[\]\(\)\{\}])/g,"\\$1");
+                    // //特殊处理<>符号
+                    // keyword = keyword.replace("<","&lt;");
+                    // keyword = keyword.replace(">","&gt;");
+                    // var html = archiveSearch(keyword, $(this)[0].innerHTML);
+                    // $(this).html(html);
+                    var keywordChange = "<span class='ar-high' style='color:#cc0000'>" + keyword + "</span>";
+                    $(this).find("span.node_name").each(function () {
+                        var nodeText = $(this).text();
+                        if (nodeText && nodeText.indexOf(keyword) != -1) {
+                            //根据节点名称获取节点对象
+                            var nodes = zTreeObj.getNodesByParam("srvRequestName",nodeText);
+                            $(this).parent().parent().find("li").show();//显示已经加载的子节点
+                            $.each(nodes,function (index,node) {
+                                var nodeFlag = node.leafNodeFlag;
+                                if (nodeFlag == "0") {//非叶子节点
+                                    var nodes = node.children;
+                                    if (nodes) {//如果此父节点已经加载了子节点，展开父节点
+                                        var count = 0;
+                                        $.each(nodes,function (index,item) {
+                                            var nodeName =  item.srvRequestName;
+                                            if (nodeName && nodeName.indexOf(keyword) != -1) {
+                                                count++;
+                                            }
+                                        })
+                                        if (count>0){
+                                            zTreeObj.expandNode(node,true,false,false);
+                                        }
+                                    }
+                                }else {
+                                    zTreeObj.expandNode(node,true,false,false);
+                                }
+
+                            })
+                            nodeText = nodeText.replaceAll(keyword,keywordChange);
+                            $(this).html(nodeText);
+                        }
+                    });
+                    $(this).show();
+                }
+            });
+        };
+        /*var deleteSelect = function(objid){
+            $("#serviceRest-has-check").find("li[objid="+ objid + "]").remove();
+        };*/
+
+        /*var addSelect = function($this){
+            var hasCheck =   $("#serviceRest-has-check");
+            var objid = $this.attr("objid");
+            var text = $this.parents("li").html();
+            hasCheck.append("<li objid='" + objid + "'><span class=\"inline-clear serviceRest-item\"><i class=\"icon km-guanbi\"></i></span>" + text + "</li>");
+            hasCheck.find("input[type=checkbox]").prop("checked", false);
+            hasCheck.find("a").addClass("inline-info");
+            $(".serviceRest-item").unbind("click");
+            $(".serviceRest-item").click(function(e){
+                $("#serviceRest-data").find("input[objid=" + $(this).parent().attr("objid") + "]").trigger("click");
+            });
+        };*/
+
+        //获取接触流水和受理号码
+        var getSernoPhone = function (type) {
+            var openMode = KmUtil.getOpenMode() || "1";
+            if ("2" == openMode && CrossAPI.url != undefined) {
+                CrossAPI.getContact("getClientBusiInfo", Constants.PARAMJSONBUSINFO,function(clientBusiInfo){
+                    phoneNumber = clientBusiInfo.bean.msisdn || "";
+                    CrossAPI.getContact("getAgentState",Constants.PARAMJSONAGENT, function(agentState){
+                        //坐席通话中
+                        if(agentState && agentState.agentState == "7"){
+                            CrossAPI.getContact("getCallingInfo",Constants.PARAMJSONCALL, function(callingInfo){
+                                if(callingInfo){
+                                    serialNum = callingInfo.serialNo ? callingInfo.serialNo : "";
+                                    callNumber = callingInfo.callerNo;
+                                }
+                                if (type == "0"){
+                                    getSerialNo();
+                                } else {
+                                    openFillBill();
+                                }
+                            })
+                        }else {
+                            CrossAPI.getContact("getSerialNo",function(serialNo){
+                                serialNum = serialNo || "";
+                                if (type == "0"){
+                                    getSerialNo();
+                                } else {
+                                    openFillBill();
+                                }
+                            });
+                        }
+                    })
+                });
+            }else{
+                Util.ajax.getJson(Constants.AJAXURL + '/kmClient/getClientInfo' + "?t=" + new Date().getTime(), {}, function (data, state) {
+                    if (state) {
+                        if (data && data.bean && data.bean.msisdn) {
+                            phoneNumber = data.bean.msisdn;
+                        }
+                        callNumber = data.bean.callerNum;
+                        if (data && data.bean && data.bean.serialNo) {
+                            serialNum = data.bean.serialNo;
+                        }
+                        if (type == "0"){
+                            getSerialNo();
+                        } else {
+                            openFillBill();
+                        }
+                    }
+
+                })
+            }
+        };
+        //打开填单页面
+        var openFillBill = function () {
+            var locationhost = window.location.host; //浏览器地址栏地址
+            var localUrl;
+            var env = Constants.getEnvment();
+            var httpType = window.location.protocol;
+            if(Constants.NGKM_ENVIROMENT_DEV == env || Constants.NGKM_ENVIROMENT_TEST == env){
+                if ('https:' == httpType) {
+                    localUrl = "https://ngwf.cs.cmos:443/";
+                } else {
+                    localUrl = "http://ngwf.cs.cmos:8080/";
+                }
+
+            }else{
+                if ('https:' == httpType) {
+                    localUrl = "https://ngwf.cs.cmos/";
+                } else {
+                    localUrl = "http://ngwf.cs.cmos/";
+                }
+
+            }
+            var accepChanInfo;
+            if (JSON.parse(localStorage.getItem("accepChanInfo"))) {
+                accepChanInfo = JSON.parse(localStorage.getItem("accepChanInfo"));
+            }else {
+                accepChanInfo = null;
+            }
+            var openMode = KmUtil.getOpenMode() || "1";
+            var knwlgName = $("#knwlgNm").text();
+            var knwlgPath="";
+            $("#businessTree").find(".passCopy").each(function (index,item) {
+                knwlgPath += item.innerText+",";
+            })
+            knwlgPath = knwlgPath.substr(0,knwlgPath.lastIndexOf(","));
+            if ("2" == openMode && CrossAPI.url != undefined) {
+                if (tmpltId == Constants.WEBSITE_KNWLG_TMPLTID) {
+                    //网点信息模板
+                    var agencySrcId = $(".detail-left").find("a[srctmpltattratomid="+atomId+"]");
+                    if(agencySrcId.length>0){
+                       var agencyCode = agencySrcId.parent().find(".yuanzi-con")[0].outerText;
+                    }
+                    if (agencyCode) {
+                        var agcyCodeKlgNm = agencyCode +" "+ knwlgNM;
+                    }else {
+                        var agcyCodeKlgNm =knwlgNM;
+                    }
+                    var params = {
+                        "ticket":(ticket),
+                        "autoClose":"1",//提交后自动关闭页面
+                        "staffId":(staffId),
+                        "system":"new",
+                        "wrkfmShowSwftno":("工单受理"+srvReqstTypeId),
+                        "srvReqstTypeId":(srvReqstTypeId),
+                        // "verno":("11"),
+                        "srvReqstTypeName":(srvReqstTypeName),
+                        "acptNum":(phoneNumber),
+                        "callingNum":(callNumber),
+                        "bizCntt":(bizCntt),
+                        "channelSysCode":("NGKM"),
+                        // "cntmngId":(serialNum),
+                        "channelCode":"01",
+                        "agcyCodeKlgNm":(agcyCodeKlgNm),
+                        "outSubAcptChnlInfo":(accepChanInfo),
+                        "knwlgName":(knwlgName),
+                        "knwlgPath":(knwlgPath)
+                    };
+                }else {
+                    var params = {
+                        "ticket":(ticket),
+                        "autoClose":"1",//提交后自动关闭页面
+                        "staffId":(staffId),
+                        "system":"new",
+                        "wrkfmShowSwftno":("工单受理"+srvReqstTypeId),
+                        "srvReqstTypeId":(srvReqstTypeId),
+                        // "verno":("11"),
+                        "srvReqstTypeName":(srvReqstTypeName),
+                        "acptNum":(phoneNumber),
+                        "callingNum":(callNumber),
+                        "bizCntt":(bizCntt),
+                        "channelSysCode":("NGKM"),
+                        // "cntmngId":(serialNum),
+                        "channelCode":"01",
+                        "outSubAcptChnlInfo":(accepChanInfo),
+                        "knwlgName":(knwlgName),
+                        "knwlgPath":(knwlgPath)
+                    };
+                }
+                CrossAPI.destroyTab(params.wrkfmShowSwftno);
+                CrossAPI.createTab(params.wrkfmShowSwftno,localUrl + "ngwf/src/module/basesr/v4new/srAcceptServiceRequest.html", params);
+
+            }else{
+                if (tmpltId == Constants.WEBSITE_KNWLG_TMPLTID) {
+                    //网点信息模板
+                    var agencySrcId = $(".detail-left").find("a[srctmpltattratomid="+atomId+"]");
+                    if(agencySrcId.length>0){
+                        var agencyCode = agencySrcId.parent().find(".yuanzi-con")[0].outerText;
+                    }
+                    if (agencyCode) {
+                        var agcyCodeKlgNm = agencyCode +" "+ knwlgNM;
+                    }else {
+                        var agcyCodeKlgNm =knwlgNM;
+                    }
+
+                    var params = {
+                        ticket: ticket,
+                        staffId: staffId,//与ticket中加密的工号保持一致
+                        // channel: "CRM",//（非必传）
+                        system: "new", //(若staffId传入为老系统工号，此参数可以省略)
+                        busiurl: localUrl + "ngwf/src/module/basesr/v4new/srAcceptServiceRequestExt.html",
+                        // busiurl: "http://172.20.127.233:20010/ngwf/src/module/basesr/v4new/srServiceRequestType.html",//跳转的地址
+                        businessOptions: //（注：此参数只针对打开立单页面传参，非必传）
+                            JSON.stringify(
+                                {
+                                    autoClose: "1",
+                                    srvReqstTypeId: srvReqstTypeId,//服务请求类型编码
+                                    // verno:"11",//版本号
+                                    srvReqstTypeName: srvReqstTypeName,//服务请求类型名称
+                                    acptNum: phoneNumber,//受理号码
+                                    callingNum: callNumber,//主叫号码
+                                    bizCntt: encodeURI(bizCntt),//受理内容
+                                    channelSysCode:"NGKM",
+                                    // callId: "1378825507",//呼叫流水号
+                                    // customerTagId: "15207710000",//目标客户ID
+                                    // cntmngId: serialNum,//接触流水
+                                    // cntmngCustSrvUnfvCode: "069101",//接触客服务统一编码
+                                    channelCode: "01",
+                                    agcyCodeKlgNm:encodeURI(agcyCodeKlgNm),
+                                    outSubAcptChnlInfo:accepChanInfo,
+                                    knwlgName:encodeURI(knwlgName),
+                                    knwlgPath:encodeURI(knwlgPath)
+                                }
+                            )
+
+                    };
+                }else {
+                    var params = {
+                        ticket: ticket,
+                        staffId: staffId,//与ticket中加密的工号保持一致
+                        // channel: "CRM",//（非必传）
+                        system: "new", //(若staffId传入为老系统工号，此参数可以省略)
+                        busiurl: localUrl + "ngwf/src/module/basesr/v4new/srAcceptServiceRequestExt.html",
+                        // busiurl: "http://172.20.127.233:20010/ngwf/src/module/basesr/v4new/srServiceRequestType.html",//跳转的地址
+                        businessOptions: //（注：此参数只针对打开立单页面传参，非必传）
+                            JSON.stringify(
+                                {
+                                    autoClose: "1",
+                                    srvReqstTypeId: srvReqstTypeId,//服务请求类型编码
+                                    // verno:"11",//版本号
+                                    srvReqstTypeName: srvReqstTypeName,//服务请求类型名称
+                                    acptNum: phoneNumber,//受理号码
+                                    callingNum: callNumber,//主叫号码
+                                    bizCntt: encodeURI(bizCntt),//受理内容
+                                    channelSysCode:"NGKM",
+                                    // callId: "1378825507",//呼叫流水号
+                                    // customerTagId: "15207710000",//目标客户ID
+                                    // cntmngId: serialNum,//接触流水
+                                    // cntmngCustSrvUnfvCode: "069101",//接触客服务统一编码
+                                    channelCode: "01",
+                                    outSubAcptChnlInfo:accepChanInfo,
+                                    knwlgName:encodeURI(knwlgName),
+                                    knwlgPath:encodeURI(knwlgPath)
+                                }
+                            )
+
+                    };
+                }
+
+                httpPost(localUrl+"ngwf/sso", params);
+            }
+        };
+
+        function httpPost(URL, PARAMS) {
+            var temp = document.createElement("form");
+            temp.action = URL;
+            temp.method = "post";
+            temp.target = "_blank";
+            temp.style.display = "none";
+
+            for (var x in PARAMS) {
+                var opt = document.createElement("textarea");
+                opt.name = x;
+                opt.value = PARAMS[x];
+                temp.appendChild(opt);
+            }
+            document.body.appendChild(temp);
+            temp.submit();
+
+            return temp;
+        };
+        var closeGuidang = function () {
+            $(".success-alert").hide();
+        };
+        var getSerialNo = function () {
+            if (!directReplyFlag) {
+                return;//防止重复提交.
+            }
+            var srvReqstTypeFullName = "";
+            var nodeNum = $("#node").text();
+            bizCntt = $('#bizCntt').val();
+            if (bizCntt.length > 4000){
+                new Dialog({
+                    mode: 'tips',
+                    tipsType: 'error',
+                    content: '答复内容不能超过4000！',
+                    height: 20
+                });
+                return;
+            }
+            if (nodeNum == '0') {
+                new Dialog({
+                    mode: 'tips',
+                    tipsType: 'error',
+                    content: '您还没有选择任何一条节点！',
+                    height: 20
+                });
+                return;
+            }
+            var inputPlan = $("input[name='true']");
+            var inputCheck = $("input[name='true']:checked");
+            var planMsg = inputPlan.length;
+            var checkedMsg = inputCheck.length;
+            var srvReqstTypeIdvar="";
+            if (planMsg == 1 || checkedMsg == 1) {
+
+                if (planMsg == 1 && checkedMsg == 0) {
+                    srvReqstTypeIdvar =srvReqstTypeIdvar+$("input[name='true']").attr("ObjId")+",";
+                    srvReqstTypeFullName = inputPlan.parent().next().text();
+                } else {
+                    srvReqstTypeIdvar =srvReqstTypeIdvar+$("input[name='true']:checked").attr("ObjId")+",";
+                    srvReqstTypeFullName = inputCheck.parent().next().text();
+                }
+
+                if(srvReqstTypeIdvar){
+                    srvReqstTypeIdvar = srvReqstTypeIdvar.substr(0, srvReqstTypeIdvar.length - 1);
+                }
+                // var body = $("body");
+                // phoneNumber = body.attr("phoneNum");
+                // serialNum= body.attr("serialNum");
+                if (serialNum && phoneNumber) {
+                    directReplyFlag = false;
+                    var config = {
+                        type: 'post',
+                        url: Constants.AJAXURL + '/knowledge/directReply',
+                        data: {srvReqstTypeId:srvReqstTypeIdvar,bizCntt:bizCntt,acptNum:phoneNumber,callId:serialNum},
+                        dataType: 'json',
+                        success: function (data) {
+                            directReplyFlag = true;
+                            if (data.returnCode == '0') {
+                                $(".success-alert").show();
+                                setTimeout(closeGuidang,1000);
+                                $("#cancel").trigger("click");
+                            }else {
+                                var returnMessage;
+                                if (data.returnMessage == null){
+                                    returnMessage = "直接回复失败";
+                                } else{
+                                    returnMessage = data.returnMessage;
+                                }
+                                new Dialog({
+                                    mode: 'tips',
+                                    tipsType: 'error',
+                                    content: returnMessage,
+                                    height: 20
+                                });
+
+                                return false;
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            directReplyFlag = true;
+                            new MyAlert({'type': 'error', 'text': errorThrown});
+                        }
+                    };
+                    Util.ajax.ajax(config);
+                } else {
+                    new MyAlert({
+                        type:'error',
+                        text:'获取来电信息失败,请确认是否已挂机',
+                        falseShow:false,
+                        trueName:'确定'
+                    });
+                    return;
+                }
+                //<editor-fold desc="ngkm_knwlgDetailService_click 详情页面服务请求功能点击事件">
+                // var srvReqstTypeFullName = $("#serviceRest-has-check").find("input:checked").parent().next().text();
+                var click_fillBtn_replyBtn_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                    if (data.returnCode == 0 && data.object == "true") {
+                        if (sensorsdata) {
+                            sensorsdata.track("ngkm_knwlgDetailService_click", {
+                                click_fillBtn_replyBtn_time: click_fillBtn_replyBtn_time,
+                                click_node: srvReqstTypeFullName,
+                                click_serviceBtn_time: click_serviceBtn_time,
+                                knwlg_id: knwlg_id,
+                                knwlg_name: knwlgNM,
+                                search_keyword: search_keyword,
+                                ngkm_service_button_name: '直接答复'
+                            });
+                        }
+                    }
+                });
+                //</editor-fold>
+            } else {
+                new Dialog({
+                    mode: 'tips',
+                    tipsType: 'error',
+                    content: '已选择超过一条服务请求节点不能操作！',
+                    height: 20
+                });
+                return;
+            }
+        };
+
+        function zTreeOnClick(event, treeId, treeNode){
+
+            if(treeNode.leafNodeFlag){
+                //不是父节点
+                zTreeObj.checkNode(treeNode, !treeNode.checked, true);
+                zTreeObj.cancelSelectedNode(treeNode);
+                zTreeOnCheck(event, treeId, treeNode);
+            }else {
+                //展开节点
+                zTreeObj.expandNode(treeNode);
+                //获取选中节点
+                var childNodes = zTreeObj.transformToArray(treeNode);
+                if (childNodes.length==1) {
+                    Util.ajax.ajax({
+                        type: "POST",
+                        async:false,
+                        url:Constants.AJAXURL+"/knowledge/getNodesByPid?srvReqTypeId="+treeNode.srvReqTypeId,
+                        success:function(data){
+                            if(data && data.object && data.object.bean){
+                                var children = JSON.parse(data.object.bean[treeNode.srvReqTypeId]);
+                                zTreeObj.addNodes(treeNode,children);
+                                $("#serviceRest-data").find("li").each(function () {
+                                    $(this).find("span.button.chk").css("marginLeft","-7px");
+                                })
+                            }
+                        }, error: function () {
+                            return false
+                        }
+                    });
+                }
+            }
+        }
+        function  zTreeOnExpand(event, treeId, treeNode){
+            if(!treeNode.leafNodeFlag){
+                zTreeObj.selectNode(treeNode);
+                //判断该节点下是否有节点，没有就加载节点
+                var childNodes = zTreeObj.transformToArray(treeNode);
+                if (childNodes.length==1) {
+                    Util.ajax.ajax({
+                        type: "POST",
+                        async:false,
+                        url:Constants.AJAXURL+"/knowledge/getNodesByPid?srvReqTypeId="+treeNode.srvReqTypeId,
+                        success:function(data){
+                            if(data && data.object && data.object.bean){
+                                var children = JSON.parse(data.object.bean[treeNode.srvReqTypeId]);
+                                zTreeObj.addNodes(treeNode,children);
+                                $("#serviceRest-data").find("li").each(function () {
+                                    $(this).find("span.button.chk").css("marginLeft","-7px");
+
+                                })
+                            }
+
+                        }, error: function () {
+                            return false
+                        }
+                    });
+                }
+            }
+
+        }
+        var deleteSelect = function(objid){
+            $("#serviceRest-has-check").find("input[objid="+ objid + "]").parent().parent().remove();
+            var checkedMsg = $("#serviceRest-has-check").find(".feed-checkbox").length;
+            $("#node").text(checkedMsg);
+        };
+
+        var addSelect = function(treeNode){
+            var path = treeNode.srvRequestFullName;
+            console.log(treeNode);
+            var colorSwitch = '#666';
+            var flagnum = treeNode.srvReqTypeId.substr(0, 3);
+            var nodeName = treeNode.srvRequestFullName;
+            if (judgeNumInarray(flagnum)) {
+                if (treeNode.srvReqTypeId.length >= 18 && treeNode.srvReqTypeId.length <= 21 && judgeStrInarr(nodeName)) {
+                    colorSwitch = '#cc0000';
+                }
+            }
+            var hasCheck = $("#serviceRest-has-check");
+            if(hasCheck.find(".feed-checkbox[objid="+treeNode.srvReqTypeId+"]").length > 0){
+                return;
+            }
+            var checkedMsg = $("#serviceRest-has-check").find(".feed-checkbox").length;
+            if (checkedMsg >= 5) {
+                new Dialog({
+                    mode: 'tips',
+                    tipsType: 'error',
+                    content: '每次最多允许选择5条节点！',
+                    height: 20
+                });
+                zTreeObj.checkNode(treeNode, !treeNode.checked, true);
+                return;
+            }
+            var text = "<div class=\"km-srn-node-item\">\n" +
+                "                <em class=\"del\">\n" +
+                "                    <a href=\"javascript:void(0)\">\n" +
+                "                        <i class=\"icon km-guanbi\"></i>\n" +
+                "                    </a>\n" +
+                "                </em>\n" +
+                "                <span>\n" +
+                "                    <input type=\"checkbox\" name=\"true\" class=\"feed-checkbox\" objid="+treeNode.srvReqTypeId+">\n" +
+                "                </span>\n" +
+                "                <label style=\"color: " + colorSwitch +";\" for=\"objid\">"+path+"</label>\n" +
+                "            </div>";
+            hasCheck.append(text);
+            hasCheck.find("input[type=checkbox]").prop("checked", false);
+            hasCheck.find("a").addClass("inline-info");
+            $(".del").unbind("click");
+            $(".del").click(function(e){
+                    var node = zTreeObj.getNodeByParam("srvReqTypeId",$(this).next().children().attr("objid"),null);
+                    $(this).parent().remove();
+                    zTreeObj.checkNode(node, !node.checked, true);
+                    var checkedMsg = $("#serviceRest-has-check").find(".feed-checkbox").length;
+                    $("#node").text(checkedMsg);
+            });
+            $("#node").text(checkedMsg+1);
+
+        };
+        function zTreeOnCheck(event, treeId, treeNode) {
+            if (treeNode.checked) {
+                addSelect(treeNode);
+            }else {
+                deleteSelect(treeNode.srvReqTypeId);
+            }
+
+        };
+        //叶子节点不显示图标
+        function showIconForTree(treeId, treeNode) {
+            if (treeNode.leafNodeFlag) {
+                return false;
+            }else {
+                return  true;
+            }
+
+        };
+
+        var judgeStrInarr = function (nodeName) {
+            var keyWords = ["不知情办理", "不知情办理、取消或变更", "不知情办理/退订", "不知情开通或取消", "不知情入网", "对查询到的业务订购关系不认同", "未订购业务，但被扣费", "没有订购关系，但被扣费", "不知情定制", "不知情兑换"];
+            for (var i = 0; i < keyWords.length; i++) {
+                var ele = keyWords[i];
+                if (nodeName.indexOf(ele) >= 0) {
+                    return true;
+                }
+            }
+        }
+        var judgeNumInarray = function (flagnum) {
+            var flagNumber = ['401', '402', '403', '404', '447'];
+            return $.inArray(flagnum, flagNumber) >= 0? true:false
+        }
+        // 服务请求关键字标红
+        var treeFontColor = function (treeId, treeNode) {
+            var flagnum = treeNode.srvReqTypeId.substr(0, 3);
+            var nodeName = treeNode.srvRequestName;
+            if (judgeNumInarray(flagnum)) {
+                if (treeNode.srvReqTypeId.length >= 18 && treeNode.srvReqTypeId.length <= 21 && judgeStrInarr(nodeName)) {
+                    return { color: "#cc0000" };
+                } else {
+                    return { color: '#000' }; 
+                }
+            } else {
+                return { color: '#000' };
+            }
+        }
+        var zTreeInit = function(nodeDate) {
+            $("#serviceRest-data").html("");
+            var treeConfig = {
+                hasLine: false,//是否有节点连线
+                callback: {
+                    onClick: zTreeOnClick, //点击事件
+                    onExpand:zTreeOnExpand,//节点展开
+                    onCheck:zTreeOnCheck//勾选/取消复选框
+                },
+
+                data: {
+                    simpleData: {
+                        enable:true,
+                        idKey: "srvReqTypeId",  //节点数据中保存唯一标识的属性名称
+                        pIdKey: "suprSrvReqstTypeId",    //节点数据中保存其父节点唯一标识的属性名称
+                        rootPId: 0 //用于修正根节点父节点数据，即 pIdKey 指定的属性值
+                    },
+                    key: {
+                        name: "srvRequestName"  //zTree 节点数据保存节点名称的属性名称  默认值："name"
+                    }
+                },
+                check:{
+                    enable: true,
+                    chkStyle: "checkbox",
+                    chkboxType: { "Y": "ps", "N": "ps" }
+                },
+                view:{
+                    fontCss: treeFontColor,
+                    showIcon:showIconForTree,
+                    showLine: false,
+                    dblClickExpand: false//关闭双击展开事件
+                    //expandSpeed: "",//不显示节点展开、折叠时的动画
+                }
+
+            };
+            zTreeObj = $.fn.zTree.init($('#serviceRest-data'), treeConfig, nodeDate);//初始化
+
+            $("#serviceRest-data").find("li").each(function () {
+                $(this).find("a").removeClass("curSelectedNode");
+                $(this).find("span.button.chk").css("marginLeft","-7px");
+
+
+            })
+            //zTreeObj.refresh();
+        }
+        var feedbackSend = function(knwlgId,knwlgName,templateId,websiteAtomId){
+            knwlgNM = knwlgName;
+            knwlg_id = knwlgId;
+            tmpltId = templateId;
+            atomId = websiteAtomId;
+            var config = {
+                type: 'post',
+                url: Constants.AJAXURL + '/knowledge/getServiceNode',
+                data: {knwlgId:knwlgId},
+                dataType: 'json',
+                success: function (data,textStatus) {
+                    if (textStatus !== "success") {
+
+                        return false;
+                    }
+                    if (data.returnCode !== '0') {
+
+                        $('#serviceBtn').hide();
+                        return false;
+                    }
+                    if (data.object === null || data.object === undefined) {
+
+                        return false;
+                    }
+                    nodeDate = data.object;
+                    var archiveData = Util.hdb.compile(archive);
+                    var serviceNode = archiveData(nodeDate);
+                    var body = $("body");
+                    // phoneNumber = body.attr("phoneNum");
+                    // serialNum= body.attr("serialNum");
+                    // var serviceRest = $("#serviceRest");
+                    // $("#serviceRest").remove();
+                    body.addClass('skin-dark');
+                    body.append(serviceNode);
+                    $("#serviceRest").hide();
+                    // 增加事件处理，可以和外部交互
+                    Util.eventTarget.call(this);
+                    eventInit();
+                    this.$el = body;
+                    zTreeInit(nodeDate);
+                    // <editor-fold desc="神策埋点开关控制">
+                    if (KmUtil.getOriginType("http://") || KmUtil.getOriginType("https://")) {
+                        Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                            if (data.returnCode == 0 && data.object == "true") {
+                                sensorsDataInit();
+                            }
+                        });
+                    }
+                    // </editor-fold>
+                    click_serviceBtn_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    new MyAlert({'type': 'error', 'text': errorThrown});
+                }
+            };
+            Util.ajax.ajax(config);
+
+        };
+        var spreadFunc= function(){
+            $("#spread").unbind().click(function () {
+                $("#spread").html("");
+                if($("#textShow").hasClass("close")){
+                    $("#textShow").removeClass("close");
+                    $("#spread").html("收起");
+                }else{
+                    $("#textShow").addClass("close");
+                    $("#spread").html("展开");
+                }
+            })
+        }
+
+        $.extend(feedbackSend.prototype, Util.eventTarget.prototype,{
+            open:function(data){
+                if(data) {
+                    data=data.replaceAll("<br>"," ");
+                    data=data.replaceAll("<br/>"," ");
+                    data=data.replaceAll("<BR>"," ");
+                    $(".km-srn-guide").find("div").html(data);
+                    $(".km-srn-guide").show();
+                    if (data.length <= 116) {
+                        $(".km-srn-guide").find("a").hide();
+                    } else {
+                        $("#textShow").addClass("close");
+                        $("#spread").html("展开");
+                        spreadFunc();
+                    }
+                }else{
+                    $(".km-srn-guide").hide();
+                }
+
+                $("#serviceRest").show();
+                $("#serviceRest-input").val("");
+                //doSearch("");
+            },
+            close:function(){
+                $("#serviceRest").hide();
+            }
+        });
+
+        return feedbackSend;
+    });
+

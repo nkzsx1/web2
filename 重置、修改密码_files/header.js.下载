@@ -1,0 +1,276 @@
+/**
+ * 用于扩展文件
+ */
+var urlParameter;
+var start = new Date();
+var getUrlParameter = function(key){
+    if(urlParameter){
+        return urlParameter[key];
+    }
+    urlParameter = {};
+    var searchURL = decodeURI(window.location.href);
+    var begin = searchURL.indexOf("?");
+    searchURL = searchURL.substr(begin+1);
+    var query = decodeURI(searchURL);
+    var pairs = query.split("&"); //在逗号处断开
+    for (var i = 0; i < pairs.length; i++) {
+        var k_v = pairs[i].split("=");
+        if(k_v.length <= 1){
+            continue;
+        }
+        urlParameter[k_v.splice(0, 1).join("=")] = k_v.join("=");
+    }
+    return urlParameter[key];
+};
+
+knwlgId = getUrlParameter("knwlgId");
+//url参数中未取到知识id 再尝试从路径链接中截取
+if(!knwlgId){
+    var searchURL = decodeURI(window.location.href);
+    searchURL = searchURL.substr(0, searchURL.indexOf("?"));
+    var fileNm = searchURL.substr(searchURL.lastIndexOf("/") + 1);
+    knwlgId  = fileNm.split("_")[0];
+    searchURL = null;
+    fileNm = null;
+}
+verNo = getUrlParameter("verNo");
+url_prefix = getUrlParameter("url_prefix");
+if(!url_prefix){
+    url_prefix = "/ngkm/src";
+}
+/*
+var link1 = document.createElement("link");
+link1.href = url_prefix + "/assets/css/km-two.css";
+link1.rel = "stylesheet";
+link1.type = "text/css";
+var link2 = document.createElement("link");
+link2.href = url_prefix + "/js/components/knowledgeTree/css/zTreeStyle/zTreeStyle.css";
+link2.rel = "stylesheet";
+link2.type = "text/css";
+
+var head = document.getElementsByTagName("head")[0];
+head.appendChild(link1);
+head.appendChild(link2);*/
+
+var getParam = function(key){
+    var searchURL = decodeURI(window.location.href);
+    var begin = searchURL.indexOf("?");
+    searchURL = searchURL.substr(begin+1);
+    var query = decodeURI(searchURL);
+    var pairs = query.split("&"); //在逗号处断开
+    for (var i = 0; i < pairs.length; i++) {
+        var pos = pairs[i].indexOf('='); //查找name=value
+        if (pos == -1) continue; //如果没有找到就跳过
+        var argname = pairs[i].substring(0, pos); //提取name
+        if(argname == key){
+            var param =  pairs[i].substring(pos + 1);
+            if(param.indexOf("#") != -1){
+                var attr = param.split('#');
+                param = attr[0];
+            }
+            return param;
+        }
+    }
+    return null;
+};
+var sysCodeId = getParam("sysCode"); //外系统编码
+if(document.documentMode !== 8 || document.documentMode == 8 && sysCodeId !== 'ngso'){
+    //gis请求加载获取请求参数
+    var uuidFast = function (len, radix) {
+        var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+        var uuid = [], i;
+        radix = radix || chars.length;
+        if (len) {
+            for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix];
+        } else {
+            var r;
+            uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
+            uuid[14] = '4';
+            for (i = 0; i < 36; i++) {
+                if (!uuid[i]) {
+                    r = 0 | Math.random() * 16;
+                    uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
+                }
+            }
+        }
+        return uuid.join('');
+    };
+    var _root = window.location.host;
+    var gisIp;
+    var businessId;
+    var basepassword = 123456;
+    var picSrcId = '89a91d25c32e4b6da569c46c7f4b82e7';
+    var httpType = window.location.protocol;
+    var envFlag = window.localStorage.getItem("envFlag");
+    if(_root.indexOf("192.168.27.51")>-1||_root.indexOf("192.168.100.36")> -1 || _root.indexOf("127.0.0.1")> -1||_root.indexOf("localhost")> -1){
+        //对应郑州测试gis
+        gisIp = "http://gistest.cmos";
+        businessId ="f48b108854154d579b2991489ea7e8f8";
+        basepassword = 12345678;
+    } else if(_root.indexOf("172.20.118.15") > -1){
+        //对应洛阳测试gis
+        gisIp = "http://172.20.118.15:10010/cascontrol";
+        businessId ="a2b461af750b491dbe044f7569501be1";
+    }else if(_root.indexOf("172.20.127.233") > -1 || _root.indexOf("ngkm.cs.cmos:8080") > -1 || _root.indexOf("ngkm-crm.cs.cmos:8080") > -1 || 'test' == envFlag){
+        //对应淮安测试gis
+        gisIp = "http://gistest.cmos";
+        businessId ="f48b108854154d579b2991489ea7e8f8";
+        basepassword = 12345678;
+    }else{
+        //生产环境gis
+        if ('https:' == httpType) {
+            gisIp = "https://gis.cs.cmos:21001/cascontrol";
+        } else {
+            gisIp = "http://gis.cmos:21000/cascontrol";
+
+        }
+        businessId ="f48b108854154d579b2991489ea7e8f8";
+    }
+    /*日志平台获取uuid*/
+    var uuid = uuidFast(22);
+    var password =basepassword + uuid;
+    password = hex_md5(password);
+    password = password.toUpperCase();
+    var gisSrc= '';
+    if ('https:' == httpType) {
+        gisSrc=gisIp+ '/getGis?requestSeq='+uuid+'&businessId='+businessId +'&password='+password+'&version=1.0.3'+'&picSrcId=' + picSrcId;
+    } else {
+        gisSrc=gisIp+ '/getGis?requestSeq='+uuid+'&businessId='+businessId +'&password='+password+'&version=1.0.3';
+    }
+
+    //异步加载sdk，可根据自身情况来实现异步
+    var CMap;
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.src = gisSrc;
+    script.type = 'text/javascript';
+    script.id = 'LoadGis';
+    head.appendChild(script);
+    script.onload = script.onreadystatechange =function (){
+        //创建地图
+        //只有在sdk加载完成之后才可以调取sdk内部的方法
+        isSDKloaded();
+        function isSDKloaded(){
+            if(!CMap){
+                setTimeout(isSDKloaded,500);
+            }
+        }
+    };
+    //防止网络超时加载时间过长，2s后删除鉴权请求，时间长短可以自己控制
+    setTimeout(function () {
+        var gis=document.getElementById("LoadGis");
+        var parent=gis.parentElement;
+        parent.removeChild(gis);
+    },2000)
+}var getParam = function(key){
+    var searchURL = decodeURI(window.location.href);
+    var begin = searchURL.indexOf("?");
+    searchURL = searchURL.substr(begin+1);
+    var query = decodeURI(searchURL);
+    var pairs = query.split("&"); //在逗号处断开
+    for (var i = 0; i < pairs.length; i++) {
+        var pos = pairs[i].indexOf('='); //查找name=value
+        if (pos == -1) continue; //如果没有找到就跳过
+        var argname = pairs[i].substring(0, pos); //提取name
+        if(argname == key){
+            var param =  pairs[i].substring(pos + 1);
+            if(param.indexOf("#") != -1){
+                var attr = param.split('#');
+                param = attr[0];
+            }
+            return param;
+        }
+    }
+    return null;
+};
+var sysCodeId = getParam("sysCode"); //外系统编码
+if(document.documentMode !== 8 || document.documentMode == 8 && sysCodeId !== 'ngso'){
+    //gis请求加载获取请求参数
+    var uuidFast = function (len, radix) {
+        var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+        var uuid = [], i;
+        radix = radix || chars.length;
+        if (len) {
+            for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix];
+        } else {
+            var r;
+            uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
+            uuid[14] = '4';
+            for (i = 0; i < 36; i++) {
+                if (!uuid[i]) {
+                    r = 0 | Math.random() * 16;
+                    uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
+                }
+            }
+        }
+        return uuid.join('');
+    };
+    var _root = window.location.host;
+    var gisIp;
+    var businessId;
+    var basepassword = 123456;
+    var picSrcId = '89a91d25c32e4b6da569c46c7f4b82e7';
+    var httpType = window.location.protocol;
+    var envFlag = window.localStorage.getItem("envFlag");
+    if(_root.indexOf("192.168.27.51")>-1||_root.indexOf("192.168.100.36")> -1 || _root.indexOf("127.0.0.1")> -1||_root.indexOf("localhost")> -1){
+        //对应郑州测试gis
+        gisIp = "http://gistest.cmos";
+        businessId ="f48b108854154d579b2991489ea7e8f8";
+        basepassword = 12345678;
+    } else if(_root.indexOf("172.20.118.15") > -1){
+        //对应洛阳测试gis
+        gisIp = "http://172.20.118.15:10010/cascontrol";
+        businessId ="a2b461af750b491dbe044f7569501be1";
+    }else if(_root.indexOf("172.20.127.233") > -1 || _root.indexOf("ngkm.cs.cmos:8080") > -1 || _root.indexOf("ngkm-crm.cs.cmos:8080") > -1 || 'test' == envFlag){
+        //对应淮安测试gis
+        gisIp = "http://gistest.cmos";
+        businessId ="f48b108854154d579b2991489ea7e8f8";
+        basepassword = 12345678;
+    }else{
+        //生产环境gis
+        if ('https:' == httpType) {
+            gisIp = "https://gis.cs.cmos:21001/cascontrol";
+        } else {
+            gisIp = "http://gis.cmos:21000/cascontrol";
+
+        }
+        businessId ="f48b108854154d579b2991489ea7e8f8";
+    }
+    /*日志平台获取uuid*/
+    var uuid = uuidFast(22);
+    var password =basepassword + uuid;
+    password = hex_md5(password);
+    password = password.toUpperCase();
+
+    var gisSrc= '';
+    if ('https:' == httpType) {
+        gisSrc=gisIp+ '/getGis?requestSeq='+uuid+'&businessId='+businessId +'&password='+password+'&version=1.0.3'+'&picSrcId=' + picSrcId;
+    } else {
+        gisSrc=gisIp+ '/getGis?requestSeq='+uuid+'&businessId='+businessId +'&password='+password+'&version=1.0.3';
+    }
+
+    //异步加载sdk，可根据自身情况来实现异步
+    var CMap;
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.src = gisSrc;
+    script.type = 'text/javascript';
+    script.id = 'LoadGis';
+    head.appendChild(script);
+    script.onload = script.onreadystatechange =function (){
+        //创建地图
+        //只有在sdk加载完成之后才可以调取sdk内部的方法
+        isSDKloaded();
+        function isSDKloaded(){
+            if(!CMap){
+                setTimeout(isSDKloaded,500);
+            }
+        }
+    };
+    //防止网络超时加载时间过长，2s后删除鉴权请求，时间长短可以自己控制
+    setTimeout(function () {
+        var gis=document.getElementById("LoadGis");
+        var parent=gis.parentElement;
+        parent.removeChild(gis);
+    },2000)
+}

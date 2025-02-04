@@ -1,0 +1,951 @@
+define([
+    'Util', "jquery", 'js/knowledge/dialog', 'js/knowledge/search/knowledgeSearch', 'js/knowledge/conMethod', 'js/knowledge/jumpTo/navigateBars', 'js/constants/kmUtil', 'js/constants/constants',
+    'text!modules/knowledgeAppNew/knowledgeInfoRelate.tpl', 'text!modules/knowledgeAppNew/knowledgeEvaluateNew.tpl',
+    'text!modules/knowledge/offside/browseKnowledge.tpl', 'js/personalCenterNew/klgFdbkSend'
+], function (Util, $, dialog, knowledgeSearch, conMethod, navigateBars, kmUtil, Constants, klgInfoRelate, knowledgeEvaluate, browseKnowledge, klgFdbkSend) {
+    var $detailRight = $(".detail-right");
+    var $detailLeft = $(".detail-left");
+    var $layout = $("#layout");
+    var evaluateFlag=false;
+    var fdbkId="";
+    var fdbkSend=null;
+
+
+
+    window.autoFdbkFlag=false;
+    
+    var $ralateKnowledge = $detailRight.find("#ralateKnowledge");
+    var keyWord = kmUtil.getUrlParamter("keyWord"); //关键词
+    keyWord = Constants.kmDecodeURl(decodeURIComponent(keyWord));
+    var light = kmUtil.getUrlParamter("light");//高亮设置
+    var evaluationTipsHtml = '<div class="klgevaluationTips" style="display: none; border-radius:5px; font-size: 12px; position: fixed; width: 165px;padding: 6px 15px 6px 6px;background-color: #5AB600;border: 1px solid #DFDFDF;z-index: 1000;-webkit-box-shadow: 0 2px 6px #ccc;box-shadow: 0 2px 6px #ccc;">\
+    <div style="width: 0; height: 0; border: 8px solid #5AB600; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 8px solid transparent; position: absolute; top: 6px; right: -13px"></div>\
+    <span style="color: #fff;">您好，请对知识质量进行评价！</span>\
+    <i style="color: #fff; cursor: pointer; position: absolute; top: 14px; right: 2px;" class="icon km-guanbi i-curr-bg tip-close"></i>\
+  </div>';
+    //注入判断数组长度
+    Util.hdb.registerHelper('if_array_length', function (context, options) {
+        if (context && context.length > 0) {
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    });
+    Util.hdb.registerHelper('if_empty_length', function (context, options) {
+        if (!context || context.length === 0) {
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    });
+    Util.hdb.registerHelper('if_isHidden', function (recessivityFlag, options) {
+        if (recessivityFlag == 1) {
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    });
+    Util.hdb.registerHelper('isHiddenClass', function (recessivityFlag, state) {
+        return recessivityFlag == 1 && (status == 0 || status == 1) ? "r-tag-two" : "r-tag-one";
+    });
+    Util.hdb.registerHelper('if_status', function (status, options) {
+        if (status == 0 || status == 1) {
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    });
+    Util.hdb.registerHelper('statusClass', function (status) {
+        return status == 0 ? "status ready" : "status dated";
+    });
+    Util.hdb.registerHelper('statusTxt', function (status) {
+        return status == 0 ? "未上线" : "已下线";
+    });
+
+
+
+    var evaluation = {
+
+    }
+
+    //知识评价综合得分
+    // var getEvaluate = function () {
+    //     var type = "detail";
+    //     Util.ajax.ajax({
+    //         type: 'post',
+    //         url: Constants.AJAXURL + '/evaluate/getEvaluate',
+    //         data: {knwlgId: knwlgId, verNo: verNo, type: type, _v: new Date().getTime()}, //要传递给url的数据
+    //         dataType: 'json', //返回值的数据类型
+    //         async: true,
+    //         success: function (result) {
+    //             if (result.returnCode == "-1") {
+    //                 dialog.alert({type: 'confirm', message: result.returnMessage, falseShow: false})
+    //                 return false;
+    //             }
+    //             if (!result.object) {
+    //                 dialog.alert({type: 'confirm', message: result.returnMessage, falseShow: false})
+    //                 return false;
+    //             }
+    //             var resultEvaluate = result.object;
+    //             var templateEvaluate = Util.hdb.compile(knowledgeEvaluate);
+    //             $ralateKnowledge.append(templateEvaluate);
+    //             var evaluateValue = $ralateKnowledge.find(".evaluateValue");
+    //             if (resultEvaluate.isEvaluate == "0") {
+    //                 for (var i = 0; i < evaluateValue.size(); i++) {
+    //                     var ecaluateV = $(evaluateValue[i]);
+    //                     ecaluateV.addClass("km-duduyinleappicon2201");
+    //                     ecaluateV.attr("type", 1);
+    //                     ecaluateV.removeClass("km-shoucang");
+    //                     $ralateKnowledge.find("#submitEva").hide();
+
+    //                 }
+    //             } else {
+    //                 $ralateKnowledge.find(".kmnew-rate-form").show();
+    //                 $ralateKnowledge.find(".kmnew-rate-btns").hide();
+    //                 $ralateKnowledge.find("#ortherTexts").hide();
+    //                 $ralateKnowledge.find("#submitEva").show();
+    //                 getEvaluationTips();
+    //             }
+    //             var evaluateAvg = resultEvaluate.evaluateAvg;
+    //             $ralateKnowledge.find("#evaluateAvg").html("(综合得分：" + evaluateAvg + ")");
+    //             if (keyWord && keyWord != "null" && light === "0") {
+    //                 knowledgeSearch.highlight($detailRight.find("#ralateKnowledge"), keyWord);
+    //             }
+    //             getAppraise();
+    //         },  //url调用成功后执行的回调函数
+    //         error: function (jqXHR, textStatus, errorThrown) {
+    //             dialog.alert({type: 'error', message: errorThrown, falseShow: false})
+
+    //         }  //url调用失败后执行的回调函数
+    //     });
+    // };
+
+    var getEvaluate = function () {
+        var type = "detail";
+        Util.ajax.ajax({
+            type: 'post',
+            url: Constants.AJAXURL + '/evaluate/getEvaluate',
+            data: {knwlgId: knwlgId, verNo: verNo, type: type, _v: new Date().getTime()}, //要传递给url的数据
+            dataType: 'json', //返回值的数据类型
+            async: true,
+            success: function (result) {
+                if (result.returnCode == "-1") {
+                    dialog.alert({type: 'confirm', message: result.returnMessage, falseShow: false})
+                    return false;
+                }
+                if (!result.object) {
+                    dialog.alert({type: 'confirm', message: result.returnMessage, falseShow: false})
+                    return false;
+                }
+                var resultEvaluate = result.object;
+                var templateEvaluate = Util.hdb.compile(knowledgeEvaluate);
+                $ralateKnowledge.append(templateEvaluate);
+                var evaluateValue = $ralateKnowledge.find(".evaluateValueNum");
+                if (resultEvaluate.isEvaluate == "0") {
+                    for (var i = 0; i < evaluateValue.size(); i++) {
+                        var ecaluateV = $(evaluateValue[i]);
+                        ecaluateV.attr("type", 1);
+                        $ralateKnowledge.find("#submitEva").hide();
+                    }
+                    evaluation['usefulness'] = parseFloat(resultEvaluate.useEvaluateEffect) * 2;
+                    evaluation['understand'] = parseFloat(resultEvaluate.useEvaluateUnderstand) * 2;
+                    evaluation['simplicity'] = parseFloat(resultEvaluate.useEvaluateConcise) * 2;
+                    evaluation['aging'] = parseFloat(resultEvaluate.useEvaluateTime) * 2;
+                    $('#com-score').find('.tip-text').text(parseFloat(resultEvaluate.evaluateAvg) * 2);
+                    initEvaluate();
+                } else {
+                    $ralateKnowledge.find(".kmnew-rate-form").show();
+                    $ralateKnowledge.find("#submitEva").show();
+                    getEvaluationTips();
+                }
+                var evaluateAvg = isNaN(resultEvaluate.evaluateAvg)?'无': parseFloat(resultEvaluate.evaluateAvg) * 2;
+                $ralateKnowledge.find("#evaluateAvg").html("(综合得分：" + evaluateAvg + ")");
+                if (keyWord && keyWord != "null" && light === "0") {
+                    knowledgeSearch.highlight($detailRight.find("#ralateKnowledge"), keyWord);
+                }
+                getAppraise();
+            },  //url调用成功后执行的回调函数
+            error: function (jqXHR, textStatus, errorThrown) {
+                dialog.alert({type: 'error', message: errorThrown, falseShow: false})
+
+            }  //url调用失败后执行的回调函数
+        });
+    };
+    var getklgVerNo = function(){
+        Util.ajax.getJsonAsync(Constants.AJAXURL + '/knowledge/getklgVerNo', {"knwldgeId": knwlgId})
+            .done(function (data, state) {
+                if (state) {
+                    var displyFlag = data.bean.displyFlag;
+                    if (displyFlag == "0") {
+                        $('.klgevaluationTips').css('left', $('#evaluateAvg').offset().left + 25);
+                        $detailLeft.css("right","");
+                        $detailRight.css("winth","");
+                        var closeRight = $detailLeft.find("#closeRight");
+                        $layout.addClass("close-view");
+                        closeRight.find("span").html("展开右侧");
+                        closeRight.find("i").removeClass("km-arrow_r").addClass("km-arrow_l");
+                    }
+                }
+            }).fail(function (data) {
+
+        });
+    }
+    // 评价提醒
+    var getEvaluationTips = function () {
+        $detailRight.after(evaluationTipsHtml);
+        $('.klgevaluationTips').css('top',$('#evaluateAvg').offset().top);
+        $('.klgevaluationTips').css('left', $('#evaluateAvg').offset().left - 250);
+        Util.ajax.ajax({
+            type: "get",
+            url: Constants.AJAXURL + '/prompt/getEvaluateTip',//接受请求的地址
+            data: {'knwlgId': knwlgId},  //要传递给url的数据
+            dataType: 'json',
+            success: function (result, isOk) {
+                getklgVerNo();
+                if (!isOk) {
+                    return false;
+                }
+                if (result.object) {
+                    $('.klgevaluationTips').show();
+                }else{
+                    $('.klgevaluationTips').hide();
+                }
+            },
+            error: function (jqXHR, textStatus) {
+
+            }
+        })
+    }
+    var getAppraise = function (){
+        Util.ajax.ajax({
+            type: 'get',
+            url: Constants.AJAXURL + '/appraise/get',
+            data: {knwlgId: knwlgId, verNo: verNo, _v: new Date().getTime()}, //要传递给url的数据
+            dataType: 'json', //返回值的数据类型
+            async: true,
+            success: function (result) {
+                if (result.object) {
+                    var $praise = $('#praise');
+                    var $thread = $('#thread');
+                    if(result.object.appraiseVal === '1'){
+                        $praise.find('img').attr('src','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAY5JREFUOE+d0k1IVFEABeBz7p1mdEQFM/B33tu1ayEZJe0i3GmgW8E2ERhpi1pEi6CVLYZ5Ey5DVxoEgQiSKzfjvGmpG7czCIGgtJDMpnn3RONPETwY567P+bjncomYM1/obm+xbcsUb8kg9y1RDV7f/Hr8f5xxQK40cINKFAi0AzhRpInZu5X1hoH8VmYSxnw8L4h6Mnu7stA4UPLeQnxeL0gRwKmnI+WVeEA4nUPoz/7WRNsGxDv1PnTgLO/PDZe3zwESqsezxYH+K7LXIyptyajWwtAeuT4kzWcIg6cFHUr4QNJcTJK+y2iVQcl/CME7C/4yKbfofiS7aKP1v0DcU2OP+dB7JTBxdtWqjdySY2OAhCPmv3gv5ZhsBiCwyyDMvABMuhlAwBrfhf4zB3Q2ByjLoOjNgLzWDAC5xwyKmUeg6bs0IPwU8ID50J8W4F8WELDPGkeZKwyO0dqhfwEY2yFiA0Am9gcAO9WT6j0ubPo9UQrjInoF1ZyiRWNw1ch+AtgfA+w76c3cSOX9bwvw2r+sYBJJAAAAAElFTkSuQmCC');
+                        $praise.find('span').html('已赞');
+                    }else{
+                        $thread.find('img').attr('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAVFJREFUOE+d0j9LlXEYxvHPfTyRBJJEU6JWi1MEDc0tLg3GMSIIGlyaXCJoyV5GS0ZbJdE5ZqtGUr2CGhubyjLQmvJ57niejmJyiOP5jdd98f3df67ItknhinRC2LRjEWc0vZLG9Hrhi3AnWtqRbTO4UPvShrIGTBjyWpjoCfgrvrFjOrJjTpqspbBh2CO/nVZYxfh/AJ8MuVR1cAunDg1Im9LlyGXzSicPDaAQrlcj3JaODwCoRr5fjXAXxwYCsBT5wj3hyECA9KHawYJScyAAW/+eseGboxb7PGP15+fI58Y0TdV7CD+Neu+Hs1jbl4PvWBIae7ko/NKwErtCVjutsyRz2aj0Fue69a9K0676uOuPkF1/76xlx2PMdavVzW9Gy7OD7r0ODhbypRtKT/bp8zHrQf+AjvN4hxFsK8zENev9A1aMKDzFxTpxLQ97DfsHk7CAe/F+0yMAAAAASUVORK5CYII=');
+                        $thread.find('span').html('已踩');
+                    }
+                    $praise.css('pointer-events','none').css('color','#999').unbind('click').attr('disabled','disabled');
+                    $thread.css('pointer-events','none').css('color','#999').unbind('click').attr('disabled','disabled');
+                }
+            },  //url调用成功后执行的回调函数
+            error: function (jqXHR, textStatus, errorThrown) {
+                dialog.alert({type: 'error', message: errorThrown, falseShow: false})
+            }  //url调用失败后执行的回调函数
+        });
+
+    }
+    //关联知识,互斥知识排序
+    var knowleRelateSort = function (sortingRule, knowType) {
+        $ralateKnowledge = $detailRight.find("#ralateKnowledge");
+        //获取关联/互斥知识集合
+        if (knowType == 'GL') {
+            var elContent = $ralateKnowledge.find('.right-words:first');
+            var knowledgePx = $detailRight.find("#ralateKnowledge").find('.km-paixu:first');
+        } else if (knowType == 'HC') {
+            var elContent = $ralateKnowledge.find('.right-words:last');
+            var knowledgePx = $ralateKnowledge.find('.km-paixu:last');
+        }
+        //关联/互斥知识a标签对象
+        var idEleRalate = elContent.find('a');
+        var knwldgeIds = "";//拼接id
+        $.each(idEleRalate, function (idx, item) {
+            if (idx == idEleRalate.length - 1) {
+                knwldgeIds = knwldgeIds + item.id;
+            } else {
+                knwldgeIds = knwldgeIds + item.id + ',';
+            }
+        });
+        Util.ajax.ajax({
+            type: "get",
+            url: Constants.AJAXURL + '/knowledge/relateSort',//接受请求的地址
+            data: {'knwldgeIds': knwldgeIds, 'sortingRule': sortingRule, '_v': new Date().getTime()},  //要传递给url的数据
+            dataType: 'json',
+            success: function (result, isOk) {
+                if (!isOk) {
+
+                    return false;
+                }
+                var relateKmInfo = (result && result.object && result.object.rltKnwlgItems) || [];
+                //刷新关联或互斥知识区域
+
+                var knowHtml = Util.hdb.compile(browseKnowledge)(relateKmInfo);
+                elContent.html(knowHtml);
+                knowledgePx.addClass('selected');
+                var eljt = knowledgePx.find('i');
+                //排序标识变更
+                if (sortingRule == 'hits=T') {
+                    eljt.removeClass('km-xjt').addClass('km-shangjiantou');
+                } else if (sortingRule == 'hits=F') {
+                    eljt.removeClass('km-shangjiantou').addClass('km-xjt');
+                }
+                //search("ralateKnowledge");//高亮
+                var inputKeyWord = $("#topSearchInput").varl();
+                if (inputKeyWord && inputKeyWord != "搜索关键字" && inputKeyWord != "未搜索到相关内容" && light === "0") {
+                    knowledgeSearch.highlight($detailRight, inputKeyWord);
+                }
+
+            },
+            error: function (jqXHR, textStatus) {
+
+            }
+        })
+
+    }
+    $detailRight.on("click", "a.km-paixu", function () {
+        var $this = $(this);
+        var linkType = $this.next("a").attr("id");
+        if (linkType == "rltKnwlg") {
+            //关联知识排序
+            var knowType = "GL";
+            var idEleRalate = $ralateKnowledge.find('.right-words:first').find('a');//关联
+            var KnowledgePx = $ralateKnowledge.find('.km-paixu:first');//关联
+        } else if (linkType == "mutexRltKnwlg") {
+            //互斥知识排序
+            var knowType = "HC";
+            var idEleRalate = $ralateKnowledge.find('.right-words:last').find('a');//互斥
+            var KnowledgePx = $ralateKnowledge.find('.km-paixu:last');//互斥
+        }
+        if (idEleRalate.length > 0) {
+            if ($this.hasClass('selected')) {
+                var eljt = $this.find('i');
+                if (eljt.hasClass('km-shangjiantou')) {
+                    knowleRelateSort('hits=F', knowType);
+                } else if (eljt.hasClass('km-xjt')) {
+                    knowleRelateSort('hits=T', knowType);
+                }
+            } else {
+                $this.addClass('selected');
+                knowleRelateSort('hits=F', knowType);
+            }
+        }
+
+    })
+    $detailRight.unbind('scroll').bind("scroll",function () {
+        $('.klgevaluationTips').css('top',$('#evaluateAvg').offset().top);
+    })
+    $('.wrap-inner').on('click','i.tip-close', function () {
+        $('.klgevaluationTips').hide();
+    })
+    //获取关联、互斥知识
+    var relateKnwlg = function () {
+        Util.ajax.ajax({
+            type: "get",
+            url: Constants.AJAXURL + '/knowledge/relate',
+            data: {knwldgeId: knwlgId, verNo: "", _v: new Date().getTime()},
+            dataType: 'json', //返回值的数据类型
+            success: function (result, isOk) {
+                if (isOk === false) {
+
+                    return false;
+                }
+                var relateKmInfo = result.object;
+                //注册一个判断相等的Helper,判断v1是否等于v2
+                Util.hdb.registerHelper("equal", function (v1, v2, options) {
+                    if (v1 === v2) {
+                        //满足添加继续执行
+                        return options.fn(this);
+                    } else {
+                        //不满足条件执行{{else}}部分
+                        return options.inverse(this);
+                    }
+                });
+                var templateRelate = Util.hdb.compile(klgInfoRelate);
+                var relateklgRight = templateRelate(relateKmInfo);
+                $ralateKnowledge.html(relateklgRight);
+                //如果关联关系知识标题过长展示...
+                var posi;
+                var catlNm;
+                // $ralateKnowledge.find(".seriesRltKnwlg").each(function () {
+                //     catlNm = $(this).text();
+                //     posi = catlNm.indexOf("<");
+                //     if (posi >= 0) {
+                //         $(this).text(catlNm.substring(0, posi + 1) + "...");
+                //     }
+                // })
+                //知识评价综合得分
+                fdbkSend=new klgFdbkSend.feedbackSend(knwlgId, $("#knwlgNm").val(), '1');
+                getEvaluate();
+                if (relateKmInfo) {
+                    navigateBars.knwlgAddRelate(relateKmInfo);//知识详情下方增加关联知识展示
+                }
+            },
+            error: function (jqXHR, textStatus) {
+
+            }
+        });
+    }
+    //知识属性隐藏/展示
+    var knowledgeAttr = function (obj) {
+        var _this = $(obj);
+        var i = _this.find("i");
+        if (i.hasClass("km-xialajiantou")) {
+            i.removeClass("km-xialajiantou").addClass("km-shanglajiantou");
+            _this.parent().next().next().removeClass("hide");
+        } else {
+            i.removeClass("km-shanglajiantou").addClass("km-xialajiantou");
+            _this.parent().next().next().addClass("hide");
+        }
+    }
+    //关联、互斥、关联业务树、知识评价隐藏/展示
+    var relateKlg = function (obj) {
+        var _this = $(obj);
+        var i = _this.find("i");
+        if (i.hasClass("km-shanglajiantou")) {
+            i.removeClass("km-shanglajiantou").addClass("km-xialajiantou");
+            _this.parent().next().hide();
+        } else {
+            i.removeClass("km-xialajiantou").addClass("km-shanglajiantou");
+            _this.parent().next().show();
+        }
+    }
+    // 提交评价按钮是否可用 
+    var judgeBtnState = function () {
+        var usefulness_num = $("#usefulness").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var understand_num = $("#understand").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var simplicity_num = $("#simplicity").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var aging_num = $("#aging").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var com_score_num = $("#com-score").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var quickChked = $detailRight.find("a.quickOptions.chked");
+
+        var submitEva = $detailRight.find("#submitEva");
+        if (usefulness_num == 0 || understand_num == 0 || simplicity_num == 0 || aging_num == 0 || com_score_num == 0) {
+            submitEva.removeClass("disabled");
+            submitEva.addClass("disabled");
+            return false;
+        } else {
+            if ((quickChked && quickChked.size() != 0) || (usefulness_num >= 4 && understand_num >= 4 && simplicity_num >= 4 && aging_num >= 4 && com_score_num >= 4)) {
+                if (usefulness_num >= 4 && understand_num >= 4 && simplicity_num >= 4 && aging_num >= 4 && com_score_num >= 4) {
+                    $detailRight.find(".kmnew-rate-btns").hide();
+                    $detailRight.find("#ortherTexts").hide();
+                }
+                submitEva.removeClass("disabled");
+            } else {
+                submitEva.removeClass("disabled");
+                submitEva.addClass("disabled");
+                return false;
+            }
+        }
+    }
+
+    // 
+    var judgeBtnStatetips = function () {
+        var usefulness_num = $("#usefulness").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var understand_num = $("#understand").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var simplicity_num = $("#simplicity").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var aging_num = $("#aging").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var com_score_num = $("#com-score").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var quickChked = $detailRight.find("a.quickOptions.chked");
+
+        if (usefulness_num == 0 || understand_num == 0 || simplicity_num == 0 || aging_num == 0 || com_score_num == 0) {
+            dialog.alert({type: 'error', message: "每级评价请至少选择一颗星星！", falseShow: false})
+            return false;
+        } else {
+            if ((quickChked && quickChked.size() != 0) || (usefulness_num >= 4 && understand_num >= 4 && simplicity_num >= 4 && aging_num >= 4 && com_score_num >= 4)) {
+                return true;                
+            } else {
+                dialog.alert({type: 'error', message: "若有评价少于四颗星，至少选择一个快捷选项再提交！", falseShow: false})
+                return false;
+            }
+        }
+    }
+    
+    //提交知识评价
+    var submitEvaluate = function (usefulness_num, understand_num, simplicity_num, aging_num, com_score_num, quickOptions, ortherTexts,isEvaluate,autoFdbkFlag,fdbkId) {
+        if(evaluateFlag==false){
+            evaluateFlag=true;
+            Util.ajax.ajax({
+                type: 'post',
+                url: Constants.AJAXURL + '/evaluate/submitEvaluate',
+                data: {
+                    isEvaluate:isEvaluate,
+                    knwlgId: knwlgId,
+                    useEvaluate: com_score_num,
+                    useEvaluateEffect: usefulness_num,
+                    useEvaluateUnderstand: understand_num,
+                    useEvaluateConcise: simplicity_num,
+                    useEvaluateTime: aging_num,
+                    quickOptions: quickOptions,
+                    ortherTexts: ortherTexts,
+                    autoFdbkFlag:autoFdbkFlag,
+                    fdbkId:fdbkId
+
+                }, //要传递给url的数据
+                dataType: 'json', //返回值的数据类型
+                async: true,
+                success: function (result) {
+                    evaluateFlag=false;
+                    if (result.returnCode !== "1") {
+                        dialog.alert({type: 'confirm', message: result.returnMessage, falseShow: false});
+                        return false;
+                    }
+                    dialog.alert({type: 'success', message: "提交成功!", falseShow: false});
+                    $('.klgevaluationTips').hide();
+                    var kmnewRate = $detailRight.find(".kmnew-rate-form");
+                    kmnewRate.show();
+                    $detailRight.find(".kmnew-rate-btns").hide();
+                    $detailRight.find("#ortherTexts").hide();
+                    $detailRight.find("#submitEva").hide();
+                    var evaluateValue = $(".evaluateValueNum");
+                    for (var i = 0; i < evaluateValue.size(); i++) {
+                        $(evaluateValue[i]).attr("type", 1);
+                    }
+                },  //url调用成功后执行的回调函数
+                error: function (jqXHR, textStatus, errorThrown) {
+                    dialog.alert({type: 'error', message: errorThrown, falseShow: false});
+
+                }  //url调用失败后执行的回调函数
+            });
+        }
+
+    };
+    //右侧知识内容展开/闭合
+    $detailRight.on("click", "a", function (event) {
+        var curr = event.srcElement || event.currentTarget;
+        var id = $(curr).attr("id");
+        switch (id) {
+            case "knwlgAtrr":
+                knowledgeAttr(this);
+                break;
+            case "rltKnwlg":
+            case "seriesRltKnwlg":
+            case "mutexRltKnwlg":
+            case "evaluateKnwlg":
+                relateKlg(this);
+                break;
+            default:
+                break;
+        }
+    })
+    //右侧点击知识、业务树跳转
+
+    $detailRight.on("click", "a", function (event) {
+        var curr = event.srcElement || event.currentTarget;
+        var id = $(curr).attr("id");
+        var name = $(curr).text();
+        var className = $(curr).attr("class");
+        switch (className) {
+            case "rltKnwlg":
+                conMethod.goKnowledgeDetail(name, id);
+                break;
+            case "seriesRltKnwlg":
+                conMethod.goBusinessTree(id);
+                break;
+            default:
+                break;
+        }
+    });
+    var clickflag = [];
+
+    var judgeShowHide = function () {
+        var usefulness_num = $("#usefulness").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var understand_num = $("#understand").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var simplicity_num = $("#simplicity").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var aging_num = $("#aging").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        var com_score_num = $("#com-score").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+        if (usefulness_num < 4 || understand_num < 4 || simplicity_num < 4 || aging_num < 4 || com_score_num < 4) {
+            $detailRight.find(".kmnew-rate-btns").show();
+            $detailRight.find("#ortherTexts").show();
+        }
+    }
+
+    //点击知识评价
+    $detailRight.on("click", ".evaluateValue", function () {
+        var _this = $(this);
+        var parent = _this.parents('ul');
+        var id = parent.attr('id');
+        if ($.inArray(id,clickflag) < 0) {
+            clickflag.push(id);
+        }
+        if (_this.attr("type") == 1) {
+            dialog.alert({type: 'success', message: "您已评价过", falseShow: false})
+            return false;
+        }
+        var evaluateValue = parent.find('.evaluateValue');
+        var value = _this.attr("value");//选中评价星星个数
+        var kmnewRate = $detailRight.find(".kmnew-rate-form");//评价内容输入框
+        var rateText = parent.find(".tip-text");
+        if (_this.hasClass("chked")) {
+            value = value - 1;//取消选中减一分
+        }
+        // if (_this.hasClass("chked")) {
+        //     //再次点击判断
+        //     if (value == 1) {
+        //         $(evaluateValue[0]).removeClass("km-duduyinleappicon2201 chked").addClass("km-shoucang");
+        //         $(evaluateValue[1]).removeClass("km-duduyinleappicon2201 chked").addClass("km-shoucang");
+        //         rateText.text("");
+        //     } else if (value == 2) {
+        //         $(evaluateValue[1]).removeClass("km-duduyinleappicon2201 chked").addClass("km-shoucang");
+        //         rateText.text("很不满意");
+        //     } else if (value == 3) {
+        //         rateText.text("不满意");
+        //     } else {
+        //         return false;
+        //     }
+        //     $(evaluateValue[2]).removeClass("km-duduyinleappicon2201 chked").addClass("km-shoucang");
+        //     return false;
+        // };
+
+        //为评价星星添加选中状态
+        for (var i = 0; i < evaluateValue.length; i++) {
+            if (!$(evaluateValue[i]).hasClass("chked")) {
+                if (i < value) {
+                    $(evaluateValue[i]).removeClass("km-shoucang").addClass("km-duduyinleappicon2201 chked");
+                }
+            } else {
+                if (i >= value) {
+                    $(evaluateValue[i]).removeClass("km-duduyinleappicon2201 chked").addClass("km-shoucang");
+                }
+            }
+        }
+        if (value == 0) {
+            rateText.text("");
+            kmnewRate.show();
+        }else if (value == 1) {
+            rateText.text("很不满意");
+            kmnewRate.show();
+        } else if (value == 2) {
+            rateText.text("不满意");
+            kmnewRate.show();
+        } else if (value == 3) {
+            rateText.text("一般");
+            kmnewRate.show();
+        } else if(value==4|| value == 5) {
+            // kmnewRate.show();
+            // $detailRight.find(".kmnew-rate-btns").hide();
+            // $detailRight.find("#ortherTexts").hide();
+            // $detailRight.find("#submitEva").hide();
+            if (value == 4) {
+                rateText.text("较满意");
+                // submitEvaluate(4, "", "");
+            } else {
+                rateText.text("非常满意");
+                // submitEvaluate(5, "", "");
+            }
+        }
+        if (clickflag.length > 4) {
+            judgeShowHide();
+        }
+        judgeBtnState();
+    })
+    $detailRight.on("click", ".quickOptions", function () {
+        var _this = $(this);
+        if (_this.hasClass("chked")) {
+            _this.removeClass("chked");
+        } else {
+            _this.addClass("chked");
+        }
+        // var quickChked = $detailRight.find("a.quickOptions.chked");
+        // var submitEva = $detailRight.find("#submitEva");
+        // if (quickChked && quickChked.size() == 0) {
+        //     submitEva.addClass("disabled");
+        // } else {
+        //     submitEva.removeClass("disabled");
+        // }
+        judgeBtnState();
+    });
+    //点击条件知识评价
+    // $detailRight.on("click", "#submitEva", function () {
+    //     var quickOptions = "";
+    //     var quickChked = $detailRight.find("a.quickOptions.chked");
+
+    //     var usefulness_num = $("#usefulness").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+    //     var understand_num = $("#understand").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+    //     var simplicity_num = $("#simplicity").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+    //     var aging_num = $("#aging").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+    //     var com_score_num = $("#com-score").find(".evaluateValue.km-duduyinleappicon2201.chked").length;
+    //     if (!judgeBtnStatetips()) {
+    //         return;
+    //     }
+    //     for (var i = 0; i < quickChked.size(); i++) {
+    //         if (quickOptions == "") {
+    //             quickOptions = quickChked[i].innerText;
+    //         } else {
+    //             quickOptions = quickOptions + ";" + quickChked[i].innerText
+    //         }
+    //     }
+    //     var showAlert = $detailRight.find("#showAlert");
+    //     showAlert.removeClass("show-alert");
+    //     var reg = new RegExp("[\\u4E00-\\u9FFF]+", "g");//对评价内容校验包含汉字
+    //     if ($detailRight.find("#ortherTexts").css('display') != 'none') {
+    //         var ortherTexts = $detailRight.find("#ortherTexts").val();
+    //         if (ortherTexts == "请详细描述具体原因及优化建议，以便我们进行改进，感谢！" || !reg.test(ortherTexts)) {
+    //             showAlert.addClass("show-alert");
+    //             var srf = setInterval(function () {
+    //                 showAlert.removeClass("show-alert");
+    //                 clearInterval(srf);
+    //             }, 3000);
+    //             return false;
+    //         }
+
+    //         if (ortherTexts.length > 240) {
+    //             dialog.alert({ type: 'error', message: "其他文本内容不能超过240!", falseShow: false })
+    //             return false;
+    //         }
+    //     }
+        
+    //     submitEvaluate(usefulness_num, understand_num, simplicity_num, aging_num, com_score_num, quickOptions, ortherTexts);
+    // });
+
+
+
+
+
+
+
+
+    
+    // 10分制知识评价
+    //点击知识评价
+    $detailRight.on("click", ".evaluateValueNum", function () {
+        var _this = $(this);
+        if (_this.attr("type") == 1) {
+            dialog.alert({type: 'success', message: "您已评价过", falseShow: false})
+            return false;
+        }
+
+        var _val = _this.attr("value");
+        var id = _this.parents('ul').attr('id');
+        _this.addClass('checked');
+        evaluation[id] = parseInt(_val) + 1;
+        // if (_this.hasClass('checked')) {
+        //     _this.removeClass('checked');
+        //     _val == 0 ? evaluation[id] = 0 : evaluation[id] = parseInt(_val);
+        // } else {
+        //     _this.addClass('checked');
+        //     evaluation[id] = parseInt(_val) + 1;
+        // }
+        // if (_this.hasClass('first-check')) {
+        //     _this.removeClass('first-check');
+        // }
+        var tempA = [];
+        var flag = false;
+        if (!$.isEmptyObject(evaluation)) {
+            for (var key in evaluation) {
+                tempA.push(key);
+                if (Object.hasOwnProperty.call(evaluation, key)) {
+                    var val = evaluation[key];
+                    if (val == 0) {
+                        $('#' + key).find('.tip-text').text('');
+                        flag = true;
+                    }
+                    if (val == 1 || val == 2) {
+                        $('#' + key).find('.tip-text').text('很不满意');
+                    }
+                    if (val == 3 || val == 4) {
+                        $('#' + key).find('.tip-text').text('不满意');
+                    }
+                    if (val == 5 || val == 6) {
+                        $('#' + key).find('.tip-text').text('一般');
+                    }
+                    if (val == 7 || val == 8) {
+                        $('#' + key).find('.tip-text').text('较满意');
+                    }
+                    if (val == 9 || val == 10) {
+                        $('#' + key).find('.tip-text').text('非常满意');
+                    }
+                }
+            }
+        }
+        getAverageNum();
+        var submitEva = $('#submitEva');
+        if (tempA.length < 4 || flag) {
+            // 存在未评价
+            submitEva.removeClass("disabled");
+            submitEva.addClass("disabled");
+        } else {
+            submitEva.removeClass("disabled");
+        }
+        _this.parents('ul').find('.evaluateValueNum').each(function (index, item) {
+            var _value = $(this).attr('value');
+            if (_value <= _val) {
+                if (_value != _val) {
+                    $(this).addClass('checked');
+                }
+            } else {
+                $(this).removeClass('checked');
+            }
+        })
+    })
+    $detailRight.on("mouseenter", ".evaluateValueNum", function () {
+        var _this = $(this);
+        var _val = _this.attr("value");
+        _this.parents('ul').find('.evaluateValueNum').each(function (index, item) {
+            var _value = $(this).attr('value');
+            if (_value <= _val) {
+                $(this).addClass('checked');
+                // $(this).addClass('first-check');
+            } else {
+                $(this).removeClass('checked');
+                // $(this).removeClass('first-check');
+            }
+        })
+    })
+    //显示评分结果
+    var initEvaluate = function () {
+        $('span.evaluateValueNum').each(function (index, item) {
+            $(this).removeClass('checked');
+            // $(this).removeClass('first-check');
+        })
+        if (!$.isEmptyObject(evaluation)) {
+            for (var key in evaluation) {
+                if (Object.hasOwnProperty.call(evaluation, key)) {
+                    var val = evaluation[key];
+                    $('#' + key).find('span.evaluateValueNum').each(function (index, item) {
+                        var _value = $(this).attr('value');
+                        if (parseInt(_value) <= (parseInt(val) - 1)) {
+                            $(this).addClass('checked');
+                        } else {
+                            $(this).removeClass('checked');
+                        }
+                    })
+                }
+            }
+        }
+    }
+    // 计算综合得分
+    var getAverageNum = function () {
+        var average = 0;
+        var sum = 0;
+        var tempA = [];
+        var length = 0;
+        if (!$.isEmptyObject(evaluation)) {
+            for (var key in evaluation) {
+                tempA.push(key);
+                if (Object.hasOwnProperty.call(evaluation, key)) {
+                    var val = evaluation[key];
+                    if (val == 0) {
+                        length++;
+                    }
+                }
+            }
+        }
+        if (tempA.length < 4 || length > 0) {
+            $('#com-score').find('.tip-text').text('-');
+        } else {
+            for (var key in evaluation) {
+                if (Object.hasOwnProperty.call(evaluation, key)) {
+                    var val = evaluation[key];
+                    sum+=val;
+                }
+            }
+            average = Math.round(sum/4 * 100) / 100;
+            $('#com-score').find('.tip-text').text(average);
+            if (average <= 6) {
+                window.autoFdbkFlag = true;
+                $('#feedbackBtn').attr("taskSource","2");//低分反馈
+
+                var klgFdbFun = function () {
+                    fdbkSend.open();
+                }
+                klgFdbFun();
+               // $('#feedbackBtn').trigger('click');
+            }
+        }
+
+    }
+    $detailRight.on("mouseleave", "ul.wrap-eva", function () {
+        initEvaluate();
+    })
+    
+    //提交评价
+    $detailRight.on("click", "#submitEva", function () {
+        var disable = $(this).hasClass('disabled');
+        if (disable) {
+            return;
+        }
+        var usefulness_num = evaluation.usefulness / 2;
+        var understand_num = evaluation.understand / 2;
+        var simplicity_num = evaluation.simplicity / 2;
+        var aging_num = evaluation.aging / 2;
+        fdbkId= klgFdbkSend.getFdbkId();//反馈主键id
+        console.log(fdbkId);
+        var com_score_num = parseFloat($('#com-score').find('.tip-text').text()) / 2;//综合得分
+        var isEvaluate = 1;
+        var autoFdbkFlag = window.autoFdbkFlag;
+        console.log(autoFdbkFlag);
+        if (parseFloat(com_score_num) <= 3) {
+            if (klgFdbkSend.getFeedBackFlag() == 0) {
+                isEvaluate = 0;
+            }
+            if (klgFdbkSend.getFeedBackFlag() == 1) {
+                isEvaluate = 1;
+            }
+        }
+        submitEvaluate(usefulness_num, understand_num, simplicity_num, aging_num, com_score_num, '', '', isEvaluate,autoFdbkFlag,fdbkId);
+    })
+
+
+
+
+
+
+
+
+    //知识评价其他内容输入框获取焦点
+    $detailRight.on("focus", "#ortherTexts", function () {
+        var _this = $(this);
+        if (_this.val().trim() === "" || _this.val().trim() === "请详细描述具体原因及优化建议，以便我们进行改进，感谢！") {
+            _this.val("");
+            _this.css("color", "");
+        }
+    });
+    //知识评价其他内容输入框失去焦点
+    $detailRight.on("blur", "#ortherTexts", function () {
+        var _this = $(this);
+        if (_this.val().trim() === "") {
+            _this.val("请详细描述具体原因及优化建议，以便我们进行改进，感谢！");
+            _this.css("color", "#999");
+        }
+    });
+    // 点赞
+    $detailRight.on('click','#praise',function (){
+        Util.ajax.postJson(Constants.AJAXURL + '/appraise/save',{knwlgId: knwlgId,verNo: verNo, appraiseVal: 1,_v: new Date().getTime()},function(data){
+            if(data && data.returnCode === '0'){
+                var $praise = $('#praise');
+                $praise.find('span').html('已赞');
+                $praise.find('img').attr('src','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAY5JREFUOE+d0k1IVFEABeBz7p1mdEQFM/B33tu1ayEZJe0i3GmgW8E2ERhpi1pEi6CVLYZ5Ey5DVxoEgQiSKzfjvGmpG7czCIGgtJDMpnn3RONPETwY567P+bjncomYM1/obm+xbcsUb8kg9y1RDV7f/Hr8f5xxQK40cINKFAi0AzhRpInZu5X1hoH8VmYSxnw8L4h6Mnu7stA4UPLeQnxeL0gRwKmnI+WVeEA4nUPoz/7WRNsGxDv1PnTgLO/PDZe3zwESqsezxYH+K7LXIyptyajWwtAeuT4kzWcIg6cFHUr4QNJcTJK+y2iVQcl/CME7C/4yKbfofiS7aKP1v0DcU2OP+dB7JTBxdtWqjdySY2OAhCPmv3gv5ZhsBiCwyyDMvABMuhlAwBrfhf4zB3Q2ByjLoOjNgLzWDAC5xwyKmUeg6bs0IPwU8ID50J8W4F8WELDPGkeZKwyO0dqhfwEY2yFiA0Am9gcAO9WT6j0ubPo9UQrjInoF1ZyiRWNw1ch+AtgfA+w76c3cSOX9bwvw2r+sYBJJAAAAAElFTkSuQmCC');
+                var $thread = $('#thread');
+                $thread.find('span').html('点踩');
+                $thread.find('img').attr('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAZtJREFUOE+d0rtLXEEYBfBz5m58bFgVSaWoSQhYBcHC2sbGwpSCkGJjtBL0Itw1qG1YC90VFMF7N6l8NBamEyNK1H9AS+2s8hLU+CLuHPGxRsIu7O5UA/PNj5nvOxycChpKrvRGQrUlDv/aE9/Y8ItQyPlCsBbZlvAd5GB8oHuJ3vhshzFsvqkT8LP8qNK/qDiuh8EagPqsAAAC6/vbK230JvyoIRoywJlzHpTbp88NtAqgLhcgYE+XbOVQwu8FUFM4oMM0bDu9ZNBnpGeFAgDSADs5lAxcSJVFADc9G2UsEXiEwkUCi/QS/rABnhQDANhhLBmMUAoVCRzzw6Qflb0bI8hfp+bMz2eM9+M9oDsxU1vKUGOaCjvin7KjV1uXkb2XcszXRzn4TWrRWpp/ubCnoLPMR0HJ7DWQ+FxVhqtvIF/fnos/DG3bx/73uw/1pG4fnStpsWTqE6HofW/SlN7G3Z6F/+tzA5NBF4W5zAWJfWNu93T+wHiqiY42AUQAnEDqiLs9G3kD3lgqYkoxD9kWGGc03v9uNtt3rwG0YcNuOTXjHAAAAABJRU5ErkJggg==');
+            }
+        });
+    });
+    // 点踩
+    $detailRight.on('click','#thread',function (){
+        Util.ajax.postJson(Constants.AJAXURL + '/appraise/save',{knwlgId: knwlgId,verNo: verNo, appraiseVal: 0,_v: new Date().getTime()},function(data){
+            if(data && data.returnCode === '0'){
+                var $praise = $('#praise');
+                $praise.find('span').html('点赞');
+                $praise.find('img').attr('src','data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAZBJREFUOE+d0r1LXEEUBfBz5j1dWTCCIRCVfHTpUlgErCXYxYC2ghYvCSQQt9gPxUKwUFfwPQsRfLtopYIgiCDaB1InTf6AVEISEEnIrjtzwqqrQVxZd6qBmfPj3ssl6pzMfLHdJNyGhBcEo1/Hdml1+u2f699ZD5iM4ucO/ASgHcBfUkOzH4P9hoFMGA8bcrsWkPRhPhUsNwzkomIeULoaEGApjcylgs3bgFo7Ou9fhwD6zgDph4NeLowHXy4BUtU7U4srPQn6zyyVNPJsCeazZ0vdLb5/AODRReCnqC04mqsK3G/Q2+XEUjwmhycXD6fON2u+K3c6tVQHVgPqzfo7s1FhipJ/VipRVsms+20NAsIJs1E8SaG1KQD4xmxYyBBKNgUIe8xFhRSkjmYACYvMhvF7Ag+aAmDfMR3Gbzyg+66AoBIdXzMXFkcB9/SuAIAj2coAM9HqKyP2/g94yco9Wa+6iY/rLQCAr6cV2890fvmhaU0MUuoSVSk7u+YZ/74H7BDsuREQjhw1kx8Piv8AL5fXclZER6QAAAAASUVORK5CYII=');
+                var $thread = $('#thread');
+                $thread.find('span').html('已踩');
+                $thread.find('img').attr('src', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAVFJREFUOE+d0j9LlXEYxvHPfTyRBJJEU6JWi1MEDc0tLg3GMSIIGlyaXCJoyV5GS0ZbJdE5ZqtGUr2CGhubyjLQmvJ57niejmJyiOP5jdd98f3df67ItknhinRC2LRjEWc0vZLG9Hrhi3AnWtqRbTO4UPvShrIGTBjyWpjoCfgrvrFjOrJjTpqspbBh2CO/nVZYxfh/AJ8MuVR1cAunDg1Im9LlyGXzSicPDaAQrlcj3JaODwCoRr5fjXAXxwYCsBT5wj3hyECA9KHawYJScyAAW/+eseGboxb7PGP15+fI58Y0TdV7CD+Neu+Hs1jbl4PvWBIae7ko/NKwErtCVjutsyRz2aj0Fue69a9K0676uOuPkF1/76xlx2PMdavVzW9Gy7OD7r0ODhbypRtKT/bp8zHrQf+AjvN4hxFsK8zENev9A1aMKDzFxTpxLQ97DfsHk7CAe/F+0yMAAAAASUVORK5CYII=');
+            }
+        });
+    });
+
+    relateKnwlg();
+
+    function freeMemory() {
+        $detailRight = null;
+        $ralateKnowledge = null;
+        keyWord = null;
+        light = null;
+        getEvaluate = null;
+        knowleRelateSort = null;
+        relateKnwlg = null;
+        knowledgeAttr = null;
+        relateKlg = null;
+        submitEvaluate = null;
+    }
+
+    return {
+        freeMemory:freeMemory
+    }
+});

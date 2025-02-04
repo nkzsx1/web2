@@ -1,0 +1,3727 @@
+/**
+ * GIS地图插件封装 CMap
+ * @param Id 地图容器的id
+ * @param Option 地图的自定义参数
+ */
+;"use strict";
+function GISMap(Option){
+    this.Op = Option || {};
+    this.control = {};//控件存放
+    this.param = {};//参数存放
+    this.AK = ["60dJaH1MXvxYS5L3KT8bZqi7AVRBt36p","4m4ZtgpbFpQhQb5SnrRPayvmgmPRn7rN","bbbd1e99c766c1f21c08051e7dcf33b2"];
+    this.locationUrl = "//"+G_PUBLICIP+"/api7/location/ip";
+    this.poiGardenUrl = "//"+G_PUBLICIP+"/map/";
+    this.suggestUrl = "//"+G_PUBLICIP+"/map/su";
+    this.ampConvertUrl = "//"+G_PUBLICIP+"/convert";
+    this.bmpConvertUrl = "//"+G_PUBLICIP+"/api7/geoconv/v1/";
+    this.isProduce = G_PUBLICIP.indexOf("172.") != -1 || G_PUBLICIP.indexOf("192.") != -1;//淮安环境
+
+    /**
+     * 默认容器ID为CMap
+     * 默认经纬度116.404, 39.915
+     * 默认地图等级11
+     */
+    this.Id = this.Op.containerid || "CMap";  
+    this.zoom = this.Op.zoom || this.Op.level || 11;    
+    this.center = {
+        lng:this.Op.lng || 116.404,
+        lat:this.Op.lat || 39.915
+    } 
+    this.bMap = null;
+    this.Map = function (){
+        return this.bMap;
+    }
+    /**
+     * 封装一些公用方法
+     */
+    var Fn = {
+        clickcallback:function(e,callback){
+            var geoc = new BMap.Geocoder();
+            var pt = e.point;
+            geoc.getLocation(pt, function(rs) {
+                var surroundingPois = rs.surroundingPois || [];
+                var json = {
+                    point: { lng: pt.lng, lat: pt.lat },
+                    address: rs.address,
+                    detail: rs.addressComponents
+                };
+                callback && callback(json,surroundingPois);
+            });
+        },
+        isArray : function (arry){
+            return Object.prototype.toString.call(arry) == '[object Array]';
+        },parse:function (str){
+            return (new Function("return " + str))();
+        },searchPois:[]
+    }
+    if(!String.prototype.trim) { //扩展trim方法
+        String.prototype.trim = function() {
+            return this.replace(/^\s*|\s*$/g, "");
+        }
+    }
+    if(jQuery){jQuery.support.cors = true;}
+    /**
+     * 地图操作
+     */
+    this.getMapCenter = function (){
+        return this.bMap.getCenter();
+    }
+    this.makeZoom = function (zoom){
+        if(zoom == undefined || zoom == ""){
+            return this.bMap.getZoom();
+        }
+        if(zoom == -1){
+            this.bMap.zoomOut();
+        }else if(zoom == 1){
+            this.bMap.zoomIn();
+        }else{
+            zoom = parseInt(zoom);
+            this.bMap.setZoom(zoom);
+        }
+    }
+    this.makeCenter = function (opts){
+        var opts = opts || {};
+        var lng = opts.lng || 116.404;
+        var lat = opts.lat || 39.915;
+        var level = opts.level || this.makeZoom()
+        var _centerPoint = new BMap.Point(lng, lat)
+        this.bMap.centerAndZoom(_centerPoint,level);
+        if(opts.printed){
+            this.makeOverlay(opts);
+        }
+    };
+    this.makeScrollWheel = function(status) {
+        if(status === false) {
+            this.bMap.disableScrollWheelZoom();
+            this.bMap.disablePinchToZoom();
+        }else{
+            this.bMap.enableScrollWheelZoom();    
+        }
+    };
+    this.makeDragging = function (status){
+        status === false ? this.bMap.disableDragging() : this.bMap.enableDragging();    
+    }
+    this.panTo = function (opts){
+        if(!opts) return;
+        this.bMap.panTo(new BMap.Point(opts.lng,opts.lat));
+    }
+    this.panBy = function (opts){
+        if(!opts) return;
+        var _animation = opts.animation === false ?true:false;
+        this.bMap.panBy(opts.x,opts.y,{noAnimation:_animation});
+    }
+    this.makegetBounds = function (){
+        var bs = this.bMap.getBounds(); //获取可视区域
+        var bssw = bs.getSouthWest(); //可视区域左下角
+        var bsne = bs.getNorthEast(); //可视区域右上角
+        var bounds = { "bssw": [bssw.lng, bssw.lat], "bsne": [bsne.lng, bsne.lat] };
+        return bounds;
+    }
+    this.makeGeolocation = function (opts){
+        var that = this;
+        opts = opts || {};
+        //隐藏定位控件
+        if (!opts.geolocation) { return false; }
+
+        // 添加定位控件
+        opts.anchorParam = opts.anchorParam || 2;
+        var geolocationControl = new BMap.GeolocationControl({ anchor: opts.anchorParam});
+        that.bMap.addControl(geolocationControl);
+        geolocationControl.location();
+        
+        var isIpLocation = opts.ip != undefined;
+        geolocationControl.addEventListener("locationSuccess", function(e) {
+            if(!isIpLocation){
+                var _point = e.point || null;
+                var _province = e.addressComponent&&e.addressComponent.province || null;
+                var _city = e.addressComponent&&e.addressComponent.city || null;
+                var _option = {
+                    type: "locationSuccess",
+                    point:_point,
+                    addressComponent:{
+                        province: _province,
+                        city: _city
+                    }
+                }
+                opts.callback && opts.callback(_option);
+                if(opts.showAddressBar){
+                    that.panTo(_point);
+                }
+            }
+            
+        });
+        geolocationControl.addEventListener("locationError", function(e) {
+            if(!isIpLocation){
+                var _option = {
+                    type: "locationError",
+                    point:null,
+                    addressComponent:{
+                        province: null,
+                        city: null
+                    }
+                }
+                opts.callback && opts.callback(_option);
+            }                
+        });
+        if(isIpLocation){
+            jQuery.support.cors=true;
+            var _data = {ak:that.AK[1],coor:"bd09ll"};
+            if(opts.ip && opts.ip!= undefined){
+                _data.ip = opts.ip
+            }
+            //begin
+            $.ajax({
+                type: "get",
+                url: that.locationUrl,
+                data:_data,
+                dataType: "jsonp",
+                error:function (){
+                    var _option = {
+                        type: "locationError",
+                        point:null,
+                        addressComponent:{
+                            province: null,
+                            city: null
+                        }
+                    }
+                    opts.callback && opts.callback(_option);
+                },
+                success: function(data) {   
+                    if(data.status == 0){
+                        var _content = data.content;
+                        var _point = _content.point || null;
+                        _point = {
+                            lng:_point.x,
+                            lat:_point.y
+                        };
+                        var _province = _content.address_detail&&_content.address_detail.province || null;
+                        var _city = _content.address_detail&&_content.address_detail.city || null;
+                        var _option = {
+                            type: "locationSuccess",
+                            point:_point,
+                            addressComponent:{
+                                province: _province,
+                                city: _city
+                            }
+
+                        }
+                        opts.callback && opts.callback(_option);
+                        if(opts.showAddressBar){
+                            that.panTo(_point);
+                        }
+                    }else{
+                        var _option = {
+                            type: "locationError",
+                            point:null,
+                            addressComponent:{
+                                province: null,
+                                city: null
+                            }
+                        }
+                        opts.callback && opts.callback(_option);
+                    }                     
+                    setTimeout(function (){
+                        isIpLocation = false;
+                    },60);
+                }
+            });
+        }  
+    }
+    /**
+     * 地图注册事件
+     */
+    
+    this.registerMapClick = function (opts){
+        this.bMap.addEventListener("click",function(e){
+            var _callback = opts.callback || opts;
+            Fn.clickcallback(e,_callback);           
+        });
+    }
+    this.registerMapRightClick = function (opts){
+        this.bMap.addEventListener("rightclick",function(e){
+            var _callback = opts.callback || opts;
+            Fn.clickcallback(e,_callback);             
+        });
+    }    
+    this.registerMapDbClick = function (opts){
+        this.bMap.addEventListener("dbclick",function(e){
+            var _callback = opts.callback || opts;
+            Fn.clickcallback(e,_callback);                    
+        })
+    }
+    this.registerMapRightDbClick = function (opts){
+        this.bMap.addEventListener("rightdblclick",function(e){
+            var _callback = opts.callback || opts;
+            Fn.clickcallback(e,_callback);                    
+        })
+    }
+
+    this.registerMapDragstart = function (opts){
+        this.bMap.addEventListener("dragstart",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        })
+    }
+    this.registerMapDraging = function (opts){
+        this.bMap.addEventListener("dragging",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        })
+    }
+    this.registerMapDragend = function (opts){
+        this.bMap.addEventListener("dragend",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        });
+    }
+    this.registerMapZoomend = function (opts){
+        this.bMap.addEventListener("zoomend",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        });
+    }
+    this.registerMapZoomstart = function (opts){
+        this.bMap.addEventListener("zoomstart",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        });
+    }
+    this.registerMapMovestart = function (opts){
+        this.bMap.addEventListener("movestart",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        });
+    }
+    this.registerMapMoving = function (opts){
+        this.bMap.addEventListener("moving",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        });
+    }
+    this.registerMapMovestart = function (opts){
+        this.bMap.addEventListener("moveend",function(e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        });
+    }
+    
+    this.registerMaploaded = function (opts){
+        this.bMap.addEventListener("tilesloaded",function (e){
+            var _callback = opts.callback || opts;
+            _callback && _callback(e);
+        })
+    }
+    /**搜索 */
+    this.makekeywordSearch = function (opts){
+        this.makeclearOverlays();
+        opts = opts || {};
+        var map = this.bMap;
+        opts.pagecapacity = opts.pagecapacity || 10;
+        var autoViewport = true;
+        if(opts.autoViewport === false){
+            autoViewport = false;
+        }
+        var city = opts&&opts.city || map;
+        var local = new BMap.LocalSearch(city, {
+            renderOptions: { map: map ,autoViewport:autoViewport},pageCapacity:opts.pagecapacity
+        });
+        //2018-03-02添加自定义显示
+        if (opts.callback != null) {
+            local.setMarkersSetCallback(function(pois) {
+                for (var i = 0; i < pois.length; i++) {
+                    map.removeOverlay(pois[i].marker);
+                }
+            });
+            local.setSearchCompleteCallback(function (data){
+                if(Fn.isArray(data)){
+                    var _Br = [];
+                    var _xQ = [];
+                    for(var i=0;i<data.length;i++){
+                        var _brbr = data[i].Br || data[i].Ar || data[i].Hr;
+                        var _xqxq = data[i].xQ || data[i].yQ || data[i].OQ;
+                        _Br.push(_brbr);
+                        _xQ.push(_xqxq);
+                    }
+                    opts.callback && opts.callback(_Br,_xQ);
+                }else{
+                    var _brbr = data.Br || data.Ar || data.Hr;
+                    var _xqxq = data.xQ || data.yQ || data.OQ;
+                    opts.callback && opts.callback(_brbr,_xqxq);
+                    
+                }
+            });
+        }
+        //2018-07-12添加自定义显示（不局限于当前城市进行搜索）
+        local.search(opts.keyword,{ forceLocal: false });
+    }
+    this.searchInBounds = function(opts) {
+        //2018-03-02添加在搜索前是否需要map.clearOverlays()；
+        this.makeclearOverlays();
+        opts = opts || {};
+        var map = this.bMap;
+        opts.pagecapacity = opts.pagecapacity || 10;
+        var autoViewport = true;
+        if(opts.autoViewport === false){
+            autoViewport = false;
+        }
+        var city = opts&&opts.city || map;
+        var local = new BMap.LocalSearch(city, {
+            renderOptions: { map: map ,autoViewport:autoViewport},pageCapacity:opts.pagecapacity
+        });       
+        
+        //2018-03-02添加自定义显示
+        if (opts.callback != null) {
+            local.setMarkersSetCallback(function(pois) {
+                for (var i = 0; i < pois.length; i++) {
+                    map.removeOverlay(pois[i].marker);
+                }
+            });
+            local.setSearchCompleteCallback(function (data){
+                if(Fn.isArray(data)){
+                    var _Br = [];
+                    var _xQ = [];
+                    for(var i=0;i<data.length;i++){
+                        var _brbr = data[i].Br || data[i].Ar || data[i].Hr;
+                        var _xqxq = data[i].xQ || data[i].yQ || data[i].OQ;
+                        _Br.push(_brbr);
+                        _xQ.push(_xqxq);
+                    }
+                    opts.callback && opts.callback(_Br,_xQ);
+                }else{
+                    var _brbr = data.Br || data.Ar || data.Hr;
+                    var _xqxq = data.xQ || data.yQ || data.OQ;
+                    opts.callback && opts.callback(_brbr,_xqxq);                    
+                }
+                
+            });
+        }
+        var pStart = new BMap.Point(opts.start.lng,opts.start.lat);
+        var pEnd = new BMap.Point(opts.end.lng,opts.end.lat);
+        var bs = new BMap.Bounds(pStart,pEnd);   //自己规定范围
+        local.searchInBounds(opts.keyword, bs);
+    };
+    this.searchNearby = function(opts) {
+        //2018-03-02添加在搜索前是否需要map.clearOverlays()；
+        this.makeclearOverlays();
+        opts = opts || {};
+        var map = this.bMap;
+        opts.pagecapacity = opts.pagecapacity || 10;
+        var autoViewport = opts.autoViewport === false? false: true;
+        var city = opts&&opts.city || map;
+        var local = new BMap.LocalSearch(city, {
+            renderOptions: { map: map ,autoViewport:autoViewport},pageCapacity:opts.pagecapacity
+        });
+        
+        //2018-03-02添加自定义显示
+        if (opts.callback != null) {
+            local.setMarkersSetCallback(function(pois) {
+                for (var i = 0; i < pois.length; i++) {
+                    map.removeOverlay(pois[i].marker);
+                }
+            });
+            local.setSearchCompleteCallback(function (data){
+                if(Fn.isArray(data)){
+                    var _Br = [];
+                    var _xQ = [];
+                    for(var i=0;i<data.length;i++){
+                        var _brbr = data[i].Br || data[i].Ar || data[i].Hr;
+                        var _xqxq = data[i].xQ || data[i].yQ || data[i].OQ;
+                        _Br.push(_brbr);
+                        _xQ.push(_xqxq);
+                    }
+                    opts.callback && opts.callback(_Br,_xQ);
+                }else{
+                    var _brbr = data.Br || data.Ar || data.Hr;
+                    var _xqxq = data.xQ || data.yQ || data.OQ;
+                    opts.callback && opts.callback(_brbr,_xqxq);                    
+                }
+            });
+        }
+        var keyPoint = new BMap.Point(opts.point.lng, opts.point.lat);
+        local.searchNearby(opts.keyword,keyPoint,opts.radius);
+        
+    };
+    this.searchAssociation = function (opts){
+        opts = opts || {};
+        if(!opts.keyword || !opts.callback) {return};
+        var that = this,map = this.bMap;
+        jQuery.support.cors=true;
+        $.ajax({
+            type:"get",
+            url:that.suggestUrl,
+            data:{
+                wd:opts.keyword,
+                cid:opts.city || map.qr || map.cs || map.bs || map.js,
+                type: 0,
+                newmap:1,
+                pc_ver:2
+            },
+            dataType:"jsonp",
+            error:function (){
+                opts.callback && opts.callback([])
+            },
+            success:function (data){
+                data = data || {};
+                var _list = data.s || [];
+                var _newArry = [];
+                for(var i=0;i<_list.length;i++){
+                    if(typeof(_list[i]) == "string"){//ie8下面返回值中偶尔出现indexof函数，非字符串
+                        var _a = _list[i].split("$");
+                        var _obj = {
+                            city:_a[0],
+                            uid:_a[5],
+                            title:_a[3]
+                        }
+                        _newArry.push(_obj);
+                    }
+                    
+                }
+                opts.callback && opts.callback(_newArry);
+            }
+        });
+    }
+    /**
+     * 覆盖物管理
+     */
+    this.makeOverlay = function (opts){
+        opts = opts || {};
+        var createopts = opts;
+        var pointM = new BMap.Point(opts.lng, opts.lat);
+        var _marker = new BMap.Marker(pointM); // 创建标注
+        //2018-03-02添加图片
+        if (opts.imgurl != null && opts.imgurl != "") {
+            var icon = new BMap.Icon(opts.imgurl, new BMap.Size(parseFloat(opts.width), parseFloat(opts.height)));
+            _marker.setIcon(icon);
+        }
+        _marker.overlaytype = "point";
+        if(opts.definedProp){
+            _marker.definedProp = opts.definedProp;
+        }
+        //2018-03-02添加图片
+        var map = this.bMap;
+        map.addOverlay(_marker); // 将标注添加到地图中
+        if (opts.animation != null && opts.animation != "") {
+            _marker.setAnimation(opts.animation); //跳动的动画
+        }
+
+        if (opts.candrag == null || opts.candrag == undefined || opts.candrag == true) {
+            _marker.enableDragging();
+            if (opts.dragendcallback != null && typeof(opts.dragendcallback) != "undefined") {
+                _marker.addEventListener("dragend", function(type, target, pixel, point) {
+                    opts.dragendcallback({ lng: type.point.lng, lat: type.point.lat });
+                });
+            }
+        } else {
+            _marker.disableDragging();
+        }
+        var markerobj = {
+            marker: _marker,
+            createopts: createopts,
+            animation: opts.animation,
+            //设置图标
+            setIcon: function(opts) {
+                if (opts.imgurl != null && opts.imgurl != "") {
+                    map.removeOverlay(_marker);
+                    var myIcon = new BMap.Icon(
+                        opts.imgurl,
+                        new BMap.Size(parseFloat(opts.width), parseFloat(opts.height))
+                    );
+                    //myIcon.setImageOffset(new BMap.Size(0, -10));
+                    _marker.setIcon(myIcon);
+                    if(opts.definedProp){
+                        _marker.definedProp = opts.definedProp;
+                    }
+                    map.addOverlay(_marker);
+                } else {
+                    map.removeOverlay(_marker);
+                    var micon = _marker.getIcon();
+                    var iconwidth;
+                    var iconheight;
+                    if (opts.width == null || opts.width == undefined || opts.width == "") {
+                        iconwidth = micon.size.width;
+                    } else {
+                        iconwidth = parseFloat(opts.width);
+                    }
+
+                    if (opts.height == null || opts.height == undefined || opts.height == "") {
+                        iconheight = micon.size.height;
+                    } else {
+                        iconheight = parseFloat(opts.height);
+                    }
+                    var iconsize = new BMap.Size(iconwidth, iconheight);
+                    micon.setSize(iconsize);
+                    _marker.setIcon(micon);
+                    if(opts.definedProp){
+                        _marker.definedProp = opts.definedProp;
+                    }
+                    map.addOverlay(_marker);
+                }
+
+            },
+            //设置label
+            setLabel: function(opts) {
+                var opts1 = {
+                    position: pointM,
+                    offset: new BMap.Size(3, -5)
+                };
+                map.removeOverlay(_marker);
+
+                var label2 = new BMap.Label(opts.content, opts1);
+                label2.setStyle({
+                    color: opts.color,
+                    fontSize: "10px",
+                    height: "20px",
+                    lineHeight: "20px",
+                    fontFamily: "微软雅黑",
+                    border: 0,
+                    backgroundColor: "none",
+                    textAlign: "center",
+                    paddingTop: "3px"
+                });
+                label2.setStyle({ zIndex: 0 });
+                _marker.setLabel(label2);
+                if(opts.definedProp){
+                    _marker.definedProp = opts.definedProp;
+                }
+                map.addOverlay(_marker);
+                _marker.setAnimation(opts.animation);
+                setTimeout(function() {
+                    $(".BMapLabel").each(function() {
+                        $(this).css("z-index", 0);
+                    });
+                }, 200);
+
+                //$
+            },
+            //添加监听器(单击)
+            addClickListener: function(opts) {
+                _marker.addEventListener("click",function(type) {
+                    var _callback = opts.callback || opts.clickcallback || opts;
+                    _callback && _callback(type);
+                });
+            }
+        };
+        return markerobj;
+    }
+    this.makegetOverlays = function (){
+        return this.bMap.getOverlays();
+    }
+    this.makeclearOverlays = function (overlay){
+        if(!overlay){
+            $(".BMap_fixedMarker").remove();
+            this.bMap.clearOverlays();
+        }else if(overlay == "dragMapPointer"){
+            $(".BMap_fixedMarker").remove();
+        }else{
+            this.bMap.removeOverlay(overlay);
+        }
+    }
+    this.param.infoWindowTime = 60;    
+    this.param.infoWindowTimeout = null;
+    this.makeInfoWindow = function(opts) {
+        opts = opts || {};
+        var that = this;
+        var map = that.bMap;
+
+        var marker = null;
+        if(opts.isMarker !== false){
+            var pointM = new BMap.Point(opts.lng, opts.lat);
+            var marker = new BMap.Marker(pointM); // 创建标注
+            
+            if(opts.imgurl != null && opts.imgurl != "") {
+                var imgwidth = opts.imgwidth || 19;
+                var imgheight = opts.imgheight || 25;
+                var icon = new BMap.Icon(opts.imgurl, new BMap.Size(parseFloat(imgwidth), parseFloat(imgheight)));
+                marker.setIcon(icon);
+            }
+            marker.overlaytype = "infowindow";
+            if(opts.definedProp){
+                marker.definedProp = opts.definedProp;
+            }
+            map.addOverlay(marker);
+        }
+        var _w = parseFloat(opts.width || 220); //220 - 730
+        if(_w > 730) _w = 730;
+        if(_w < 220) _w = 220;
+        var _h = parseFloat(opts.height || 70);//70 - 650
+        if(_h > 650) _h = 650;
+        if(_h < 70) _h = 70;
+        var opts1 = {
+            width: _w, // 信息窗口宽度
+            height: _h, // 信息窗口高度
+            title: opts.title, // 信息窗口标题
+            enableMessage: true //设置允许信息窗发送短息
+        }
+        
+        var _infoWindow = new BMap.InfoWindow(opts.content, opts1); // 创建信息窗口对象 
+                    
+        if(opts.infoWindowStatus && typeof(opts.infoWindowStatus) == "function"){
+            
+            _infoWindow.addEventListener("open",function (obj){
+                clearTimeout(that.param.infoWindowTimeout);
+                that.param.infoWindowTimeout = setTimeout(function(){
+                    opts.infoWindowStatus({open:true,type:obj});
+                },that.param.infoWindowTime);
+                
+            });
+            _infoWindow.addEventListener("close",function (obj){
+                clearTimeout(that.param.infoWindowTimeout);
+                that.param.infoWindowTimeout = setTimeout(function(){
+                    opts.infoWindowStatus({open:false,type:obj});
+                },that.param.infoWindowTime);                  
+            });
+        }
+        if(opts.isClick !== false){
+            marker&&marker.addEventListener("click", function() {
+                map.openInfoWindow(_infoWindow, pointM); //开启信息窗口
+            }); 
+        }
+        
+        if(opts.open && opts.open == true){
+            map.openInfoWindow(_infoWindow, pointM); //开启信息窗口      
+        }else{
+            map.closeInfoWindow();
+        }
+        return {close:function (){
+            map.closeInfoWindow();
+        },isOpen:function (){
+            if(that.param.infoWindowTimeout == null ){
+                return opts.open && opts.open == true
+            }
+            return _infoWindow.isOpen();
+        }}
+    };
+    this.makePolyline = function(opts) {
+        opts = opts || {};
+        if(Fn.isArray(opts.polyline)){//公交线路
+            opts.polyline[0].setStrokeColor(opts.color);
+            opts.polyline[0].setStrokeWeight(parseFloat(opts.width));
+            opts.polyline[0].setStrokeOpacity(parseFloat(opts.opacity));
+            this.bMap.addOverlay(opts.polyline[0]);
+            for(var i=0;i<opts.polyline[1].length;i++){
+                if(i==0 || i==opts.polyline[1].length-1) {
+                    this.bMap.addOverlay(opts.polyline[1][i]);
+                }
+            }
+        }else{
+            opts.polyline.setStrokeColor(opts.color);
+            opts.polyline.setStrokeWeight(parseFloat(opts.width));
+            opts.polyline.setStrokeOpacity(parseFloat(opts.opacity));
+            this.bMap.addOverlay(opts.polyline);
+        }        
+    };
+    this.makePolygon = function (opts){
+        opts = opts || {};
+        opts.color = opts.color || "blue";
+        opts.width = opts.width || "2";
+        opts.opacity = opts.opacity || "1";
+        //opts.editor = opts.editor || false;
+        if(opts.polygon && opts.polygon.length>0){
+            var pointArry = [];
+            for(var i=0;i<opts.polygon.length;i++){
+                pointArry.push(new BMap.Point(opts.polygon[i].lng,opts.polygon[i].lat));
+            }
+            var _polygon = new BMap.Polygon(pointArry, {strokeColor:opts.color, strokeWeight:opts.width, strokeOpacity:opts.opacity,fillOpacity:opts.opacity});
+            _polygon.overlaytype = "polygon";
+            if(opts.definedProp){
+                _polygon.definedProp = opts.definedProp;
+            }
+            this.bMap.addOverlay(_polygon);
+            if(opts.review){
+                this.bMap.setViewport(pointArry); //调整视野 
+            }
+            opts.callback && opts.callback(opts.polygon)
+            
+        }
+        return {
+            enableEditPolygon : function (opts){
+                opts = opts || {};
+                var _callback = opts.callback || opts;
+                _polygon.enableEditing();
+                _polygon.addEventListener("lineupdate",function (e){
+                    var _points = e.target.ia || e.target.so
+                    typeof(_callback) == "function" && _callback(_points);
+                });
+            },
+            disableEditPolygon : function (opts){
+                opts = opts || {};
+                var _callback = opts.callback || opts;
+                _polygon.disableEditing();
+                typeof(_callback) == "function" && _callback(_polygon.ia);
+            }
+        }
+    }
+    this.enableEditPolygon = function (opts){
+        opts = opts || {};
+        var overlays = this.makegetOverlays(); 
+        var _callback = opts.callback || opts;
+        for(var i=0;i<overlays.length;i++){
+            if(overlays[i] instanceof BMap.Polygon){
+                overlays[i].enableEditing();
+                overlays[i].addEventListener("lineupdate",function (e){
+                    var _points = e.target.ia || e.target.so
+                    typeof(_callback) == "function" && _callback(_points);
+                });
+            }
+        } 
+    }
+    this.disableEditPolygon = function (opts){
+        
+        opts = opts || {};
+        var overlays = this.makegetOverlays(); 
+        var _callback = opts.callback || opts;
+        for(var i=0;i<overlays.length;i++){
+            if(overlays[i] instanceof BMap.Polygon){
+                overlays[i].disableEditing();
+                typeof(_callback) == "function" && _callback(overlays[i].ia);
+            }
+        }            
+    }
+    this.makeCircle = function(opts) {
+        opts = opts || {};
+        var map = this.bMap;
+        var point = new BMap.Point(parseFloat(opts.lng), parseFloat(opts.lat));
+
+        var circle = new BMap.Circle(
+            point,
+            parseFloat(opts.radius), {
+                strokeColor: opts.strokeColor, //边线颜色
+                strokeWeight: parseFloat(opts.strokeWeight), // 边线的宽度，以像素为单位
+                strokeOpacity: parseFloat(opts.strokeOpacity), //边线透明度，取值范围0 - 1
+                fillOpacity: parseFloat(opts.fillOpacity), //填充的透明度，取值范围0 - 1
+                fillColor: opts.fillColor //填充颜色。当参数为空时，圆形将没有填充效果
+            }
+        );
+        circle.overlaytype = "circle";
+        if(opts.definedProp){
+            circle.definedProp = opts.definedProp;
+        }
+        map.addOverlay(circle);
+        var json = {
+            center: { lng: point.lng, lat: point.lat },
+            radius: opts.radius,
+            setEditing: function(optss) {
+                circle.enableEditing();
+                circle.addEventListener("mouseout", function() {
+                    if(map.getOverlays().length ==0 ) {return;}  
+                    var sameOverlays = false; 
+                    var _overlays = map.getOverlays();
+                    for(var i =0 ;i<_overlays.length;i++){
+                        if(map.getOverlays()[i] == circle){
+                            sameOverlays = true;
+                        }
+                    }      
+                    if(!sameOverlays) {return;};
+                    var cpnew = circle.getBounds();
+                    var swnew = cpnew.getSouthWest();
+                    var nenew = cpnew.getNorthEast();
+                    var minLngnew = swnew.lng;
+                    var maxLngnew = nenew.lng;
+                    var minLatnew = swnew.lat;
+                    var maxLatnew = nenew.lat;
+                    var centerpoint = circle.getCenter();
+                    var jsoninfo = {
+                        center: { lng: centerpoint.lng, lat: centerpoint.lat },
+                        radius: circle.getRadius(), //半径（单位:米）
+                        leftbottompoint: { lng: minLngnew, lat: minLatnew }, //左下角坐标
+                        righttoppoint: { lng: maxLngnew, lat: maxLatnew } //右下角坐标
+                    };
+                    optss.editendcallback(jsoninfo);
+                });
+            }
+        };
+        return json;
+    };
+    this.makeline = function(opts) {
+        opts = opts || {};
+        if (!opts.lineopactity) {
+            opts.lineopactity = 0.001;
+        }
+        var pointarr = [];
+        for (var i = 0; i < opts.points.length; i++) {
+            pointarr[i] = new BMap.Point(opts.points[i].lng, opts.points[i].lat);
+        }
+        var polyline =
+            new BMap.Polyline(
+                pointarr, {
+                    strokeColor: opts.linecolor,
+                    strokeWeight: parseFloat(opts.linewidth),
+                    strokeOpacity: parseFloat(opts.lineopactity)
+                }
+            );
+        polyline.overlaytype = "polyline";
+        if(opts.definedProp){
+            polyline.definedProp = opts.definedProp;
+        }
+        this.bMap.addOverlay(polyline);
+    };
+    this.makeMarkerClusterer = function() {
+        /**
+         * markerStyle : [{
+         * imgurl:自定义图片地址
+         * width:图片宽度
+         * height:图片高度
+         * textColor: 文字颜色
+         * }]
+         */
+        /**
+         * singleMarker:{
+         *  imgurl
+         *  height:
+         *  width
+         * }
+        */
+       var objectArray, maxZoom,callback,reViewport,clusterclick,markerStyle,singleMarker;
+       if(!Fn.isArray(arguments[0])){
+            var _opts = arguments[0];
+            objectArray = _opts.objectArray;
+            maxZoom = _opts.maxZoom;
+            callback = _opts.callback;
+            reViewport = _opts.reViewport;
+            clusterclick = _opts.clusterclick;
+            markerStyle = _opts.markerStyle;
+            singleMarker = _opts.singleMarker;
+        }else{
+            objectArray = arguments[0], maxZoom =arguments[1],callback=arguments[2],reViewport=arguments[3],clusterclick=arguments[4],markerStyle=arguments[5],singleMarker=arguments[6]
+        }
+        if(Fn.isArray(markerStyle) && markerStyle.length>0){
+            var _dfstyle = [];
+            for(var i in markerStyle){
+                var _x = markerStyle[i].width || 25;
+                var _y = markerStyle[i].height || 25;
+                var _textColor = markerStyle[i].textColor || "#000";
+                var _obj = {
+                    url:markerStyle[i].imgurl,
+                    size:new BMap.Size(_x,_y),
+                    textColor:_textColor
+                }
+                _dfstyle.push(_obj);
+            }
+            markerStyle = _dfstyle;
+        }
+        
+        var MAX = objectArray;
+        var markers = [];
+        var pt = null;
+        var i = 0;
+        for (; i < MAX.length; i++) {
+            pt = new BMap.Point(MAX[i].lng, MAX[i].lat);
+            var tag = new BMap.Marker(pt);
+            markers.push(tag);
+            tag.addEventListener("click",function (e){
+                var p = e.target;
+                var cpt = {"lng":p.getPosition().lng,"lat":p.getPosition().lat};
+                callback && callback(cpt);
+            });
+        }
+        reViewport === false ? reViewport=false:reViewport=true;
+        if (this.param.markerClusterer == null) {
+            this.param.markerClusterer = new BMapLib.MarkerClusterer(this.bMap,{reViewport:reViewport,clickcallback:clusterclick,singleMarker:singleMarker});
+            
+        }
+        this.param.markerClusterer.clearMarkers();
+        if(maxZoom){
+            this.param.markerClusterer.setMaxZoom(maxZoom);
+        }
+        if(markerStyle){
+            this.param.markerClusterer.setStyles(markerStyle);
+        }
+        this.param.markerClusterer.addMarkers(markers);
+    };
+    this.makeHeatmapOverlay = function(objectArray,definedProp) {
+        if (!isSupportCanvas()) {
+            throw new Error("Error3：" + "热力图目前只支持有canvas支持的浏览器,您所使用的浏览器不能使用热力图功能~");
+        }
+        heatmapOverlay = new BMapLib.HeatmapOverlay({ "radius": 20 });
+        heatmapOverlay.overlaytype = "heatmap";
+        if(definedProp){
+            heatmapOverlay.definedProp = definedProp;
+        }
+        this.bMap.addOverlay(heatmapOverlay);
+        heatmapOverlay.setDataSet({ data: objectArray, max: 100 });
+        heatmapOverlay.show();
+        //判断浏览区是否支持canvas
+        function isSupportCanvas() {
+            var elem = document.createElement('canvas');
+            return !!(elem.getContext && elem.getContext('2d'));
+        }
+    };
+    this.clearMarkerClusterer = function() {
+        this.param.markerClusterer && this.param.markerClusterer.clearMarkers();
+    }
+    this.dragMapPointer = function (opts){
+        opts = opts || {};
+        var map = this.bMap;
+        var _icon = opts.icon;
+        var _mapId = this.Id;
+        var _html = '<div class="BMap_fixedMarker" style="position:absolute;left:50%;top:50%;width:60px;height:26px;text-align:center;margin:-25px -30px;pointer-events: none;"><div style="background:url('+G_cmapstaich+'src/assets/img/us_cursor_9517a2b.png) no-repeat 0 -22px;width:18px;height:26px;position:absolute;left:0;top:0;right:0;bottom:0;margin:auto;"></div>';
+        if(_icon){
+            var _width = parseFloat(_icon.width);
+            var _height = parseFloat(_icon.height);
+            var _src = _icon.src;
+            if(_src){
+                _html = '<div class="BMap_fixedMarker" style="position:absolute;left:50%;top:50%;width:'+_width+'px;height:'+_height+'px;text-align:center;margin:-'+_height/2+'px -'+_width/2+'px;pointer-events: none;"><div style="background:url('+_icon.src+') no-repeat;background-size:cover;width:100%;height:100%;position:absolute;left:0;top:0;right:0;bottom:0;margin:auto;"></div>'
+            }
+        }
+        $("#" + _mapId).append(_html);            
+        if(opts.callback != null){
+            map.addEventListener("dragend",function (e){
+                if($(".BMap_fixedMarker").size() >0 ){
+                    opts.callback&&opts.callback(map.getCenter());
+                }
+            });
+            map.addEventListener("zoomend",function (e){
+                if($(".BMap_fixedMarker").size() >0 ){
+                    opts.callback&&opts.callback(map.getCenter());
+                }
+            });
+            opts.callback&&opts.callback(map.getCenter());
+        }else{
+            if(opts.dragendcallback){
+                map.addEventListener("dragend",function (e){
+                    if($(".BMap_fixedMarker").size() >0 ){
+                        opts.dragendcallback&&opts.dragendcallback(map.getCenter());
+                    }
+                });
+            }
+            if(opts.zoomendcallback){
+                map.addEventListener("zoomend",function (e){
+                    if($(".BMap_fixedMarker").size() >0 ){
+                        opts.zoomendcallback&&opts.zoomendcallback(map.getCenter());
+                    }
+                });
+            }
+        }
+        if(opts.moveendcallback){
+            map.addEventListener("moveend",function (e){
+                if($(".BMap_fixedMarker").size() >0 ){
+                    opts.moveendcallback&&opts.moveendcallback(map.getCenter());
+                }
+            });
+        }
+        
+    }
+    
+    this.closeInfoWindow = function (){
+        this.bMap.closeInfoWindow();
+    }
+    /**
+     * 地图控件
+     */
+    this.makeNavigationControl = function (opts){
+        this.delNavigationControl();
+        opts = opts || {};
+        opts.anchor = opts.anchor || 0;
+        opts.type = opts.type || 0;
+        this.control.navigationControl = new BMap.NavigationControl({anchor: parseInt(opts.anchor), type: parseInt(opts.type)});
+        this.bMap.addControl(this.control.navigationControl); 
+    }
+    this.delNavigationControl = function (){
+        if(!this.control.navigationControl) return;
+        this.bMap.removeControl(this.control.navigationControl);
+    }
+    this.makeScale = function (anchorParam){
+        this.delControlScale();
+        this.control.scaleControl = new BMap.ScaleControl({ anchor: anchorParam }); // 添加比例尺
+        this.bMap.addControl(this.control.scaleControl);
+    }
+    this.delControlScale = function (){
+        this.bMap.removeControl(this.control.scaleControl);
+    }
+    this.addControlLocation = function (){
+
+    }
+    this.makeDrawing = function (opts){
+        var map = this.bMap;
+        var opts = opts || {};
+        var styleOptions = {
+            strokeColor: opts.strokeColorParam || "red", //边线颜色。
+            fillColor: opts.fillColorParam || "orange", //填充颜色。当参数为空时，圆形将没有填充效果。
+            strokeWeight: opts.strokeWeightParam || 2, //边线的宽度，以像素为单位。
+            strokeOpacity: opts.fillOpacityParam || 0.5, //边线透明度，取值范围0 - 1。
+            fillOpacity: opts.fillOpacityParam || 0.5, //填充的透明度，取值范围0 - 1。
+            strokeStyle: 'solid' //边线的样式，solid或dashed。
+        };
+    
+        //实例化鼠标绘制工具
+        var drawmode = opts.drwamode || "circle";//默认绘制圆形
+        /**
+        * @param BMAP_DRAWING_MARKER 画点 
+        * @param BMAP_DRAWING_CIRCLE 画圆 
+        * @param BMAP_DRAWING_POLYLINE 画线 
+        * @param BMAP_DRAWING_POLYGON 画多边形 
+        * @param BMAP_DRAWING_RECTANGLE 画矩形
+        **/
+
+        var drawingManager = new BMapLib.DrawingManager(map, {
+            isOpen: false, //是否开启绘制模式
+            enableDrawingTool: true, //是否显示工具栏
+            drawingMode:drawmode,
+            drawingToolOptions: {
+                anchor: BMAP_ANCHOR_TOP_RIGHT, //位置
+                offset: new BMap.Size(5, 5), //偏离值
+                drawingModes: [drawmode]
+            },
+            circleOptions: styleOptions, //圆的样式
+            polylineOptions: styleOptions, //线的样式
+            polygonOptions: styleOptions, //多边形的样式
+            rectangleOptions: styleOptions //矩形的样式
+        });
+        //2018-03-31修改圆编辑
+        drawingManager.addEventListener('overlaycomplete', function(e) {
+            drawingManager.close();
+            var mode = e.drawingMode;
+
+            if (mode == 'circle') {
+                if (opts.edited == true) {
+                    var circleoverylay = e.overlay;
+                    circleoverylay.enableEditing();
+                    circleoverylay.addEventListener("mouseout", function() {
+                        if(map.getOverlays().length ==0 ) {return;}  
+                        var sameOverlays = false; 
+                        var _overlays = map.getOverlays();
+                        for(var i =0 ;i<_overlays.length;i++){
+                            if(map.getOverlays()[i] == circleoverylay){
+                                sameOverlays = true;
+                            }
+                        }      
+                        if(!sameOverlays) {return;};
+                        var cpnew = circleoverylay.getBounds();
+                        var swnew = cpnew.getSouthWest();
+                        var nenew = cpnew.getNorthEast();
+                        var minLngnew = swnew.lng;
+                        var maxLngnew = nenew.lng;
+                        var minLatnew = swnew.lat;
+                        var maxLatnew = nenew.lat;
+                        var centerpoint = circleoverylay.getCenter();
+                        var json = {
+                            center: { lng: centerpoint.lng, lat: centerpoint.lat },
+                            radius: circleoverylay.getRadius(), //半径（单位:米）
+                            leftbottompoint: { lng: minLngnew, lat: minLatnew }, //左下角坐标
+                            righttoppoint: { lng: maxLngnew, lat: maxLatnew } //右下角坐标
+                        };
+                        opts.editendcallback(json);
+                    });
+
+                }
+            }else if(mode == "polygon"){
+                var path = e.overlay.getPath();
+                opts.callback && opts.callback(path);
+            }
+        });
+    }
+    /**
+     * 导航规划
+     */
+    this.makeTransitRouteByName = function(opts) {
+        this.makeclearOverlays();
+        opts = opts || {};
+        var that = this;
+        var map = that.bMap;
+        var routePolicy = [BMAP_TRANSIT_POLICY_LEAST_TIME,
+            BMAP_TRANSIT_POLICY_LEAST_TRANSFER,
+            BMAP_TRANSIT_POLICY_LEAST_WALKING,
+            BMAP_TRANSIT_POLICY_AVOID_SUBWAYS
+        ];
+        var renderoption = {map: map};
+        if(opts.panelid){
+            renderoption.panel = opts.panelid;//2018-03-02将参数放活，指定面板
+        }
+        var transit = new BMap.TransitRoute(map, {
+            renderOptions: renderoption, 
+            policy: routePolicy[opts.policity]
+                //end
+        });
+        if (opts.callback != null && typeof(opts.callback) != "undefined") {
+            transit.setPolylinesSetCallback(function(lines) {
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].getPolyline();
+                    map.removeOverlay(line);
+                }
+            });
+            transit.setMarkersSetCallback(function(rst) {
+                for (var i = 0; i < rst.length; i++) {
+                    map.removeOverlay(rst[i].marker);
+                }
+            });
+            transit.setSearchCompleteCallback(
+                function(rst) {
+                    //begin
+                    var json = {};
+                    var star = rst.getStart();
+                    var end = rst.getEnd();
+                    json.star = star.point;
+                    json.end = end.point;
+                    json.plannums = rst.getNumPlans();
+                    json.lines = [];
+                    var plannums = json.plannums;
+                    for (var i = 0; i < plannums; i++) {
+                        var plan = rst.getPlan(i);
+                        var ps = [];
+                        
+                        //
+                        //ps.push(star.point);
+                        var routeArray = [];
+                        for (var w = 0; w < plan.getNumRoutes(); w++) {
+                            if (plan.getRoute(w).getDistance(false) > 0) {
+                                routeArray.push(new BMap.Polyline(plan.getRoute(w).getPath(), {
+                                    strokeColor: 'green',
+                                    width: 5,
+                                    opacity: 0.5,
+                                    strokeStyle: 'dashed',
+                                    enableClicking: false
+                                }));
+                            }
+                        }
+                        //return false;
+                        //
+                        json.lines[i] = {
+                            "distance": plan.getDistance(false), //单位：米
+                            "duration": plan.getDuration(false), //单位：秒
+                            "description": plan.getDescription(false) //单位：秒
+                        };
+                        
+                        for(var k = 0;k<plan.getNumLines();k++){
+                            var line = plan.getLine(k);
+                            for(var p in line.getPath()){
+                                ps.push(line.getPath()[p]);
+                            }                             
+                            
+                        }
+                        if(navigator.userAgent.indexOf("MSIE 8.0")>0){
+                            ps.push(ps[ps.length-2]);
+                        }
+                        var polyline =
+                            new BMap.Polyline(
+                                ps, { strokeColor: "red", strokeWeight: 8, strokeOpacity: 0.5 });
+                        var transitArry = [polyline,routeArray];
+                        //json.lines[i].poloyline = polyline;
+                        json.lines[i].poloyline = transitArry;
+                    }
+                    
+                    opts.callback&&opts.callback(json);
+                    setTimeout(function() {
+                        var opts2 = {
+                            color: 'red',
+                            width: 5,
+                            opacity: 0.5,
+                            polyline: json.lines[0].poloyline
+                        };
+                        that.makePolyline(opts2);
+                        var popts1 = {
+                            lng: star.point.lng,
+                            lat: star.point.lat
+                        };
+
+                        var popts2 = {
+                            lng: end.point.lng,
+                            lat: end.point.lat
+                        };
+                        var starOverlay =  that.makeOverlay(popts1);
+                        var endOverlay =  that.makeOverlay(popts2);
+                        if(opts.startIcon){
+                            var _icon = opts.startIcon || {};
+                             starOverlay.setIcon({
+                                 imgurl:_icon.imgurl,
+                                 width:_icon.width || 20,
+                                 height:_icon.height || 25
+                             });
+                        }
+                        if(opts.endIcon){
+                             var _icon = opts.endIcon || {};
+                             endOverlay.setIcon({
+                                 imgurl:_icon.imgurl,
+                                 width:_icon.width || 20,
+                                 height:_icon.height || 25
+                             });
+                        }
+                    }, 200);
+                    //end
+                }
+            );
+        } else {}
+        //增加坐标点查询
+        var addressA = opts.start;
+        var addressB = opts.end;
+        if (Fn.isArray(addressA)) {
+            addressA = new BMap.Point(addressA[0], addressA[1]);
+        }
+        if (Fn.isArray(addressB)) {
+            addressB = new BMap.Point(addressB[0], addressB[1]);
+        }
+        transit.search(addressA, addressB);
+        //transit.search(opts.start, opts.end);
+    };
+    this.makeDrivingRouteByName = function(opts) {
+        this.makeclearOverlays();
+        opts = opts || {};
+        var that = this;
+        var map = that.bMap;
+        
+        var driving = new BMap.DrivingRoute(map, {
+            renderOptions: {
+                map: map,
+                autoViewport: opts.autoViewported //2018-03-02修改成动态参数
+            },
+            policy: opts.policy
+        });
+        //增加坐标点查询
+        var addressA = opts.start;
+        var addressB = opts.end;
+        if (Fn.isArray(addressA)) {
+            addressA = new BMap.Point(addressA[0], addressA[1]);
+        }
+        if (Fn.isArray(addressB)) {
+            addressB = new BMap.Point(addressB[0], addressB[1]);
+        }
+        driving.search(addressA, addressB);
+        //driving.search(opts.start, opts.end);
+        //添加回调函数
+        if (opts.callback != null && typeof(opts.callback) != "undefined") {
+            driving.setPolylinesSetCallback(function(lines) {
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].getPolyline();
+                    map.removeOverlay(line);
+                }
+            });
+            driving.setMarkersSetCallback(function(rst) {
+                for (var i = 0; i < rst.length; i++) {
+                    map.removeOverlay(rst[i].marker);
+                }
+            });
+            driving.setSearchCompleteCallback(function(rs) {
+                //begin
+                var json = {};
+                json.plannums = rs.getNumPlans(); //方案个数
+                json.star = { lng: rs.getStart().point.lng, lat: rs.getStart().point.lat }; //开始点
+                json.end = { lng: rs.getEnd().point.lng, lat: rs.getEnd().point.lat }; //结束点
+                json.plans = [];
+                for (var i = 0; i < json.plannums; i++) {
+                    var plan = rs.getPlan(i);
+                    json.plans[i] = {};
+                    json.plans[i].distance = plan.getDistance(false); //距离，单位：米
+                    json.plans[i].duration = plan.getDuration(false); //时间，单位：秒
+                    json.plans[i].numRoutes = plan.getNumRoutes(); //方案包含的线路个数
+                    json.plans[i].routes = [];
+                    var route;
+                    for (var k = 0; k < json.plans[i].numRoutes; k++) {
+                        route = plan.getRoute(k);
+                        json.plans[i].routes[k] = {};
+                        var paths = route.getPath();
+                        paths.push(rs.getEnd().point);
+                        json.plans[i].routes[k].polyline =
+                            new BMap.Polyline(
+                                paths, { strokeColor: "red", strokeWeight: 8, strokeOpacity: 0.5 })
+                        json.plans[i].routes[k].numSteps = route.getNumSteps(); //线路包含的步数
+                        json.plans[i].routes[k].steps = [];
+                        for (var m = 0; m < json.plans[i].routes[k].numSteps; m++) {
+                            json.plans[i].routes[k].steps[m] = route.getStep(m).getDescription(false); //步描述
+                        }
+                    }
+                }
+                if(opts.panel != ""){
+                    $("#"+opts.panel).hide();
+                }
+                opts.callback&&opts.callback(json);
+                setTimeout(function() {
+                    var opts1 = {
+                        color: 'red',
+                        width: 5,
+                        opacity: 0.5,
+                        polyline: json.plans[0].routes[0].polyline
+                    };
+                    that.makePolyline(opts1);
+                    var popts1 = {
+                        lng: rs.getStart().point.lng,
+                        lat: rs.getStart().point.lat
+                    };
+
+                    var popts2 = {
+                        lng: rs.getEnd().point.lng,
+                        lat: rs.getEnd().point.lat
+                    };
+                    var starOverlay =  that.makeOverlay(popts1);
+                    var endOverlay =  that.makeOverlay(popts2);
+                    if(opts.startIcon){
+                        var _icon = opts.startIcon || {};
+                         starOverlay.setIcon({
+                             imgurl:_icon.imgurl,
+                             width:_icon.width || 20,
+                             height:_icon.height || 25
+                         });
+                    }
+                    if(opts.endIcon){
+                         var _icon = opts.endIcon || {};
+                         endOverlay.setIcon({
+                             imgurl:_icon.imgurl,
+                             width:_icon.width || 20,
+                             height:_icon.height || 25
+                         });
+                    }
+                }, 200);
+                //end
+            });
+        }
+        //添加回调函数
+
+    };
+
+    /**     
+     * 步行线路规划（根据起始点名称规划路线）
+     * @param start
+     * @param end
+     * @param autoViewported 2018-03-02添加
+     */
+
+    this.makeWalkingRouteByName = function(opts) {
+        this.makeclearOverlays();
+        opts = opts || {};
+        var that = this;
+        var map = that.bMap;
+        var walking = new BMap.WalkingRoute(map, { renderOptions: { map: map, panel: opts.panel, autoViewport: opts.autoViewported } });
+        //增加坐标点查询
+        var addressA = opts.start;
+        var addressB = opts.end;
+        if (Fn.isArray(addressA)) {
+            addressA = new BMap.Point(addressA[0], addressA[1]);
+        }
+        if (Fn.isArray(addressB)) {
+            addressB = new BMap.Point(addressB[0], addressB[1]);
+        }
+        walking.search(addressA, addressB);
+        //walking.search(opts.start, opts.end);
+        //添加回调函数
+        if (opts.callback != null && typeof(opts.callback) != "undefined") {
+            walking.setPolylinesSetCallback(function(lines) {
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].getPolyline();
+                    map.removeOverlay(line);
+                }
+            });
+            walking.setMarkersSetCallback(function(rst) {
+                for (var i = 0; i < rst.length; i++) {
+                    map.removeOverlay(rst[i].marker);
+                }
+            });
+            walking.setSearchCompleteCallback(function(rs) {
+                //begin
+                var json = {};
+                json.plannums = rs.getNumPlans(); //方案个数
+                json.star = { lng: rs.getStart().point.lng, lat: rs.getStart().point.lat }; //开始点
+                json.end = { lng: rs.getEnd().point.lng, lat: rs.getEnd().point.lat }; //结束点
+                json.plans = [];
+                for (var i = 0; i < json.plannums; i++) {
+                    var plan = rs.getPlan(i);
+                    json.plans[i] = {};
+                    json.plans[i].distance = plan.getDistance(false); //距离，单位：米
+                    json.plans[i].duration = plan.getDuration(false); //时间，单位：秒
+                    json.plans[i].numRoutes = plan.getNumRoutes(); //方案包含的线路个数
+                    json.plans[i].routes = [];
+                    var route;
+                    for (var k = 0; k < json.plans[i].numRoutes; k++) {
+                        route = plan.getRoute(k);
+                        json.plans[i].routes[k] = {};
+                        var paths = route.getPath();
+                        paths.push(rs.getEnd().point);
+                        json.plans[i].routes[k].polyline =
+                            new BMap.Polyline(
+                                route.getPath(), { strokeColor: "red", strokeWeight: 8, strokeOpacity: 0.5 })
+                        json.plans[i].routes[k].numSteps = route.getNumSteps(); //线路包含的步数
+                        json.plans[i].routes[k].steps = [];
+                        for (var m = 0; m < json.plans[i].routes[k].numSteps; m++) {
+                            json.plans[i].routes[k].steps[m] = route.getStep(m).getDescription(false); //步描述
+                        }
+                    }
+                }
+                if(opts.panel != ""){
+                    $("#"+opts.panel).hide();
+                }
+                
+                opts.callback&&opts.callback(json);
+                setTimeout(function() {
+                    var opts1 = {
+                        color: 'red',
+                        width: 5,
+                        opacity: 0.5,
+                        polyline: json.plans[0].routes[0].polyline
+                    };
+                    that.makePolyline(opts1);
+                    var popts1 = {
+                        lng: rs.getStart().point.lng,
+                        lat: rs.getStart().point.lat
+                    };
+
+                    var popts2 = {
+                        lng: rs.getEnd().point.lng,
+                        lat: rs.getEnd().point.lat
+                    };
+                    var starOverlay =  that.makeOverlay(popts1);
+                    var endOverlay =  that.makeOverlay(popts2);
+                    if(opts.startIcon){
+                        var _icon = opts.startIcon || {};
+                         starOverlay.setIcon({
+                             imgurl:_icon.imgurl,
+                             width:_icon.width || 20,
+                             height:_icon.height || 25
+                         });
+                    }
+                    if(opts.endIcon){
+                         var _icon = opts.endIcon || {};
+                         endOverlay.setIcon({
+                             imgurl:_icon.imgurl,
+                             width:_icon.width || 20,
+                             height:_icon.height || 25
+                         });
+                    }
+                }, 200);
+                //end
+            });
+        }
+    };
+    /**
+     * 地理编码
+     */
+    this.makeGeocoderByLocation = function() {
+        var address, city,callback;
+        if(typeof(arguments[0]) == "object"){
+            address = arguments[0].address;
+            city = arguments[0].city;
+            callback = arguments[0].callback;
+        }else{
+            address=arguments[0], city=arguments[1],callback=arguments[2];
+        }
+        
+        var myGeo = new BMap.Geocoder();
+        // 将地址解析结果显示在地图上,并调整地图视野
+        myGeo.getPoint(address, function(point) {
+            if (point) {
+                // that.makeCenter({
+                //     lng:point.lng,
+                //     lat:point.lat,
+                //     printed:true                    
+                // });
+                callback && callback(point);
+            } else {
+                callback && callback(undefined);
+                throw new Error("Error2：" + "您选择地址没有解析到结果!");
+            }
+            
+        }, city);
+    };
+    this.makeGeocoderByPoint = function(lng, lat, callback) {
+        var geoc = new BMap.Geocoder();
+        var pt = new BMap.Point(lng, lat);
+        geoc.getLocation(pt, function(rs) {
+            //2018-03-01修改为回调函数处理解析结果
+            callback(rs);
+            //2018-03-02修改为回调函数处理解析结果
+        });
+    };
+    this.batchGecode = {
+        bdGEO: function (opts){
+            var _that = this.that;
+            opts = opts || {};
+            if(!opts.address || opts.address.length<1) return;
+            var allAddress = [];
+            var allGeo = [];
+            if(opts.inonecity === false){//不同城市
+                allAddress = opts.address;
+            }else{
+                for(var i in opts.address){
+                    var _obj = {city:opts.city,address:opts.address[i] };
+                    allAddress.push(_obj);
+                }
+            }
+            geoCode();            
+            function geoCode(index){
+                index = index || 0;
+                var geoObj = allAddress[index];
+                var _opts = {
+                    address:geoObj.address || geoObj.adderss,
+                    city:geoObj.city,
+                    callback:function (point){
+                        geoCodeCallback(point);
+                    } 
+                }
+                _that.makeGeocoderByLocation(_opts);
+            }
+            function geoCodeCallback(point){  
+                allGeo.push(point);
+                allGeo.length == allAddress.length ?opts.callback && opts.callback(allGeo):geoCode(allGeo.length);
+            }
+           
+        },
+        that:this
+    };
+    /**百度坐标转高德 */
+    this.convertor = function (opts){
+        opts = opts || {};
+        jQuery.support.cors=true;
+        $.ajax({
+            type: 'get',
+            url: this.ampConvertUrl,
+            data: {
+                coordsys:"baidu",
+                locations:opts.points
+                //,key:this.AK[0]
+            },
+            dataType:"jsonp",
+            error: function() {
+                opts.callback && opts.callback("")
+            },
+            success: function(data) {
+                opts.callback && opts.callback(data.locations);
+            }
+        });
+    }
+    /**高德坐标转百度 */
+    this.convertorToBMap = function (opts){
+        opts = opts || {};
+        var _coords =  opts.coords.join(";");
+        var _from = opts.from || 3;
+        var _to = opts.to || 5;
+        jQuery.support.cors=true;
+        $.ajax({
+            type: 'get',
+            url: this.bmpConvertUrl,
+            data: {
+                coordsys:"baidu",
+                coords:_coords,
+                ak:this.AK[0],
+                from:_from,
+                to:_to
+            },
+            dataType:"jsonp",
+            error: function() {
+                opts.callback && opts.callback("")
+            },
+            success: function(data) {
+                var _locations = [];
+                var points = data && data.result || [];
+                
+                for(var i =0; i<points.length;i++){
+                    var _str = {lng:points[i].x,lat:points[i].y};
+                    _locations.push(_str)
+                }
+                opts.callback && opts.callback(_locations);
+            }
+        });
+    }
+    /**
+     * 一些功能
+     */
+    this.getGardenBounds = function (opts){
+        if(opts==null || (opts&&opts.uid==null)){
+            return undefined;
+        }
+        var map = this.bMap;
+        $.ajax({
+            type:"get",
+            url:this.poiGardenUrl,
+            //reqflag=pcmap&coord_type=3&from=webmap&qt=ext&ext_ver=new&l=18
+            data:{reqflag:"pcmap",from:"webmap",qt:"ext",uid:opts.uid,ext_ver:"new",l:18},
+            dataType:"jsonp",
+            error:function (e){
+                throw new Error("暂时无法获取到小区边界，请您重试！");
+            },success:function (data){
+                var point = null;
+                if(data && data.content && data.content.geo){
+                    var geo = data.content.geo;
+                    if(geo != ""){
+                        point = geoToPoint(geo);
+                    }                        
+                }                    
+                if(opts.callback&&opts.callback(point));
+                
+            }
+        });
+        function geoToPoint(geo) {
+            //geo 墨卡托坐标
+            if(typeof geo != 'string'){
+                return {};
+            }
+            var t = geo.split("|");
+            var n = parseInt(t[0]);
+            //var i = t[1];
+            var r = t[2];
+            var o = r.split(";");
+            if(n === 4){
+                for (var a = [], s = 0; s < o.length - 1; s++){
+                    "1" === o[s].split("-")[0] && a.push(o[s].split("-")[1]);
+                }
+                o = a;
+                o.push("");
+            }
+            var u = [];
+            switch(n){
+                case 1:
+                    u.push(o[0]);
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    for (var s = 0; s < o.length - 1; s++) {
+                        var l = o[s];
+                        if (l.length > 100){
+                            l = l.replace(/(-?[1-9]\d*\.\d*|-?0\.\d*[1-9]\d*|-?0?\.0+|0|-?[1-9]\d*),(-?[1-9]\d*\.\d*|-?0\.\d*[1-9]\d*|-?0?\.0+|0|-?[1-9]\d*)(,)/g,
+                                            "$1,$2;");
+                            u.push(l);
+                        } else {
+                            for (var c = [], d = l.split(","), f = 0; f < d.length; f += 2) {
+                                var p = d[f];
+                                var h = d[f + 1];
+                                c.push(p + "," + h);
+                            }
+                            u.push(c.join(";"))
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+            if(u.length <= 1){
+                u = u.toString();
+            }
+            var points = [];
+            if (u) {
+                var arr = u.split(";");
+                if(arr){
+                    for(var i = 0; i < arr.length; i++){
+                        var coord = arr[i].split(",");
+                        if(coord && coord.length == 2){
+                            var mctXY = new BMap.Pixel(coord[0], coord[1]);    
+                            var project = map.getMapType().getProjection();
+                            var point = project.pointToLngLat(mctXY);   
+                            points.push(new BMap.Point(point.lng, point.lat));
+                        }
+                    }
+                }
+            }
+            return points;
+        }
+    }
+    /*经纬度转坐标像素*/
+    this.pointToPixel = function (opts){
+        var opts = opts || {};
+        if(!opts.lng || !opts.lat){
+            return;
+        }
+        var _point = {lng:opts.lng,lat:opts.lat};
+        return this.bMap.pointToPixel(_point)
+    }
+    /*坐标像素转经纬度*/
+    this.pixelToPoint = function (opts){
+        var opts = opts || {};
+        if(!opts.x || !opts.y){
+            return;
+        }
+        var _point = {x:opts.x,y:opts.y};
+        return this.bMap.pixelToPoint(_point)
+    }
+    /*卫星地图*/
+    this.setMapType = function (opts){
+        /**
+         * mapTypes:需要显示的地图类型数组，NORMAL：普通地图，HYBRID：混合（路网和卫星图），SATELLITE：卫星图，PERSPECTIVE：透视图像视图
+         * change:是否立即进行地图切换，
+         */
+        var opts = opts || {};
+        var _mapTypeObj = {
+            "NORMAL":BMAP_NORMAL_MAP,//此地图类型展示普通街道视图
+            "HYBRID":BMAP_HYBRID_MAP,//此地图类型展示卫星和路网的混合视图
+            "SATELLITE":BMAP_SATELLITE_MAP,//此地图类型展示卫星视图
+            "PERSPECTIVE":BMAP_PERSPECTIVE_MAP//此地图类型展示透视图像视图
+        };
+        var _mapType = opts.mapTypes || ["NORMAL","HYBRID"];
+        var _arr = [];
+        for(var i=0;i<_mapType.length;i++){
+            _arr.push(_mapTypeObj[_mapType[i]]);
+        }
+        var _control = new BMap.MapTypeControl({
+            mapTypes:_arr
+        });
+        this.bMap.addControl(_control);
+        if(opts.change!= undefined){
+            this.bMap.setMapType(_mapTypeObj[opts.change]);
+        }
+    }
+    /**POI搜索面板*/
+    this.initPoipanel = function (opts){
+        opts = opts || {};
+        var that = this;
+        var map = that.bMap;
+        var nearbyCircle,hasLocalpoi=isLocalpoi = opts.localpoi === true;
+        // var nearbyCircle,hasLocalpoi=isLocalpoi = false;
+        var _poicss = document.createElement('link');
+        _poicss.rel="stylesheet";
+        var _poicsssrc = G_cmapstaich+'src/assets/css/poipanel.css';
+        _poicss.href = _poicsssrc;
+
+        document.getElementsByTagName('head')[0].appendChild(_poicss);
+
+        opts = opts || {};
+        var panelCss = [];
+        if(opts.position){
+            var _panelcss = "position:"+opts.position+";";
+            panelCss.push(_panelcss);
+        }else{
+            panelCss.push("position:absolute;");
+        }
+        if(opts.right){
+            var _panelcss = "right:"+_returnCss(opts.right)+";";
+            panelCss.push(_panelcss);
+        }else{
+            var _panelcss = "left:"+_returnCss(opts.left)+";";
+            panelCss.push(_panelcss);
+        }
+        var _panelcss = "top:"+_returnCss(opts.top)+";";
+        panelCss.push(_panelcss);
+        // if(opts.bottom){
+        //     var _panelcss = "bottom:"+_returnCss(opts.bottom)+";";
+        //     panelCss.push(_panelcss);
+        // }else{
+        //     var _panelcss = "top:"+_returnCss(opts.top)+";";
+        //     panelCss.push(_panelcss);
+        // }
+        function _returnCss(value,defaultValue){
+            defaultValue = defaultValue || 20;
+            if(!value){
+                return defaultValue+"px";
+            }
+            if(parseFloat(value) == value){
+                return value+"px";
+            }else{
+                return value;
+            }
+
+        }
+        var _poiPanelHtml = '<div class="cmap-poipanel"  style="'+panelCss.join("")+';display:none;">'+
+            '<!--poi搜索-->'+
+            '<div class="cmap-search-box" style="display:block">'+
+                '<div class="cmap-poipanel-input cmap-poipanel-common">'+
+                    '<div class="cmap-poipanel-inputside">在<span>中国银行</span>附近搜索</div>'+
+                    '<input type="text" name="keyword" autocomplete="off" maxlength="256" placeholder="搜地点、查公交、找路线" value="">'+
+                    '<div class="cmap-poipanel-inputclear" title="清空"></div>'+
+                    '<div class="cmap-poipanel-changeroute" title="路线"></div>'+
+                '</div>'+
+                '<!--搜索按钮-->'+
+                '<div class="cmap-poipanel-submitBtn" title="搜索"></div>'+
+                '<div style="clear:both;"></div>'+
+                '<!--poi导航-->'+
+                '<div class="cmap-poipanel-poinav cmap-poipanel-common">'+
+                    '<div class="cmap-poipanel-backpoilist">返回"大学的搜索结果"</div>'+
+                '</div>'+
+                '<!--poi搜索结果列表-->'+
+                '<div class="cmap-poipanel-poilist">'+
+                    '<ul class="cmap-poipanel-pois"><ul>'+
+                '</div>'+
+                '<!--poi详细列表-->'+
+                '<div class="cmap-poipanel-poidetail cmap-poipanel-common">'+
+                    '<div class="cmap-poipanel-detailhead">'+
+                        '<div class="cmap-poipanel-detailhead-l">'+
+                            '<div class="cmap-poipanel-detail-poiname">升龙又一城</div>'+
+                            '<div class="cmap-poipanel-detail-poiscore"><span>3.7</span> / 5.0</div>'+
+                            '<div class="cmap-poipanel-detail-poitags"><span>住宅区</span></div>'+
+                        '</div>'+
+                        '<div class="cmap-poipanel-detailhead-r">'+
+                            '<div class="cmap-poipanel-detail-routeend"><em></em>到这去</div>'+
+                            '<div class="cmap-poipanel-detail-routestar"><em></em>从这出发</div>'+
+                        '</div>'+
+                        '<div style="clear:both;"></div>'+
+                    '</div>'+
+                    '<div class="cmap-poipanel-poigeneralinfo">'+
+                        '<div class="cmap-poipanel-poigeneraltabs">'+
+                            '<ul>'+
+                                '<li class="cmap-poipanel-poibtn-nearby"><span class="cmap-poipanel-poigeneral-iconfj"></span>附近</li>'+(opts.detailbtn?'<li>'+opts.detailbtn+'</li>':'')+
+                            '</ul>'+
+                        '</div>'+
+                        '<div class="cmap-poipanel-poigeneraladdress">'+
+                            '<span class="cmap-poipanel-poigeneral-icondz"></span><span class="cmap-poipanel-poigeneral-addr"></span>'+
+                        '</div>'+
+                    '</div>'+
+                    '<div class="cmap-poipanel-poigeneral-pics">'+
+                        '<div class="cmap-poipanel-poigeneral-pictit">相册</div>'+
+                        '<div class="cmap-poipanel-poigeneral-piclist"></div>'+
+                    '</div>'+
+                    '<div class="cmap-poipanel-poigeneral-tags">'+
+                        '<div class="cmap-poipanel-poigeneral-tagtit">印象标签</div>'+
+                        '<div class="cmap-poipanel-poigeneral-taglist">'+
+                            
+                        '</div>'+
+                    '</div>'+
+                '</div>'+
+            '</div>'+
+            '<!--导航规划-->'+
+            '<div class="cmap-navplan-box">'+
+                '<!--导航面板-->'+
+                '<div class="cmap-poipanel-route cmap-poipanel-common">'+
+                    '<div class="cmap-poipanel-routeheader">'+
+                        '<div class="cmap-poipanel-routetabs cmap-poipanel-bus">'+
+                            '<ul class="cmap-poipanel-clearfix" style="padding:0 20px;">'+
+                                '<li class="cmap-poipanel-routebus" data-type="bus">'+
+                                    '<i></i><span>公交</span>'+
+                                '</li>'+
+                                '<li class="cmap-poipanel-routedrive" data-type="drive">'+
+                                    '<i></i><span>驾车</span>'+
+                                '</li>'+
+                                '<li class="cmap-poipanel-routewalk" data-type="walk">'+
+                                    '<i></i><span>步行</span>'+
+                                '</li>'+
+                                '<!--'+
+                                '<li class="cmap-poipanel-routebike" data-type="bike">'+
+                                    '<i></i><span>骑行</span>'+
+                                '</li>'+
+                                '-->'+
+                            '</ul>'+
+                            '<div class="cmap-poipanel-routearrow"></div>'+
+                        '</div>'+
+                        '<div class="cmap-poipanel-changesearch" title="关闭路线"></div>'+
+                        '<div style="clear:both;"></div>'+
+                    '</div>'+
+                    '<div class="cmap-poipanel-routebox">'+
+                        '<div class="cmap-poipanel-revert" title="切换起终点">'+
+                            '<div class="cmap-poipanel-reverticon"> </div>'+
+                        '</div>'+
+                        '<div class="cmap-poipanel-routeinputs">'+
+                            '<div class="cmap-poipanel-routeinput cmap-poipanel-routestar">'+
+                                '<div class="cmap-poipanel-routeicon"> </div> <input autocomplete="off" maxlength="256" placeholder="输入起点或在图区上选点" class="route-start-input input-iploc" type="text" value="">'+
+                                '<div class="cmap-poipanel-inputclear" title="清空" type="start"> </div>'+
+                                '<div class="cmap-poipanel-routeadd"> </div>'+
+                            '</div>'+
+                            '<div class="cmap-poipanel-routeinput cmap-poipanel-routeend">'+
+                                '<div class="cmap-poipanel-routeicon"> </div> <input autocomplete="off" maxlength="256" placeholder="输入终点或在图区上选点" class="route-end-input" type="text" value="">'+
+                                '<div class="cmap-poipanel-inputclear" title="清空" type="end"> </div>'+
+                            '</div>'+
+                        '</div>'+
+                    '</div>'+
+                '</div>'+
+                '<div class="cmap-poipanel-submitBtn" title="搜索"></div>'+
+                '<div style="clear:both;"></div>'+
+                '<!--线路规划结果展示-->'+
+                '<div class="cmap-poipanel-routeresult" style="display:none;" id="cmap-render-panel'+that.Id+'">'+
+                    '<!--'+
+                    '<div class="cmap-poipanel-route-plan">'+
+                        '<table>'+
+                            '<tr>'+
+                            '<th colspan="2"><div>出发时间：17：50</div></th>'+
+                            '<th colspan="2"><div>交通工具：全部</div></th>'+
+                            '</tr><tr>'+
+                            '<td><span>推荐路线</span></td>'+
+                            '<td><span>时间短</span></td>'+
+                            '<td><span>少换乘</span></td>'+
+                            '<td><span>少步行</span></td>'+
+                            '</tr>'+
+                        '</table>'+
+                    '</div>'+
+                    '<div class="cmap-poipanel-route-lists">'+
+                        '<ul class="cmap-poipanel-r-ls-ul">'+
+                            '<li>'+
+                                '<div class="cmap-poipanel-route-list-nav">'+
+                                    '<div class="cmap-poipanel-clearfix cmap-poipanel-r-l-n-top">'+
+                                        '<span class="cmap-poipanel-r-l-n-price">票价¥9</span>'+
+                                        '<span class="cmap-poipanel-r-l-n-tag">无堵车风险</span>'+
+                                        '城郊线<span>→</span>地铁1号线<span>→</span>地铁2号线'+
+                                    '</div>'+
+                                    '<div class="cmap-poipanel-r-l-n-end">2小时30分钟<span>|</span>59.3公里<span>|</span>步行1.5公里</div>'+
+                                '</div>'+
+                                '<div class="cmap-poipanel-route-list-detail">'+
+                                    '<div class="cmap-poipanel-r-d-start">郑州新郑国际机场</div>'+
+                                    '<table>'+
+                                        '<tr>'+
+                                            '<th><div class="cmap-poipanel-r-icon-step"></div></th>'+
+                                            '<td><p>步行 260米</p></td>'+
+                                        '</tr>'+
+                                        '<tr>'+
+                                            '<th class="cmap-poipanel-r-line"></th>'+
+                                            '<td>'+
+                                                '<div><span>新郑机场</span>站 上车<div class="cmap-poipanel-r-icon-bus"></div></div>'+
+                                                '<div><em>城郊线</em>（南四环方向）</div>'+
+                                                '<div><span>新郑机场</span>站 下车<div class="cmap-poipanel-r-icon-bus"></div></div>'+
+                                            '</td>'+
+                                        '</tr><tr>'+
+                                            '<th><div class="cmap-poipanel-r-icon-step-zx"></div></th>'+
+                                            '<td><p>直行，进入京港澳高速</p></td>'+
+                                        '</tr><tr>'+
+                                            '<th><div class="cmap-poipanel-r-icon-step-zqf"></div></th>'+
+                                            '<td><p>左前方行驶，进入京港澳高速</p></td>'+
+                                        '</tr><tr>'+
+                                            '<th><div class="cmap-poipanel-r-icon-step-yqf"></div></th>'+
+                                            '<td><p>右前方行驶，进入京港澳高速</p></td>'+
+                                        '</tr><tr>'+
+                                            '<th><div class="cmap-poipanel-r-icon-step-zz"></div></th>'+
+                                            '<td><p>左转行驶，进入京港澳高速</p></td>'+
+                                        '</tr><tr>'+
+                                            '<th><div class="cmap-poipanel-r-icon-step-yz"></div></th>'+
+                                            '<td><p>右转行驶，进入京港澳高速</p></td>'+
+                                        '</tr><tr>'+
+                                            '<th><div class="cmap-poipanel-r-icon-step-dt"></div></th>'+
+                                            '<td><p>调头行驶，进入京港澳高速</p></td>'+
+                                        '</tr>'+
+                                    '</table>'+
+                                    '<div class="cmap-poipanel-r-d-end">郑州新郑国际机场</div>'+        
+                                '</div>'+
+                            '</li>'+
+                        '</ul>'+
+                    '</div>'+
+                    '-->'+
+                '</div>'+
+            '</div>'+  
+            '<!--搜索提示-->'+
+            '<div class="cmap-poipanel-suggest cmap-poipanel-common" style="display: none;"><ul><li data-key="321bd6e35b373b8331f71d0f"><a><i>郑州space酒吧</i><em>郑州市金水区</em></a></li></ul></div>'+  
+            '<!--本地数据-->'+
+            (hasLocalpoi?'<div class="cmap-poipanel-historytag cmap-poipanel-common"><div><span class="chooseit" key="assembly"><em></em>装维数据</span></div></div>':'')+
+            '<!--搜索历史-->'+
+            '<div class="cmap-poipanel-history cmap-poipanel-common">'+
+            
+            '<ul></ul><div class="cmap-poipanel-historyclear"><a>删除历史</a></div></div>' +      
+        '</div>';
+        var _cmapPoipanel = document.getElementById("cmap-poipanel");
+        if(_cmapPoipanel){            
+            _cmapPoipanel.parentNode.removeChild(_cmapPoipanel);
+        }
+        $("#"+that.Id).append(_poiPanelHtml);
+        /**
+         * 取消滚动绑定
+         */
+        var domPoipanel = $("#"+that.Id).find(".cmap-poipanel");
+        if(window.attachEvent){
+            domPoipanel[0].attachEvent("onmousewheel",stopMapMouseWheel)
+        }else{
+            var _mouseType = document.mozFullScreen !== undefined ? "DOMMouseScroll":"mousewheel";
+            domPoipanel[0].addEventListener(_mouseType,stopMapMouseWheel,false)
+        }
+        function stopMapMouseWheel(e){ //阻止事件冒泡和默认行为的完整兼容性代码
+            e = e||window.event;
+            if (e.stopPropagation) { //这是取消冒泡
+                e.stopPropagation();
+            } else{
+                e.cancelBubble = true;
+            };
+        }
+        //淮安
+        var _localSearchBound = "//"+G_PUBLICIP+"/poicontrol/poi/getBoundingPoi";
+        var _localSearchNearby = "//"+G_PUBLICIP+"/poicontrol/poi/getPoiAroundInfo";
+        var _localPoidetail = "//"+G_PUBLICIP+"/poicontrol/poi/getPoiDetail";
+        var _locbusinessId = "370d25e282674a928368a6b6f0f1f4bc";//12345678
+
+        var domSuggestList = domPoipanel.find(".cmap-poipanel-suggest");
+        var domHistory = domPoipanel.find(".cmap-poipanel-history");
+        var domSearchList = domPoipanel.find(".cmap-poipanel-poilist");
+        var domSearchDetail = domPoipanel.find(".cmap-poipanel-poidetail");
+        var domBackNav = domPoipanel.find(".cmap-poipanel-poinav");
+        setTimeout(function (){
+            domPoipanel.show();
+            if(hasLocalpoi){
+                domSearchList.css("margin-top","40px");
+                domBackNav.css("margin-top","40px");
+            }
+        },300);
+        var panelSearch = true;//默认搜索
+        var isNearbySearch = false;
+        var navArray = [], arrayPoints = [],namePoints = [],uidPoints=[];
+
+        var domRouteStart = domPoipanel.find(".route-start-input");
+        var domRouteEnd = domPoipanel.find(".route-end-input");
+        var _routeStartPoint,_routeEndPoint,_routeStartName = "",_routeEndName = "";
+        domRouteStart.keyup(function (event){
+            _addListenKeyup(event,$(this));
+        }).focus(function (event){
+            _addListenInputFocus(event,$(this));
+        }).click(function (event){
+            event.stopPropagation();
+        });
+        domRouteEnd.keyup(function (event){
+            _addListenKeyup(event,$(this));
+        }).focus(function (event){
+            _addListenInputFocus(event,$(this));
+        }).click(function (event){
+            event.stopPropagation();
+        });
+        domPoipanel.find("input[name='keyword']").keyup(function (event){
+            _addListenKeyup(event,$(this));
+        });
+        domPoipanel.find(".cmap-poipanel-historytag").find("span").click(function (event){
+            var that = $(this);
+            if(that.hasClass("chooseit")){
+                that.removeClass("chooseit");
+            }else{
+                that.addClass("chooseit");
+            }
+            isLocalpoi = domPoipanel.find(".cmap-poipanel-historytag").find(".chooseit").index()!=-1;
+            event.stopPropagation();
+        });
+        $("body").click(function (){
+            domSuggestList.hide();
+            domHistory.hide();
+        });
+        domPoipanel.find(".cmap-poipanel-submitBtn").click(function (){
+            if(!panelSearch){
+                _routeLine();
+            }else{
+                var _value = $.trim(domPoipanel.find("input[name='keyword']").val());
+                _searchKey({
+                    key:_value,
+                    poiid:domPoipanel.attr("uid")
+                })
+            }
+        });
+        domPoipanel.find(".cmap-poipanel-routetabs").find("li").click(function (){
+            $(this).parents(".cmap-poipanel-routetabs").attr("class","cmap-poipanel-routetabs cmap-poipanel-"+$(this).attr("data-type"));
+            _routeLine();
+        });
+        //到这里去
+        domPoipanel.find(".cmap-poipanel-detail-routeend,.cmap-poipanel-detail-routestar").click(function (ele){
+            var _detailLng = domSearchDetail.attr("lnglat").split(",");
+            var _point = new BMap.Point(_detailLng[0],_detailLng[1]);
+            var _detailName = domSearchDetail.attr("poiname");
+            if($(this).hasClass("cmap-poipanel-detail-routeend")){//到这里去
+                _routeEndPoint = _point;
+                _routeEndName = _detailName;
+                domRouteEnd.val(_routeEndName).focus();
+                var geolocation = new BMap.Geolocation();
+                geolocation.getCurrentPosition(function(r){                    
+                    if(this.getStatus() == 0){
+                        if($.trim(domRouteStart.val()) == ""){
+                            _routeStartPoint = r.point,_routeStartName = "我的位置";
+                            domRouteStart.addClass("cmp-poipanel-currinput");
+                            map.panTo(_routeStartPoint);
+                        }                        
+                    }else {
+                        _routeStartPoint = null,_routeStartName = "";
+                        domRouteStart.removeClass("cmp-poipanel-currinput");
+                    }        
+                    domRouteStart.val(_routeStartName);                    
+                },{enableHighAccuracy: true});                
+            }else{
+                _routeStartPoint = _point,_routeStartName = _detailName;
+                _routeEndPoint = null;
+                _routeEndName = "";
+                domRouteStart.val(_routeStartName);
+                domRouteEnd.focus();
+            }
+            _loadNavplanbox();
+        });
+        //切换线路
+        domPoipanel.find(".cmap-poipanel-revert").click(function (){
+            var _oldStartName = _routeStartName;
+            var _oldStartPoint = _routeStartPoint;
+            var _oldEndName = _routeEndName;
+            var _oldEndPoint = _routeEndPoint;
+            _routeStartName = _oldEndName;
+            _routeStartPoint = _oldEndPoint
+            _routeEndName = _oldStartName;
+            _routeEndPoint = _oldStartPoint;
+            if(domRouteStart.hasClass("cmp-poipanel-currinput")){
+                domRouteStart.removeClass("cmp-poipanel-currinput");
+                domRouteEnd.addClass("cmp-poipanel-currinput");
+            }else{
+                domRouteStart.addClass("cmp-poipanel-currinput");
+                domRouteEnd.removeClass("cmp-poipanel-currinput");
+            }
+            domRouteStart.val(_routeStartName);
+            domRouteEnd.val(_routeEndName);
+            _routeLine();
+        });
+        domPoipanel.find(".cmap-poipanel-inputclear").click(function (){
+            $(this).hide();
+            var _type = $(this).attr("type");
+            if(_type == "end"){
+                _routeEndPoint = null;
+                _routeEndName = "";
+                domRouteEnd.val(_routeEndName);
+            }else if(_type == "start"){
+                _routeStartPoint = null;
+                _routeStartName = "";
+                domRouteStart.val(_routeStartName);
+            }else{
+                if(_type == "nearby"){
+                    var _val = domSearchDetail.attr("poiname");
+                    $(this).attr({"title":"清空","type":""}).siblings("input[type='text']").val(_val);
+                    domSearchDetail.show();
+                    domBackNav.show();
+                    domPoipanel.find(".cmap-poipanel-nearby").removeClass("cmap-poipanel-nearby");
+                }else{                    
+                    isNearbySearch = false;                   
+                }
+                navArray = [];
+                _routeStartPoint = null,_routeEndPoint = null ,_routeStartName = "",_routeEndName ="";
+                
+            }
+            
+        });
+        domHistory.delegate("li","click",function (){
+            if(!panelSearch){
+                var _name = $(this).attr("data-name").split(" - ");
+                var _point = $(this).attr("data-point");
+                var _arry = Fn.parse(_point);
+                domRouteStart.val(_name[0]);
+                _routeStartName = _name[0];
+                domRouteEnd.val(_name[1]);
+                _routeEndName = _name[1];
+                _routeStartPoint = new BMap.Point(_arry[0].lng,_arry[0].lat);
+                _routeEndPoint = new BMap.Point(_arry[1].lng,_arry[1].lat);
+                _routeLine();
+                return;
+            }
+            if($(this).attr("data-key") != ""){
+                var key = $(this).find("i").text();
+                var key2 = $(this).find("em").text();
+                domPoipanel.find("input[name='keyword']").val(key);
+                _searchKey({
+                    key:key,
+                    pagenum:1,
+                    key2:key2,
+                    poiid:$(this).attr("data-key")
+                });
+                
+
+            }else{
+                //进行搜索
+                var key = $(this).find("i").text();
+                domPoipanel.find("input[name='keyword']").val(key);
+                _searchKey({key:key});
+            }        
+        });
+        function _addListenKeyup(event,ele){
+            
+            _addListenInputFocus(event,ele);
+            var _value = $.trim(ele.val());
+            if(event.keyCode == 13){//回车
+                if(_value == "") return;
+                if(!panelSearch){
+                    if($.trim(domRouteStart.val()) != "" && $.trim(domRouteEnd.val()) != ""){
+                        _routeLine();
+                        return;
+                    }
+                    if(ele.hasClass("route-start-input")){
+                        domRouteEnd.focus();
+                    }else{
+                        domRouteStart.focus();
+                    }
+                    return;
+                }
+                _searchKey({
+                    key:_value,
+                    poiid:domPoipanel.attr("uid")
+                });
+                return;
+            }
+            if(_value != ""){
+                
+                if(!panelSearch){
+                    if(ele.hasClass("route-start-input")){
+                        _routeStartPoint = null;
+                        _routeStartName = _value;
+                    }else{
+                        _routeEndPoint = null;
+                        _routeEndName = _value;
+                    }
+                    if(_value != "我的位置"){
+                        ele.removeClass("cmp-poipanel-currinput");
+                    }else{
+                        ele.addClass("cmp-poipanel-currinput");
+                    }
+                }
+                if(isLocalpoi){
+                    return;
+                }
+                _loadSuggestKey(_value,ele);
+            }else{
+                _loadHistory();
+            }
+        }
+        function _addListenInputFocus(event,ele){
+            var _value = $.trim(ele.val());
+            if(_value == ""){
+                _loadHistory();
+                if(panelSearch){
+                    ele.siblings(".cmap-poipanel-changesearch").removeClass("cmap-poipanel-changesearch").addClass("cmap-poipanel-changeroute").attr("title","路线");
+                }
+                
+            }else{
+                if(!panelSearch || panelSearch&&ele.siblings(".cmap-poipanel-changesearch").attr("title") != "清空"){
+                    ele.siblings(".cmap-poipanel-inputclear").show();                    
+                }                
+            }
+        }
+        /**搜索和导航切换 */
+        domPoipanel.find(".cmap-poipanel-changeroute").click(function (){
+            var that = $(this);
+            if(that.hasClass("cmap-poipanel-changesearch")){
+                that.removeClass("cmap-poipanel-changesearch").addClass("cmap-poipanel-changeroute").attr("title","路线").siblings("input").val("").focus();
+                _closeAll();
+                navArray = [];  
+                isNearbySearch = false;   
+                domPoipanel.find(".cmap-poipanel-nearby").removeClass("cmap-poipanel-nearby");
+                domPoipanel.find("input[name='keyword']").val("");
+            }else{
+                var geolocation = new BMap.Geolocation();
+                geolocation.getCurrentPosition(function(r){
+                    if(this.getStatus() == 0){
+                        _routeStartPoint = r.point,_routeStartName = "我的位置";
+                        _routeEndPoint = undefined,_routeEndName = $.trim(that.siblings("input[name='keyword']").val());
+                        domRouteEnd.focus();
+                        domRouteStart.addClass("cmp-poipanel-currinput");
+                        map.panTo(_routeStartPoint);
+                    }else {
+                        _routeStartPoint = undefined,_routeStartName = $.trim(that.siblings("input[name='keyword']").val());
+                        _routeEndPoint = undefined,_routeEndName = "";
+                        domRouteStart.focus();
+                        domRouteStart.removeClass("cmp-poipanel-currinput");
+                    }
+                    domRouteStart.val(_routeStartName);
+                    domRouteEnd.val(_routeEndName);
+                },{enableHighAccuracy: true});                
+                _loadNavplanbox();
+            }
+            
+        });
+        domPoipanel.find(".cmap-poipanel-changesearch").click(function (){
+            _loadSearchbox();
+        });
+
+        domSuggestList.delegate("li","click",function (){
+            
+            domSuggestList.hide();
+            var key = $(this).find("i").text();
+             
+            if(!panelSearch){  
+                if($(this).attr("data-key") ==""){
+                    _loadPoiDetail($(this).attr("data-key"));
+                }else{
+                    suggestValuedom.val(key);
+                    if(suggestValuedom.hasClass("route-start-input")){
+                        _routeStartName = key;
+                    }else{
+                        _routeEndName = key;
+                    }
+                    _routeLine();
+                }                
+            }else{
+                if(isNearbySearch){
+                    domPoipanel.find("input[name='keyword']").val(key);
+                    _searchKey({key:key});
+
+                    return;
+                }
+                if($(this).attr("data-key") != ""){
+                    var key2 = $(this).find("em").text();
+                    domPoipanel.find("input[name='keyword']").val(key);
+                    _searchKey({
+                        key:key,
+                        pagenum:1,
+                        key2:key2,
+                        poiid:$(this).attr("data-key")
+                    });
+
+                }else{
+                    //进行搜索
+                    domPoipanel.find("input[name='keyword']").val(key);
+                    _searchKey({key:key});
+                }
+            }
+        });
+        //加载导航面板
+        function _loadNavplanbox(){
+            panelSearch = false;
+            domPoipanel.attr("status","route").find(".cmap-navplan-box").show().siblings(".cmap-search-box").hide();
+            domPoipanel.find(".cmap-poipanel-historytag").hide();
+            isLocalpoi = false;
+            _listenEvent();
+        }
+        function _listenEvent(){
+            map.addEventListener("click",function (result){
+                _routeStartName = $.trim(domRouteStart.val());
+                _routeEndName = $.trim(domRouteEnd.val());
+                Fn.clickcallback(result,function (obj){
+                    var _name = obj.address;
+                    if(!_name) return;
+                    if(_routeStartName == ""){
+                        domRouteStart.val(_name);
+                        domRouteEnd.focus();
+                        _routeStartPoint = result.point;
+                        _routeStartName = _name;
+                        var marker = new BMap.Marker(result.point,{
+                            offset:new BMap.Size(0,-20),
+                            icon: new BMap.Icon(G_cmapstaich+'src/assets/img/panel/markers_new2_4ab0bc5.png',new BMap.Size(25,40),{
+                                imageOffset:new BMap.Size(-200,-139)
+                            }),
+                            title:_routeStartName||"起点"
+                        });
+                        map.addOverlay(marker);                        
+                        if(_routeStartName && _routeEndName){
+                            setTimeout(_routeLine,300);
+                        }
+                    }else if(_routeEndName == ""){
+                        domRouteEnd.val(_name);
+                        domRouteStart.focus();
+                        _routeEndPoint = result.point;
+                        _routeEndName = _name;
+                        var marker = new BMap.Marker(result.point,{
+                            offset:new BMap.Size(0,-20),
+                            icon: new BMap.Icon(G_cmapstaich+'src/assets/img/panel/markers_new2_4ab0bc5.png',new BMap.Size(25,40),{
+                                imageOffset:new BMap.Size(-225,-139)
+                            }),
+                            title:_routeEndName || "终点"
+                        });
+                        map.addOverlay(marker);
+                        if(_routeStartName && _routeEndName){
+                            setTimeout(_routeLine,300);
+                        }
+                    }
+                    
+                });
+            });
+        }
+        function _routeLine(){
+            domHistory.hide();
+            domSuggestList.hide();
+            if(!_routeStartName){
+                domRouteStart.focus();
+                return;
+            }
+            if(!_routeEndName){
+                domRouteEnd.focus();
+                return;
+            }
+            map.clearOverlays();
+            var _s = _routeStartPoint ? _routeStartPoint : _routeStartName;
+            var _e = _routeEndPoint ? _routeEndPoint : _routeEndName;
+            if(!_s || !_e) return;
+            _ajaxLoading(); 
+            var _option = {
+                renderOptions: {
+                    map: map //显示默认线路图
+                    ,pageCapacity:9 //方案显示的最大个数
+                    ,panel:"cmap-render-panel"+that.Id
+                    ,selectFirstResult:true
+                }
+            };
+            var transit = null;
+
+            var _route = domPoipanel.find(".cmap-poipanel-routetabs");
+            var _isBus = _route.hasClass("cmap-poipanel-bus");
+            var _isDrive = _route.hasClass("cmap-poipanel-drive");
+            var _isWalk = _route.hasClass("cmap-poipanel-walk");
+            var _isBike = _route.hasClass("cmap-poipanel-bike");
+            if(_isBus){
+                transit = new BMap.TransitRoute(map,_option);
+            }else if(_isDrive){
+                transit = new BMap.DrivingRoute(map,_option);
+                //_routeLineDrive();
+            }else if(_isWalk){
+                transit = new BMap.WalkingRoute(map,_option);
+                //_routeLineWalk();
+            }else if(_isBike){
+                transit = new BMap.RidingRoute(map,_option);
+                //_routeLineBike();
+            }
+            if(!transit) return;
+            transit.search(_s, _e);
+            var _policyIndex = 0;
+            transit.setResultsHtmlSetCallback(function (result){
+                var _policyhtml = '';
+                if(_isBus){
+                    _policyhtml = '<div class="cmap-route-policy policy4">'+
+                    '<span policy="0">推荐路线</span>'+
+                    '<span policy="2">少换乘</span>'+
+                    '<span policy="3">少步行</span>'+
+                    '<span policy="4">不乘地铁</span>'+
+                    '</div>';
+                }else if(_isDrive){
+                    _policyhtml = '<div class="cmap-route-policy policy3">'+
+                    '<span policy="0">推荐路线</span>'+
+                    '<span policy="1">最短距离</span>'+
+                    '<span policy="2">不走高速</span>'+
+                    '</div>';
+                    
+                }
+                if(_policyhtml != ""){
+                    domPoipanel.find(".cmap-poipanel-routeresult").prepend(_policyhtml).find(".cmap-route-policy span").eq(_policyIndex).addClass("chooseit");
+                    domPoipanel.find(".cmap-poipanel-routeresult").find(".cmap-route-policy span").click(function (){
+                        if($(this).hasClass("chooseit")) return;
+                        _policyIndex = $(this).index();
+                        $(this).addClass("chooseit").siblings("span").removeClass("chooseit");
+                        var _policy = parseInt($(this).attr("policy"));
+                        transit.setPolicy(_policy);
+                        transit.search(_s, _e);
+                    })
+                }
+                
+                domPoipanel.find(".cmap-poipanel-routeresult").find("a").each(function (){
+                    if($(this).text().indexOf("到百度地图查看") != -1){
+                        if(_route.hasClass("cmap-poipanel-bus")){
+                            $(this).parent().hide();
+                        }else{
+                            $(this).hide();
+                        }
+                    }
+                })
+            });
+            transit.setSearchCompleteCallback(function(result){
+                
+                var _start = result.getStart();
+                var _end = result.getEnd();
+                
+                domPoipanel.find(".cmap-poipanel-routeresult").show();     
+                _ajaxLoaded();
+                var _planroute = result.yr || [];
+                if(_planroute.length == 0){
+                    var _tips = '';
+                    if(_start == _end || _routeStartName==_routeEndName){
+                        _tips = '<div style="color: #994c00;font-size:14px;text-align:center;padding:10px;background-color:rgb(255, 255, 223);"><em style="width: 18px;height: 18px;vertical-align: middle;margin-right: 8px;display:inline-block;background:url('+G_cmapstaich+'src/assets/img/panel/tip.png") no-repeat;></em>起点和终点不能完全相同</div>';
+                    }
+                    var _nothing = _tips+'<div style="padding:10px 0;">未能计算出从“ '+_routeStartName+'”到“ '+_routeEndName+'”的路线信息，抱歉。</div>';
+                    domPoipanel.find(".cmap-poipanel-routeresult").prepend(_nothing)
+                }
+                
+                if(!_end || !_start){
+                    return;
+                }
+                _routeStartPoint = _start;
+                _routeEndPoint = _end;
+                _addHistory(_routeStartName,_routeEndName,"[{lng:"+_start.point.lng+",lat:"+_start.point.lat+"},{lng:"+_end.point.lng+",lat:"+_end.point.lat+"}]");
+            });
+            transit.setPolylinesSetCallback(function (arry){
+                arry = arry || [];
+                for(var i =0 ;i <arry.length;i++){
+                    var _polyLine = arry[i].getPolyline();
+                    _polyLine.setStrokeColor("#5298ff");
+                    _polyLine.setStrokeWeight(6);
+                    _polyLine.setStrokeOpacity(1);
+                }
+            });
+            transit.setMarkersSetCallback(function (arry){
+                for(var i =0 ;i <arry.length;i++){
+                    var _marker = arry[i].marker;
+                    if(i==0){//起点
+                        _marker.setIcon(new BMap.Icon(G_cmapstaich+'src/assets/img/panel/markers_new2_4ab0bc5.png',new BMap.Size(25,40),{
+                            imageOffset:new BMap.Size(-200,-139)
+                        }));
+                        _marker.setOffset(new BMap.Size(0,-20));
+                        _marker.setTitle(_routeStartName||"起点");
+                    }else{
+                        _marker.setIcon(new BMap.Icon(G_cmapstaich+'src/assets/img/panel/markers_new2_4ab0bc5.png',new BMap.Size(25,40),{
+                            imageOffset:new BMap.Size(-225,-139)
+                        }));
+                        _marker.setOffset(new BMap.Size(0,-20));
+                        _marker.setTitle(_routeEndName||"终点");
+                    }
+                }
+            });
+
+        }
+        /**加载关键字搜索 */
+        function _loadSearchbox(){
+            panelSearch = true;
+            _closeAll(true);
+            domPoipanel.attr("status","search").show().find(".cmap-search-box").show().siblings(".cmap-navplan-box").hide();
+            map.clearOverlays();
+            domPoipanel.find(".cmap-poipanel-routeresult").html("").hide();
+            domPoipanel.find(".cmap-poipanel-historytag").show();
+            if(domPoipanel.find(".cmap-poipanel-historytag .chooseit").index() != -1){
+                isLocalpoi = true;
+            }
+        }
+        domPoipanel.delegate("a[data-cid]","click",function (){
+            var _cid = $(this).attr("data-cid");
+            var key = domSearchList.attr("key");
+            _searchKey({key:key,cid:_cid});
+
+        });
+        domSearchList.delegate("li[data-key]","click",function (){
+            _loadPoiDetail($(this).attr("data-key"),$(this).index());
+        }).delegate(".cmap-poipanel-showmorecity","click",function (){
+            if($(this).siblings(".cmap-poipanel-morecityhide").is(":visible")){
+                $(this).siblings(".cmap-poipanel-morecityhide").hide();
+            }else{
+                $(this).siblings(".cmap-poipanel-morecityhide").show();
+            }
+            
+        }).delegate(".cmap-poipanel-morecityhide ul li","click",function (){
+            if($(this).hasClass("chooseit")){
+                $(this).removeClass("chooseit");
+                return;
+            }
+            $(this).addClass("chooseit").siblings("li").removeClass("chooseit");
+            $(".cmap-poipanel-morecityhide").scrollTop($(this).position().top);
+        });
+        domSearchList.delegate(".cmap-poipanel-poi","mouseover mouseout",function (event){
+            var _index = $(this).index();
+            if(event.type == "mouseout"){
+                poiListblur(_index);    
+            }else{
+                poiListfocus(_index);
+            }
+        }).delegate(".cmap-poipanel-pagelist span","click",function(){
+            if($(this).hasClass("chooseit")) return;
+            var _key = $(this).parent().attr("key");
+            var _cid = $(this).parent().attr("cid");
+            _searchKey({
+                key:_key,
+                cid:_cid,
+                pagenum:$(this).attr("pagenum")
+            });
+
+        });
+        domPoipanel.delegate(".cmap-poipanel-poibtn-nearby","click",function (){
+            var _poiName = domSearchDetail.find(".cmap-poipanel-detail-poiname").text();
+            isNearbySearch = true;
+            domPoipanel.find(".cmap-poipanel-input").addClass("cmap-poipanel-nearby").find(".cmap-poipanel-inputside").find("span").html(_poiName);
+            domSearchDetail.hide();
+            domBackNav.hide();
+            domPoipanel.find("input[name='keyword']").val("").focus();
+            domPoipanel.find(".cmap-poipanel-nearby").find(".cmap-poipanel-inputclear").attr({"type":"nearby","title":"关闭附近搜索"}).show();
+            domPoipanel.find(".cmap-poipanel-input").find(".cmap-poipanel-changesearch").attr("type","").hide();
+        });
+        /**
+         * poi列表选中效果
+         */
+        function poiListfocus(index,type){
+            var _that = Fn.searchPois[index];
+            _that.setZIndex(3);
+            if(type || !_that.definedChoose){
+                var _icon = _that.getIcon();
+                var _newIcon = new BMap.Icon(_icon.imageUrl,new BMap.Size(_that.definedWidth,_that.definedHeight),{
+                    imageOffset:new BMap.Size(-index*_that.definedWidth,-66)
+                });
+                _that.setIcon(_newIcon);
+                domSearchList.find("li").eq(index).addClass("chooseit");
+            }
+            
+        }
+        function poiListblur(index,type){
+            var _that = Fn.searchPois[index];
+            _that.setZIndex(0);
+            if(type || !_that.definedChoose){
+                var _icon = _that.getIcon();
+                var _newIcon = new BMap.Icon(_icon.imageUrl,new BMap.Size(_that.definedWidth,_that.definedHeight),{
+                    imageOffset:new BMap.Size(-index*_that.definedWidth,0)
+                });
+                _that.setIcon(_newIcon);
+                domSearchList.find("li").eq(index).removeClass("chooseit");
+            }
+            
+        }
+        /**
+         * 重置选中poi的样式
+         */
+        function _resetChoosePoi(){
+            var _overlays = map.getOverlays();
+            for(var o in _overlays){
+                var _overlay = _overlays[o];
+                if(_overlay.definedChoose == "chooseit"){
+                    _overlay.definedChoose = null;
+                    poiListblur(_overlay.definedIndex,true);
+                }
+                if(_overlay.definedOverlay == "label"){
+                    map.removeOverlay(_overlay);
+                }
+            }
+        }
+        /**导航显示 */
+        function changeNavtext(){
+            var _len = navArray.length;
+            if(_len>0){
+                if(domPoipanel.find(".cmap-poipanel-historytag").size()==1){
+                    domSearchList.css("margin-top","10px");
+                }
+                var _arry = navArray[_len-1];
+                isLocalpoi = _arry.local;
+                if(!isLocalpoi){
+                    domPoipanel.find(".cmap-poipanel-historytag .chooseit").removeClass("chooseit");
+                }
+                var key = _arry.key;
+                var _type = _arry.type;
+                if(_type != "detail"){
+                    domBackNav.show().find(".cmap-poipanel-backpoilist").html("返回“"+key+"”的搜索结果");
+                }else{
+                    domBackNav.show().find(".cmap-poipanel-backpoilist").html("返回“"+_arry.name+"”的详情");
+                }
+                domBackNav.show().find(".cmap-poipanel-backpoilist").unbind("click").click(function (){
+                    navArray.pop();
+                    changeNavtext();
+                    domSearchDetail.hide();
+                    if(_type != "detail"){
+                        if(_type == "nearby"){
+                            isNearbySearch = true;                           
+                        }else{
+                            isNearbySearch = false;
+                        }
+                        _searchKey({
+                            key:_arry.key,
+                            cid:_arry.cid,
+                            pagenum:_arry.pagenum,
+                            key2:_arry.key2,
+                            poiid:_arry.poiid,
+                            back:1
+                        });
+
+                    }else{
+                        _loadPoiDetail( _arry.key, -1,1);
+                    }
+                });
+            }else{
+                if(domPoipanel.find(".cmap-poipanel-historytag").size()==1){
+                    domSearchList.css("margin-top","40px");
+                }
+                domBackNav.hide();
+                isNearbySearch  = false;
+                domPoipanel.find(".cmap-poipanel-input").removeClass("cmap-poipanel-nearby").find(".cmap-poipanel-inputclear").attr({"title":"清空","type":"clear"});
+            }
+            _resizePoipanel();
+            
+        }
+        /**
+         * 数据加载中效果
+         */
+        function _ajaxLoading(){
+            domPoipanel.find(".cmap-poipanel-changeroute,.cmap-poipanel-changesearch").addClass("cmap-poipanel-loading");
+        }
+        function _ajaxLoaded(){
+            setTimeout(function (){
+                domPoipanel.find(".cmap-poipanel-changeroute,.cmap-poipanel-changesearch").removeClass("cmap-poipanel-loading");
+            },200);
+        }
+        function _ajaxLoadfail(){
+            arrayPoints = [],namePoints = [],uidPoints=[];
+            _ajaxLoaded();
+        }
+        function _closeAll(overlay){
+            if(overlay !== true){
+                if(!overlay){
+                    map.clearOverlays();
+                }else{
+                    var overlays = map.getOverlays();
+                    for(var i in overlays){
+                        if(!overlays[i].notClearOverlay){
+                            map.removeOverlay(overlays[i]);
+                        }
+                    }                    
+                }
+            }            
+            domSuggestList.hide();
+            domSearchList.hide();
+            domSearchDetail.hide();
+            domBackNav.hide();
+            domHistory.hide();
+        }
+        /**搜索建议 */
+        var suggestValuedom = null;
+        function _loadSuggestKey(value,ele){
+            domHistory.hide();
+            suggestValuedom = ele;
+            jQuery.support.cors=true;
+            $.ajax({
+                type:"get",
+                url:that.suggestUrl,
+                data:{
+                    wd:value,
+                    cid:map.cs || map.bs || map.js,
+                    type: 0,
+                    newmap:1,
+                    pc_ver:2
+                },
+                dataType:"jsonp",
+                error:function (){
+                    _ajaxLoadfail();
+                },
+                success:function (data){
+                    var _arry = data && data.s || [];     
+                    var _suggest = '<ul>';
+                    for(var i in _arry){
+                        var _list = _arry[i].split("$");
+                        _suggest+='<li data-key="'+_list[5]+'"><a><i>'+_list[3]+'</i><em>'+_list[0]+_list[1]+'</em></a></li>';
+                    }
+                    _suggest+='</ul>';
+                    domSuggestList.show().empty().html(_suggest);
+                    if(!panelSearch){
+                        domSuggestList.css("top","119px");
+                    }else{
+                        if(hasLocalpoi){
+                            domSuggestList.css("top","72px");
+                        }else{
+                            domSuggestList.css("top","38px");
+                        }
+                        
+                    }
+                }
+            });
+        }
+        function _addHistory(key,key2,poiid){
+            var _localStorage = window.localStorage;
+            if(!key || !_localStorage) return;
+            key2 = key2 || "";
+            poiid = poiid || "";
+            var _name = "gisPoiHistory";
+            var _key = key+"-|-"+key2+"-|-"+poiid;
+            if(!panelSearch){
+                //poiid = "[{lng:lng,lat:lat},{lng:lng,lat:lat}];
+                _name = "gisRouteHistory";
+                _key = key+" - "+key2+"-|-"+poiid;
+            }
+            if(isLocalpoi){
+                _key = key;
+            }
+            var _history = _localStorage.getItem(_name);            
+            if(!_history){
+                _localStorage.setItem(_name,_key);
+            }else{
+                if(_history.indexOf(_key) == -1){
+                    _localStorage.setItem(_name,_key+"$$"+_history);
+                }            
+            }            
+        }
+        function _loadHistory(){
+            domSuggestList.hide();
+            var _localStorage = window.localStorage;
+            if(!_localStorage) return;
+            var _name = "gisPoiHistory";
+            if(!panelSearch){
+                _name = "gisRouteHistory";
+            }
+            var _history = _localStorage.getItem(_name);
+            if(!_history){
+                //domHistory.show().find("ul").empty().siblings(".cmap-poipanel-historyclear").hide();
+                return;
+            };
+            
+            var _arry = _history.split("$$");
+            var _html = '';
+            var _maxlen = _arry.length>10?10:_arry.length;
+            for(var i=0;i<_maxlen;i++){
+                var _list = _arry[i].split("-|-");
+                if(isLocalpoi){
+                    if(_list.length == 1){
+                        _html+='<li data-name="'+_list[0]+'"><a><i>'+_list[0]+'</i></a></li>';
+                    }                    
+                }else{
+                    if(!panelSearch){
+                        _html+='<li data-name="'+_list[0]+'" data-point="'+_list[1]+'"><a><i>'+_list[0]+'</i></a></li>';
+                    }else{
+                        _html+='<li data-key="'+_list[2]+'"><a><i>'+_list[0]+'</i><em>'+(_list[1]||"")+'</em></a></li>';
+                    }
+                }
+                
+                
+                
+            }
+            //key|key2|cid$$
+            if(_html != ""){
+                domHistory.show().find("ul").empty().html(_html).siblings(".cmap-poipanel-historyclear").show().find("a").unbind("click").click(function (){
+                    var _localStorage = window.localStorage;
+                    if(!_localStorage) return;
+                    _localStorage.removeItem(_name);
+                    domHistory.hide();
+                });
+                if(!panelSearch){
+                    domHistory.css("top","119px");
+                }else{
+                    if(hasLocalpoi){
+                        domHistory.css("top","72px");
+                    }else{
+                        domHistory.css("top","38px");
+                    }
+                }
+            }
+            
+        }
+        /**关键字搜索 */
+        function realImgSrc(url,w,h) {
+            if(!url) return null;
+            var enUrl = encodeURIComponent(url);
+            /**
+             * width:图片的宽度
+             * height:图片的高度
+             * align：图片截取后的压缩方式，不填时直接根据宽高缩放，设置为"center,center"时图片按宽高等比缩放
+             * quality：图片的清晰度，一般设置为100
+            */
+            var width = w || 71,
+                height = h || 58,
+                align = "none",//center,center
+                quality = 100;
+            var getImgurl = "//"+G_PUBLICIP+"/webmap0/client/services/thumbnails?" + "width=" + width + "&height=" + height + "&align=" + align + "&quality=" + quality + "&src=" + enUrl;
+            return getImgurl;
+        }
+        function _searchKey(opts){
+            var key = opts.key,cid=opts.cid,pagenum=opts.pagenum || 1,key2=opts.key2,poiid=opts.poiid;
+            if(!key) return;
+            domPoipanel.find("input[name='keyword']").val(key);
+            _ajaxLoading(); 
+            _addHistory(key,key2,poiid);
+            
+            /**
+             * 增加本地搜索
+             */            
+            var _localsys = domPoipanel.find(".cmap-poipanel-historytag .chooseit").attr("key")||"assembly";
+            var _localparam = {
+                requestSeq:"20190313123456",
+                password:"F563947FD010568DB7A3DC4FE3EB77EC",
+                businessId:_locbusinessId,
+                buinessKey:_localsys,//业务部门key，装维assembly
+                keywords:key,
+                pageIndex:parseInt(pagenum),
+                pageSize:10
+            };            
+            var _pagenum = pagenum?parseInt(pagenum):1;
+            var _cid = cid || map.cs || map.bs;
+            var _key2 = key2 ||"";
+            var _poiid = poiid || "";
+            function _buildList(data,key,pagenum){
+                arrayPoints = [],namePoints = [],uidPoints=[];
+                domSearchList.attr({key:key,cid:_cid,pagenum:_pagenum,key2:_key2,poiid:_poiid});
+                //_closeAll(true);
+                _ajaxLoaded();
+                domPoipanel.find(".cmap-poipanel-changeroute").removeClass("cmap-poipanel-changeroute").addClass("cmap-poipanel-changesearch").attr("title","清空").show().siblings(".cmap-poipanel-inputclear").hide();
+                changeNavtext();
+                var _emptyhtml='<div style="color: #333;padding: 10px 10px 40px;line-height: 18px;">在当前视图区域内未找到相关地点。<br>您还可以：<br>检查输入是否正确或者输入其它词，再次尝试。</div>';
+                Fn.searchPois = [];
+                if(isLocalpoi){
+                    if(data.rtnCode == "0"){
+                        var _result = data.object;
+                        var _total = _result.total;
+                        var _pages = _result.pages || 1;
+                        if(_total == 0){
+                            domSearchList.show().empty().html(_emptyhtml);
+                            return; 
+                        }else{
+                            var _loclist = _result.list || [];
+                            var _lochtml = '<ul class="cmap-poipanel-pois">';
+                            for(var i=0,_len=_loclist.length;i<_len;i++){
+                                var _poi = _loclist[i];
+                                var _k = i+1;
+                                var _imageSrc = G_cmapstaich+'src/assets/img/panel/default.jpg';
+                                _lochtml+='<li class="cmap-poipanel-poi" data-key="'+_poi.poiId+'"><div style="float:left;"><a href="javascript:;" class="poi-num poi-num'+_k+'"></a></div><div style="float:right;margin:10px 10px 0 0;padding-bottom:5px"><a href="javascript:void(0)"><img src="'+_imageSrc+'" class="hasIndoorPano" style="width:71px;height:58px;"></a></div><div style="margin:auto 90px auto 30px;"><p><a href="##">'+_poi.poiName+'</a></p><p>'+(_poi.address || '')+'</p></div><div style="clear:both;height:0;"></div></li>';
+                                var _point = new BMap.Point(_poi.poix,_poi.poiy);
+                                arrayPoints.push(_point); 
+                                namePoints.push(_poi.poiName);
+                                uidPoints.push(_poi.poiId); 
+                            }
+                            _lochtml+='</ul>';
+                            //分页
+                            if(_pages>1){
+                                _lochtml+='<div class="cmap-poipanel-pagelist" key="'+key+'" cid="'+_cid+'">';
+                                var _isFirst = pagenum==1;
+                                var _isLast = pagenum == _pages;
+                                var _start = pagenum-1;
+                                var _end = pagenum+3;
+                                if(_end>_pages) {_end =_pages; _start=_end-3;}
+                                if(_start<0){_start=0}
+                                
+                                if(!_isFirst && _pages !=_start) _lochtml+='<span pagenum="1">首页</span>';
+                                if(!_isFirst && _start>0) _lochtml+='<span pagenum="'+_start+'">上一页</span>';
+                                for(var i=_start;i<=_end;i++){
+                                    if(i>0 && _pages>1){
+                                        i==pagenum?_lochtml+='<span pagenum="'+i+'" class="chooseit">'+i+'</span>':_lochtml+='<span pagenum="'+i+'">'+i+'</span>';
+                                    }
+                                    
+                                }
+                                if(!_isLast && pagenum<_pages+1) _html+='<span pagenum="'+(pagenum+1)+'">下一页</span>';
+                                _lochtml+='</div>';
+                                
+                            }
+                            domSearchList.show().empty().html(_lochtml);                            
+                        }
+
+                    }else{
+                        domSearchList.show().empty().html(_emptyhtml);
+                    }                    
+                }else{
+                    if(!data) {
+                        domSearchList.show().empty().html(_emptyhtml);
+                        return;
+                    }
+                    var _list = data.content;
+                    if(!_list){
+                        domSearchList.show().empty().html(_emptyhtml);
+                        return;
+                    };
+                    
+                    var  _resultTYPE = data.result&&data.result.type || -1;
+                    if(_resultTYPE == -1) return;
+                    if(_resultTYPE == 2){
+                        var _geo = _list.geo.split("|");                    
+                        var _lnglat = _geo[2].split(",");
+                        var _control = map.getMapType().getProjection();
+                        var _point = _control.pointToLngLat(new BMap.Pixel(parseFloat(_lnglat[0]),parseFloat(_lnglat[1])));
+                        map.centerAndZoom(_point,_list.level || 5);
+                        var _marker = new BMap.Marker(_point);
+                        map.addOverlay(_marker);
+                        return;
+                    }
+                    //data.result.result_array[0].type 36:poi分页  37：城市  7：其他城市
+                    window.searchData = data;     
+                    
+                    var _html = '<ul class="cmap-poipanel-pois">';
+                    
+                    var _maxlen = _list.length>10?10:_list.length
+                    for (var i =0;i<_maxlen;i++) {
+                        var _poi = _list[i];
+                        if(!_poi.num){
+                            var _image = _poi.ext&&_poi.ext.detail_info&&_poi.ext.detail_info.image || null;
+                            var _imageSrc = realImgSrc(_image);
+                            var _k = parseInt(i)+1;
+                            var _control = map.getMapType().getProjection();
+                            var _point = _control.pointToLngLat(new BMap.Pixel(_poi.x/100,_poi.y/100));
+                            arrayPoints.push(_point); 
+                            namePoints.push(_poi.name);
+                            uidPoints.push(_poi.uid);                       
+                            _html+='<li class="cmap-poipanel-poi" data-key="'+_poi.uid+'"><div style="float:left;"><a href="javascript:;" class="poi-num poi-num'+_k+'"></a></div><div style="float:right;margin:10px 10px 0 0;padding-bottom:5px"><a href="javascript:void(0)">'+(_imageSrc?'<img src="'+_imageSrc+'" class="hasIndoorPano" style="width:71px;height:58px;" onerror="this.src=\''+G_cmapstaich+'src/assets/img/panel/default.jpg\'">':'')+'</a></div><div style="margin:auto 90px auto 30px;"><p><a href="##">'+_poi.name+'</a></p><p>'+(_poi.addr || "&nbsp;")+'</p><p>'+(_poi.tel?'电话:'+_poi.tel:'')+'</p></div><div style="clear:both;height:0;"></div></li>';
+                        }else{
+                            arrayPoints = [],namePoints=[];
+                            
+                            if(i == 0){
+                                _html+='<div class="cmap-poipanel-citylist"><p>其他城市结果：</p>';
+                            }
+                            
+                            _html += '<a href="javascript:;" data-cid="'+_poi.code+'" class="cmap-poipanel-citypoi"><span>'+_poi.name+'</span>('+_poi.num+')</a>';
+                            if(i == _list.length-1){
+                                _html+='</div>';
+                            }
+                        }
+                        
+                    }
+                    _html+='</ul>';
+                    //支持分页
+                    //if(_resultTYPE == 36 || _resultTYPE == 38 || _resultTYPE==11){
+                    if(_resultTYPE != 37){
+                        _html+='<div class="cmap-poipanel-pagelist" key="'+key+'" cid="'+_cid+'">';
+                        var _maxpage = data.result.aladdin_res_num?data.result.aladdin_res_num:Math.ceil(data.result.total/10);
+                        var _isFirst = pagenum==1;
+                        var _isLast = pagenum == _maxpage;
+                        var _start = pagenum-1;
+                        _end = pagenum+3;
+                        if(_end>_maxpage) {_end =_maxpage; _start=_end-3;}
+                        if(_start<0){_start=0}
+                        if(!_isFirst && _maxpage !=_start) _html+='<span pagenum="1">首页</span>';
+                        if(!_isFirst && _start>0) _html+='<span pagenum="'+_start+'">上一页</span>';
+                        for(var i=_start;i<=_end;i++){
+                            if(i>0 && _maxpage>1){
+                                i==pagenum?_html+='<span pagenum="'+i+'" class="chooseit">'+i+'</span>':_html+='<span pagenum="'+i+'">'+i+'</span>';
+                            }
+                            
+                        }
+                        if(!_isLast && pagenum<_maxpage+1) _html+='<span pagenum="'+(pagenum+1)+'">下一页</span>';
+                        _html+='</div>';
+                    }
+                    var _morecitys = data.more_city || [];
+                    for(var i=0;i<_morecitys.length;i++){
+                        var _morecity = _morecitys[i];
+                        if(i == 0){
+                            _html+='<div class="cmap-poipanel-morecitylist">'+'<a href="javascript:;" class="cmap-poipanel-showmorecity">更多城市</a>'+'<div class="cmap-poipanel-morecityhide"><ul><li><a href="javascript:;"><span>'+_morecity.province+'</span>('+_morecity.num+')</a><ol>';
+                            for(var j in _morecity.city){
+                                var _poi = _morecity.city[j];
+                                _html+='<li><a href="javascript:;" data-cid="'+_poi.code+'""><span>'+_poi.name+'</span>('+_poi.num+')</a></li>';
+                            }
+                            _html+='</ol></li>';
+                        }else if(i == _morecity.length-1){
+                            _html+='<li><a href="javascript:;"><span>'+_morecity.province+'</span>('+_morecity.num+')</a><ol>';
+                            for(var j in _morecity.city){
+                                var _poi = _morecity.city[j];
+                                _html+='<li><a  href="javascript:;"  data-cid="'+_poi.code+'" ><span>'+_poi.name+'</span>('+_poi.num+')</a></li>';
+                            }
+                            _html+='</ol></li></ul></div></div>';
+                        }else{
+                            _html+='<li><a href="javascript:;"><span>'+_morecity.province+'</span>('+_morecity.num+')</a><ol>';
+                            for(var j in _morecity.city){
+                                var _poi = _morecity.city[j];
+                                _html+='<li><a  href="javascript:;"  data-cid="'+_poi.code+'" ><span>'+_poi.name+'</span>('+_poi.num+')</a></li>';
+                            }
+                            _html+='</ol></li>';
+                        }
+                        
+                        
+                    }
+                    domSearchList.show().empty().html(_html);
+                }
+                /**marker打点*/
+                for(var index in arrayPoints){
+                    var ele = arrayPoints[index];
+                    var _w = 21,_h=32;
+                    var _marker = new BMap.Marker(ele,{
+                        icon:new BMap.Icon(G_cmapstaich+'src/assets/img/panel/markers_new2_4ab0bc5.png',new BMap.Size(_w,_h),{
+                            imageOffset:new BMap.Size(-index*_w,0)
+                        }),
+                        title:namePoints[index]
+                    });
+                    _marker.definedIndex = index;
+                    _marker.definedUid = uidPoints[index];
+                    _marker.definedOverlay = "marker";
+                    _marker.definedWidth = _w;
+                    _marker.definedHeight = _h;
+                    
+                    map.addOverlay(_marker);
+                    Fn.searchPois.push(_marker);
+                    _marker.addEventListener("mouseover",function (e){
+                        poiListfocus(this.definedIndex);
+                        
+                    });
+                    _marker.addEventListener("mouseout",function (e){
+                        poiListblur(this.definedIndex);
+    
+                    });
+                    _marker.addEventListener("click",function (e){
+                        _resetChoosePoi();
+                        _loadPoiDetail(this.definedUid,this.definedIndex);
+                    });
+                }
+                map.setViewport(arrayPoints,{
+                    margins:[40, 20, 0, 360]//视野调整的预留边距，例如： margins: [30, 20, 0, 20] 表示坐标点会限制在上述区域内
+                    //,zoomFactor:-2//地图级别的偏移量，您可以在方法得出的结果上增加一个偏移值。例如map.setViewport计算出地图的级别为10，如果zoomFactor为-1，则最终的地图级别为9
+                });      
+                
+            }
+            function lnglatP(point){
+                var _control = map.getMapType().getProjection();
+                return _control.lngLatToPoint(point);
+            }
+            if(isNearbySearch){
+                nearbyCircle&&nearbyCircle.disableEditing();
+                var _status = false;
+                for(var i=0;i<navArray.length;i++){
+                    if(navArray[i].key == domSearchDetail.attr("key")){
+                        _status=true;
+                    }
+                }
+                if(!_status && !opts.back){
+                    navArray.push({
+                        key:domSearchDetail.attr("key"),
+                        name:domSearchDetail.attr("poiname"),
+                        type:"detail",
+                        local:isLocalpoi
+                    });
+                }
+                if(opts.back){
+                    var _poiName = "";
+                    for(var i=0,_len=navArray.length;i<_len;i++){
+                        if(i == _len-1 && navArray[i].type == "detail"){
+                            _poiName = navArray[i].name;
+                        }
+                    }
+                    if(_poiName){
+                        domPoipanel.find(".cmap-poipanel-input").addClass("cmap-poipanel-nearby").find(".cmap-poipanel-inputside").find("span").html(_poiName);
+                    }
+                    
+                }
+                var _radius = parseInt(opts.radius || 1000);
+                var _lnglat = domSearchDetail.attr("lnglat").split(",");
+                var _lng = parseFloat(_lnglat[0]),_lat = parseFloat(_lnglat[1]);
+                var _point = new BMap.Point(_lng,_lat);
+                nearbyCircle = new BMap.Circle(_point,_radius,{
+                    strokeColor:"#a3b1cc",
+                    fillColor:"#4673cc",
+                    strokeWeight:1,
+                    strokeOpacity:0.9,
+                    fillOpacity:0.35,
+                    strokeStyle:"solid"
+                    //,enableEditing:true
+                });
+                nearbyCircle.notClearOverlay = "circle";
+                map.addOverlay(nearbyCircle);
+                if(isLocalpoi){
+                    var _nearbyParams = $.extend({},_localparam,{
+                        distance:_radius+"m",//距离，字符串"100m"
+                        lon:_lng,//经度
+                        lat:_lat//纬度
+                    });
+                    $.ajax({
+                        type:"post",
+                        url:_localSearchNearby,
+                        data:JSON.stringify({params:_nearbyParams}),
+                        contentType:"application/json",
+                        dataType:"json",
+                        error:function (){
+                            _ajaxLoadfail();
+                        },success:function (data){
+                            _commonNearby(data);                            
+                        }
+                    });
+                }else{
+                    var _bounds = nearbyCircle.getBounds();
+                    var _leftpoint = lnglatP(_bounds.getSouthWest());
+                    var _rightpoint = lnglatP(_bounds.getNorthEast());
+                    
+                    $.ajax({
+                        type: "get",
+                        url: that.poiGardenUrl,
+                        data:{
+                            qt:'nb',
+                            wd:key,
+                            nb_x:lnglatP(_point).x,
+                            nb_y:lnglatP(_point).y,
+                            uid:domPoipanel.attr("poiuid"),
+                            b:"("+_leftpoint.x+","+_leftpoint.y+";"+_rightpoint.x+","+_rightpoint.y+")",
+                            l:map.getZoom()+1,
+                            gr_radius:_radius,
+                            pn:0,
+                            nn:_pagenum-1,
+                            ie:"utf-8",
+                            on_gel:opts.rule || 0,//1:限制死就在半径内展示
+                            //pl_sort_rule:0,
+                            auth:"eO8HN0KZ7wfd2K2D42dUxNMKcgBYMze"
+                        },
+                        dataType: "jsonp",
+                        error: function () {
+                            ajaxLoadfail();
+        
+                        }, success: function (data) {
+                            _commonNearby(data);
+                        }
+                    });
+                }
+                function _commonNearby(data){
+                    domPoipanel.find(".cmap-poipanel-input").find(".cmap-poipanel-inputclear").attr({"title":"清空","type":"clear"}).hide();
+                    domPoipanel.find(".cmap-poipanel-input").find(".cmap-poipanel-changesearch").attr("type","closeall").show();
+                    map.clearOverlays();
+                    
+                    var _thatPoi = new BMap.Marker(_point,{
+                        icon:new BMap.Icon(G_cmapstaich+'src/assets/img/panel/markers_new2_4ab0bc5.png',new BMap.Size(25,40),{
+                            imageOffset:new BMap.Size(-75,-232)
+                        }),
+                        title:key2
+                    });
+                    _thatPoi.notClearOverlay = "poi";
+                    map.addOverlay(nearbyCircle);
+                    nearbyCircle.enableEditing();
+                    map.addOverlay(_thatPoi);
+                    _closeAll(true);
+                    _buildList(data,key,_pagenum);
+                    
+                    nearbyCircle.removeEventListener("lineupdate");
+                    var count = 0;
+                    nearbyCircle.addEventListener("lineupdate",function (event){
+                        count++;
+                        if (count == 1) {
+                            event.target.oc[0].addEventListener('dragend', function(result) {
+                                    opts.radius = nearbyCircle.getRadius();
+                                    opts.rule = 1;
+                                    _searchKey(opts);
+                                    count = 0;
+                            });
+                            event.target.oc[1].addEventListener('dragend', function (result) {
+                                    // 业务处理
+                                    opts.radius = nearbyCircle.getRadius();
+                                    opts.rule = 1;
+                                    _searchKey(opts);
+                                    count = 0;
+                            });
+                        }
+                    });
+                }
+                return;
+            }
+            var _bounds = map.getBounds();
+            if(isLocalpoi){                
+                var _bds = map.getBounds();
+                var _lpoint = _bds.getSouthWest();//左下角
+                var _rpoint = _bds.getNorthEast();//右上角
+                var _boundParams = $.extend({},_localparam,{
+                    topLeftLon:_lpoint.lng,//左上角经度
+                    topLeftLat:_rpoint.lat,//左上角纬度
+                    rightBottomLon:_rpoint.lng,//右下角经度
+                    rightBottomLat:_lpoint.lat//右下角纬度
+                });
+                $.ajax({
+                    type:"post",
+                    url:_localSearchBound,
+                    data:JSON.stringify({params:_boundParams}),
+                    contentType:"application/json",
+                    dataType:"json",
+                    error:function (){
+                        _ajaxLoadfail();
+                    },success:function (data){
+                        map.clearOverlays();
+                        _closeAll(true);
+                        navArray = [];
+                        _buildList(data,key,_pagenum);
+                        navArray = [{
+                            key:domSearchList.attr("key"),
+                            cid:domSearchList.attr("cid"),
+                            pagenum:domSearchList.attr("pagenum"),
+                            key2:domSearchList.attr("key2"),
+                            poiid:domSearchList.attr("poiid"),
+                            type:"list",
+                            local:isLocalpoi
+                        }];
+                    }
+                });
+                return;
+            }
+            var _leftpoint = lnglatP(_bounds.getSouthWest());//左下角
+            var _rightpoint = lnglatP(_bounds.getNorthEast());//右上角
+            var _par = {
+                auth:"60dJaH1MXvxYS5L3KT8bZqi7AVRBt36p",
+                qt:"s",
+                c:_cid,
+                wd:key,
+                sug:0,//1
+                src:0,
+                nn:_pagenum-1,	
+                ie:"utf-8",
+                biz:1,
+                wd2:key2 || "",
+                b:"("+parseInt(_leftpoint.x)+","+parseInt(_leftpoint.y)+";"+parseInt(_rightpoint.x)+","+parseInt(_rightpoint.y)+")"
+                //l:18
+            }
+            if(poiid){
+                _par.sug=1;
+                _par.sug_forward = poiid
+            }
+            $.ajax({
+                type: "get",
+                url: that.poiGardenUrl,
+                data:_par,
+                dataType: "jsonp",
+                error: function () {
+                    ajaxLoadfail();
+    
+                }, success: function (data) {
+                    map.clearOverlays();
+                    _closeAll(true);
+                    navArray = [];
+                    _buildList(data,key,_pagenum);
+                    navArray = [{
+                        key:domSearchList.attr("key"),
+                        cid:domSearchList.attr("cid"),
+                        pagenum:domSearchList.attr("pagenum"),
+                        key2:domSearchList.attr("key2"),
+                        poiid:domSearchList.attr("poiid"),
+                        type:"list",
+                        local:isLocalpoi
+                    }];
+                }
+            });
+
+        }
+        /**poi详情 */
+        function _loadPoiDetail(key,index,action){
+            if(!action){
+                var _status = false;
+                for(var i=0;i<navArray.length;i++){
+                    if(navArray[i].key == domSearchList.attr("key")){
+                        _status=true;
+                    }
+                }
+                if(!_status){
+
+                    var _obj = {
+                        key:domSearchList.attr("key"),
+                        cid:domSearchList.attr("cid"),
+                        pagenum:domSearchList.attr("pagenum"),
+                        key2:domSearchList.attr("key2"),
+                        poiid:domSearchList.attr("poiid"),
+                        type:"list",
+                        local:isLocalpoi
+                    };
+                    if(isNearbySearch){
+                        _obj.type ="nearby"
+                    }
+                    navArray.push(_obj);
+                }
+            }
+            
+            isNearbySearch  = false;
+            domPoipanel.find(".cmap-poipanel-input").removeClass("cmap-poipanel-nearby").find(".cmap-poipanel-inputclear").attr({"title":"清空","type":"clear"}).find("input[name='keyword']").val(domSearchList.attr("key"));
+            _ajaxLoading();
+            if(isLocalpoi){
+                domPoipanel.find(".cmap-poipanel-poigeneral-pics,.cmap-poipanel-poigeneral-tags").hide();
+                var _localsys = domPoipanel.find(".cmap-poipanel-historytag .chooseit").attr("key")||"assembly";
+                var _data = {
+                    requestSeq:"20190313123456",
+                    password:"F563947FD010568DB7A3DC4FE3EB77EC",
+                    businessId:_locbusinessId,
+                    buinessKey:_localsys,
+                    poiId:key
+                }
+                $.ajax({
+                    type:"post",
+                    url:_localPoidetail,
+                    data:JSON.stringify({params:_data}),
+                    contentType:"application/json",
+                    dataType:"json",
+                    error:function (){
+                        _ajaxLoadfail();
+                    },success:function (data){
+                        _ajaxLoaded();
+                        _closeAll(true);
+                        if(data.rtnCode == 0){
+                            var _list = data.object&&data.object.list[0] || {}
+                            var _content = {
+                                name:_list.poiName,
+                                addr:_list.address,
+                                phone:null
+                            };
+                            domSearchDetail.find(".cmap-poipanel-detail-poiname").text(_content.name);
+                            domPoipanel.attr("poiuid",key);
+                            domSearchDetail.find(".cmap-poipanel-detail-poitags").find("span").text(_content.showtag || "");
+                            domSearchDetail.find(".cmap-poipanel-poigeneral-addr").text(_content.addr);
+                            if(!_content.phone){
+                                domSearchDetail.find(".cmap-poipanel-poigeneraltel").hide();
+                            }else{
+                                domSearchDetail.find(".cmap-poipanel-poigeneraltel").show().find(".cmap-poipanel-poigeneral-telno").text(_content.phone);
+                            }
+                            
+                            var _point = new BMap.Point(_list.poix,_list.poiy);
+                            _thisCommonBuild(_point,_content);
+                            //domSearchDetail.show().attr({"lnglat":_list.poix+","+_list.poiy,poiname:_content.name,key:key}); 
+                        }
+                    }
+                });
+            }else{
+                domPoipanel.find(".cmap-poipanel-poigeneral-pics,.cmap-poipanel-poigeneral-tags").show();
+                $.ajax({
+                    type:"get",
+                    url:that.poiGardenUrl,
+                    data:{
+                        ugc_type: 3,
+                        ugc_ver: 1,
+                        qt: "detailConInfo",
+                        device_ratio: 2,
+                        compat: 1,
+                        uid: key,
+                        //primaryUid: "1315719619403663030",
+                        auth: "test"
+                    },
+                    dataType:"jsonp",
+                    error:function (){
+                        ajaxLoadfail();
+                    },
+                    success:function (data){
+                        _ajaxLoaded();
+                        var _content = data.content || {};
+                        if(!panelSearch){
+                            suggestValuedom.val(_content.name);
+                            var _geo = _content.geo.split("|");                    
+                            var _lnglat = _geo[2].split(",");
+                            var _control = map.getMapType().getProjection();
+                            var _point = _control.pointToLngLat(new BMap.Pixel(parseFloat(_lnglat[0]),parseFloat(_lnglat[1])));
+
+                            if(suggestValuedom.hasClass("route-start-input")){
+                                _routeStartPoint = _point;
+                                _routeStartName = _content.name;
+                            }else{
+                                _routeEndPoint = _point;
+                                _routeEndName = _content.name;
+                            }
+                            _routeLine();
+                            return;
+                        }                    
+                        _closeAll(true);
+                        
+                        var _avocad = data.avocado || {};
+                        domSearchDetail.find(".cmap-poipanel-detail-poiname").text(_content.name);
+                        domPoipanel.attr("poiuid",key);
+                        domSearchDetail.find(".cmap-poipanel-detail-poitags").find("span").text(_content.showtag || "");
+                        domSearchDetail.find(".cmap-poipanel-poigeneral-addr").text(_content.addr);
+                        if(!_content.phone){
+                            domSearchDetail.find(".cmap-poipanel-poigeneraltel").hide();
+                        }else{
+                            domSearchDetail.find(".cmap-poipanel-poigeneraltel").show().find(".cmap-poipanel-poigeneral-telno").text(_content.phone);
+                        }                   
+        
+                        var _cardlist = _avocad.cards || [];
+                        for(var i in _cardlist){
+                            if(_cardlist[i].card_info.name == "imagewall"){
+                                //图片
+                                var _imgs = '';
+                                var _imglist = _cardlist[i].data&&_cardlist[i].data.list&&_cardlist[i].data.list.photo_list || [];
+                                for(var i in _imglist){
+                                    if(i>=4) break;
+                                    _imgs+='<img src="'+realImgSrc(_imglist[i].imgUrl,78,60)+'"/>';
+                                }
+                                if(!_imgs){
+                                    domSearchDetail.find(".cmap-poipanel-poigeneral-pics").hide();
+                                }else{
+                                    domSearchDetail.find(".cmap-poipanel-poigeneral-pics").show().find(".cmap-poipanel-poigeneral-piclist").html(_imgs);
+                                }
+                            }else if(_cardlist[i].card_info.name == "comment"){
+                                //评论
+                                var _score = _cardlist[i].data&&_cardlist[i].data.list&&_cardlist[i].data.list.avgScore || 0;
+                                domSearchDetail.find(".cmap-poipanel-detail-poiscore").find("span").text(_score);
+                            }else if(_cardlist[i].card_info.name == "labels"){
+                                //印象标签
+                                var _tags = _cardlist[i].data&&_cardlist[i].data.content || [];
+                                var _taghtml = '';
+                                for(var i in _tags){
+                                    for(var j in _tags[i].labels){
+                                        _taghtml+='<span>'+_tags[i].labels[j].label_name+'('+_tags[i].labels[j].count+')'+'</span>';
+                                    }
+                                }
+                                if(!_taghtml){
+                                    domSearchDetail.find(".cmap-poipanel-poigeneral-tags").hide();
+                                }
+                                domSearchDetail.find(".cmap-poipanel-poigeneral-tags").show().find(".cmap-poipanel-poigeneral-taglist").html(_taghtml);
+                            }
+                        }
+                        
+                        var _geo = _content.geo.split("|");                    
+                        var _lnglat = _geo[2].split(",");
+                        var _control = map.getMapType().getProjection();
+                        var _point = _control.pointToLngLat(new BMap.Pixel(parseFloat(_lnglat[0]),parseFloat(_lnglat[1])));                        
+                        _thisCommonBuild(_point,_content);  
+                                        
+                        
+                    }
+                });
+            }
+            function _thisCommonBuild(_point,_content){
+                domSearchDetail.show().attr({"lnglat":_point.lng+","+_point.lat,poiname:_content.name,key:key});            
+                var _overlay = null;
+                changeNavtext();
+                if(index ==-1){
+                    map.clearOverlays();
+                    var _label = new BMap.Label('<div class="cmap-poipanel-choosepoi"><div class="cmap-poipanel-choosepoi-name"><span>'+_content.name+'</span></div><div class="cmap-poipanel-choosepoi-arrow"></div></div>',{
+                        position:_point,
+                        offset:new BMap.Size(-80,-80)
+                    });
+                    _label.setStyle({
+                        color : "#4c4c4c",
+                        fontSize : "12px",
+                        fontWeight:"700",
+                        border:0,
+                        backgroundColor:"none"
+                    });
+                    _label.definedOverlay = "label";
+                    map.addOverlay(_label);
+                    var _newW = 25;
+                    var _newH = 40;
+                    var _marker = new BMap.Marker(_point,{
+                        icon:new BMap.Icon(G_cmapstaich+'src/assets/img/panel/markers_new2_4ab0bc5.png',new BMap.Size(_newW,_newH),{
+                            imageOffset:new BMap.Size(0,-232)
+                        })
+                    });
+                    map.addOverlay(_marker);
+                    
+
+                }else{
+                    _overlay = Fn.searchPois[index];
+                    _overlay.definedChoose = "chooseit";
+                    var _label = new BMap.Label('<div class="cmap-poipanel-choosepoi"><div class="cmap-poipanel-choosepoi-name"><span>'+_content.name+'</span></div><div class="cmap-poipanel-choosepoi-arrow"></div></div>',{
+                        position:_overlay.point,
+                        offset:new BMap.Size(-80,-80)
+                    });
+                    _label.setStyle({
+                        color : "#4c4c4c",
+                        fontSize : "12px",
+                        fontWeight:"700",
+                        border:0,
+                        backgroundColor:"none"
+                    });
+                    _label.definedOverlay = "label";
+                    map.addOverlay(_label);    
+                    var _icon = _overlay.getIcon();
+                    var _newW = 25;
+                    var _newH = 40;
+                    var _newIcon = new BMap.Icon(_icon.imageUrl,new BMap.Size(_newW,_newH),{
+                        imageOffset:new BMap.Size(-_newW*index,-98)
+                    });
+                    _overlay.setIcon(_newIcon);
+                }
+            }
+            
+        }
+        /**计算面板的最大尺寸 */
+        function _resizePoipanel(){
+            var _value = opts.top || 20;
+            var _max = $("#"+that.Id).height()-_value-60;
+            domPoipanel.css("max-height",_max+"px");
+            domPoipanel.find(".cmap-poipanel-routeresult").css("max-height",(_max-119)+"px");
+            if(domPoipanel.find(".cmap-poipanel-poinav").is(":visible")){
+                domPoipanel.find(".cmap-poipanel-poilist,.cmap-poipanel-poidetail").css("max-height",(_max-10-48-48)+"px");
+            }else{
+                domPoipanel.find(".cmap-poipanel-poilist,.cmap-poipanel-poidetail").css("max-height",(_max-10-48)+"px");
+            }
+        }
+        _resizePoipanel();
+        // if(panelSearch){
+        //     _loadSearchbox();
+        // }
+        //返回一些操作
+        return {
+            resize:function (){
+                _resizePoipanel();
+            },
+            close:function (){
+                domPoipanel.hide();
+            },open:function (){
+                _loadSearchbox();
+            }
+        }
+    }
+    /**
+     * 获取省市区县街道
+     */
+    this.getDistrict = function (opts){
+        opts = opts || {};
+        var code = (opts.code || 0)+"";
+        var level = parseInt(opts.level || 0);
+        var callback = opts.callback;
+        var web = opts.isweb || false;
+        if(typeof(callback) != "function"){
+            return;
+        }
+        if(web === true){
+            if(!window.G_getareaData){
+                var t = document.getElementsByTagName("head")[0]
+                , a = document.createElement("script");
+                a.src = G_cmapstaich+"src/js/bmap/lib/area.js",
+                a.type = "text/javascript",
+                t.appendChild(a),
+                a.onload = a.onreadystatechange = function() {
+                    _loadDistrict();
+                }
+            }else{
+                _loadDistrict();
+            }
+            function _loadDistrict(){
+                var obj = G_getareaData() || {};
+                var _a = [];
+                if(code == 0 && level == 0 ){
+                    // code level name
+                    for(var i in obj.province){
+                        _a.push({
+                            name:obj.province[i],
+                            code:i.slice(0,2),
+                            level:1
+                        })
+                    }
+                }else{
+                    if(level ==1){
+                        for(var i in obj.city){
+                            if(i.slice(0,2) == code){
+                                _a.push({
+                                    name:obj.city[i],
+                                    code:i.slice(0,4),
+                                    level:2
+                                });
+                            }
+                            
+                        }
+                    }else if(level == 2){
+                        for(var i in obj.county){
+                            if(i.slice(0,4) == code){
+                                _a.push({
+                                    name:obj.county[i],
+                                    code:i.slice(0,5),
+                                    level:3
+                                });
+                            }
+                            
+                        }
+
+                    }           
+
+                }
+                callback&&callback(_a);
+            }
+            return;
+        }
+        //淮安环境
+        var getDistrictUrl = "//gistest.cmos/getDivision";
+        if(!this.isProduce){
+            //生产环境
+            getDistrictUrl = "//"+G_PUBLICIP+"/cascontrol/getDivision";
+        }    
+        jQuery.support.cors = true;  
+        $.ajax({
+            type:"post",
+            url:getDistrictUrl,
+            contentType:"application/json",
+            data:JSON.stringify({code:code,level:level}),
+            dataType:"json",
+            error:function(){
+                callback([]);
+                throw new Error("服务器异常，请重试");
+            },
+            success:function (data){
+                data = data || {};
+                var list = data.object || [];
+                callback(list)
+                
+            }
+        })
+
+    }
+    /**
+     * 初始化地图
+     */
+    this.init = function (){
+        var opts = this.Op;
+        this.bMap = new BMap.Map(this.Id,{
+            enableMapClick: opts.enableMapClick === false ? false:true
+        }); 
+        
+        var map = this.bMap;
+        var _centerPoint = new BMap.Point(this.center.lng, this.center.lat)
+        map.centerAndZoom(_centerPoint,this.zoom);
+        if(opts.disableDragging){
+            this.makeDragging(false);
+        }
+        if(opts.disableScrollWheelZoom){
+            this.makeScrollWheel(false)
+            //map.disableScrollWheelZoom();
+            //map.disablePinchToZoom();
+        }else{
+            this.makeScrollWheel();
+        }
+        if(opts.disableDoubleClickZoom){
+            map.disableDoubleClickZoom();
+        }
+        //事件监听
+        if(opts.clickcallback){
+            this.registerMapClick({
+                callback:opts.clickcallback
+            });
+        }
+        if(opts.dbclickcallback){
+            this.registerMapDbClick({
+                callback:opts.dbclickcallback
+            });
+        }
+        if(opts.rightdbclickcallback){
+            this.registerMapRightDbClick({
+                callback:opts.rightdbclickcallback
+            });
+        }
+        if(opts.rightclickcallback){
+            this.registerMapRightClick({
+                callback:opts.rightclickcallback
+            });
+        }
+        //拖拽回调
+        if(opts.draggingcallback){
+            this.registerMapDraging({
+                callback:opts.draggingcallback
+            });
+        }
+        if(opts.dragendcallback){
+            this.registerMapDragend({
+                callback:opts.dragendcallback
+            });
+        }
+        //缩放监听
+        if(opts.zoomendcallback){
+            
+            map.addEventListener("zoomend", function(e) {
+                opts.zoomendcallback(e);
+           });
+            
+        }
+        //所有图块加载完成
+        if(opts.tilesloaded){
+            this.registerMaploaded({
+                callback:opts.tilesloaded
+            });
+        }
+        
+    };
+    this.init();
+};
+(function (){
+    window.CMap = {
+        createMap: function(opts) {
+            opts = opts || {};
+            var _gisMap = new GISMap(opts);
+            return _gisMap;
+        }
+    }
+})();

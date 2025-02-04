@@ -1,0 +1,113 @@
+define([
+    "Util",
+    "jquery",
+    "js/constants/constants"
+], function (Util,$,Constants) {
+
+    var escapesList;//常用转义符
+    var keywords;
+    var blockSearch = function (searchKeys, htmlTarget) {
+        htmlTarget = htmlTarget.replace(/>/gi, ">>");
+        var patt = new RegExp(">[^<>]*" + searchKeys + "[^<>]*(<[^<>]*>)", "gi");
+        var result;
+        while (result = patt.exec(htmlTarget)) {
+            var splits = result[0].split("<");
+            var ignore;
+            if(splits.length < 1){
+                //搜索结果未达预期
+                continue;
+            }
+            result[0] = splits[0];
+            ignore = splits[1];
+
+            //style标签中的内容是不需要替换的，跳过
+            if (("<" + ignore) == "</style>"){
+                continue;
+            }
+
+            var addTimes = 0;
+            var left = htmlTarget.substring(0, result.index);
+            var target = htmlTarget.substring(result.index, result.index + result[0].length);
+            var right = htmlTarget.substring(result.index + result[0].length);
+            //处理单个子句中的多个关键字高亮
+            var pattInner = new RegExp(searchKeys, "i");
+            if (escapesList && escapesList.length>0){
+                $.each(escapesList,function (index,item) {
+                    var re = item.split("|");
+                    var escapes = re[0];
+                    target = target.replace(new RegExp(""+escapes+"","g"),re[1]);
+                })
+            }else {
+                target = target.replace(/&amp;/g,"&");
+                target = target.replace(/&nbsp;/g," ");
+            }
+            while (pattInner.test(target)) {
+                var resultInner = pattInner.exec(target);
+                if (resultInner.index != 0) {
+                    left = left + target.substring(0, resultInner.index);
+                    target = target.substring(resultInner.index);
+                }
+                var targetLength = resultInner[0].length;
+                target = target.replace(eval("/" + searchKeys + "/i"), "<span class='sr-high'>" + target.substring(0, targetLength) + "</span>");
+                left = left + target.substring(0, 22 + targetLength + 7);
+                target = target.substring(22 + targetLength + 7);
+                addTimes++;
+            }
+            htmlTarget = left + target + right;
+            //指针向后移动addTimes个"<spanclass='sr-high'>"
+            patt.lastIndex = patt.lastIndex + (22 + 7) * addTimes;
+        }
+        return htmlTarget.replace(/>>/gi, ">");
+    };
+
+    /**
+     * 替换
+     * @param $this
+     * @param str
+     */
+    var highlight = function ($this, str, callback) {
+        var template = $this.html();
+        if(!template){
+            return ;
+        }
+        //移出高亮
+        if(keywords && keywords.length > 0){
+            for(var i = 0 ; i < keywords.length ; i++){
+                template = template.replace(eval('/(<span class="sr-high">' + keywords[i] + '<\\/span>)/g'), keywords[i]);
+            }
+        }
+        //替换标签
+        keywords = str.split(/\s+/);
+        for(var i = 0 ; i < keywords.length ; i++){
+            template = blockSearch(keywords[i],template);
+        }
+        $this.html(template.replace(/>>/gi, ">"));
+        callback && callback();
+    };
+
+    var getEscapesReplace = function(){
+        if (!escapesList || escapesList.length==0){
+            Util.ajax.postJson(Constants.AJAXURL+'/knowledge/getEscapesReplace',{}, function(data, status){
+                if (status && data.object && data.object.length>0){
+                    var escapesReplace = data.object;
+                    escapesList = escapesReplace.split(",");
+                }
+            })
+        }
+    }
+    getEscapesReplace();
+    /**
+     * 高亮函数
+     * @param func
+     * @param asyn
+     */
+    $.fn.asynSearch = function (func , asyn) {
+        $(this).each(function () {
+            var t = $(this);
+            func && func(t);
+        });
+    };
+    return {
+        highlight: highlight
+    }
+});

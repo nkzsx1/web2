@@ -1,0 +1,1003 @@
+define(['Util','js/constants/constants','js/constants/kmUtil','js/personalCenter/MyAlert', 'crossAPI','dialog'], function(
+    Util, Constants, Kmutil, MyAlert, CrossAPI, Dialog){
+    var baseData = [];
+    var baseUserData;
+
+    var productUrl = "http://ngmbc.cs.cmos/ngmbc/portall/quickOrder.html?pageId=2020072214372868801000001&";
+    var huiduUrl = "http://ngmbc.cs.cmos/ngmbc/portallx/quickOrder.html?pageId=2020072214372868801000001&";
+    var testUrl = "http://ngmbc.cs.cmos:8082/ngmbc/portall/quickOrder.html?pageId=2020072214372868801000001&";
+
+    var callInfoData;
+    var isLoading = true;
+    var suffix = "";
+    var knwledgeId;
+    var knwlgNm;
+    var tmpltName;
+    var paramTplNm;
+    var chnlCode =  Kmutil.getUrlParamter("sysCode");
+    var oCipher="";
+    var callType;
+    var callerNo;
+    var calledNo;
+    var buildParam = function(param){
+        var arr = [];
+        for(var key in param){
+            arr.push(key + "=" + param[key]);
+        }
+        return arr.join("&");
+    }
+    var order;
+    var prodName;
+    var paramList;
+    var regnCode ="" ;
+
+    Date.prototype.Format = function (fmt) {
+        var o = {
+            "M+": this.getMonth() + 1, //月份
+            "d+": this.getDate(), //日
+            "H+": this.getHours(), //小时
+            "m+": this.getMinutes(), //分
+            "s+": this.getSeconds(), //秒
+            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+            "S": this.getMilliseconds() //毫秒
+        };
+        if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+        for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        return fmt;
+    }
+
+
+    // <editor-fold desc="前端埋点神策 SDK 初始化">
+    var sensorsDataInit = function() {
+        var env = Constants.getEnvment();
+        var receiveUrl = 'http://sensors.ipaas.cmos/sa?project=production';
+        if (Constants.NGKM_ENVIROMENT_DEV == env) {
+            receiveUrl = Constants.getSensorsTestEnvReceiveUrl();
+        } else if (Constants.NGKM_ENVIROMENT_TEST == env) {
+            receiveUrl = Constants.getSensorsTestEnvReceiveUrl();
+        } else {
+            var httpType = window.location.protocol;
+            if ('https:' == httpType) {
+                receiveUrl = 'https://sensors.ipaas.cmos:20443/sa?project=production';
+            }else {
+                receiveUrl = 'http://sensors.ipaas.cmos/sa?project=production';
+            }
+        }
+        (function (para) {
+            var p = para.sdk_url, n = para.name, w = window, d = document, s = 'script', x = null, y = null;
+            if(typeof(w['sensorsDataAnalytic201505']) !== 'undefined') {
+                return false;
+            }
+            w['sensorsDataAnalytic201505'] = n;
+            w[n] = w[n] || function (a) {
+                return function () {
+                    (w[n]._q = w[n]._q || []).push([a, arguments]);
+                }
+            };
+            var ifs = ['track', 'quick', 'register', 'registerPage', 'registerOnce', 'clearAllRegister', 'trackSignup', 'trackAbtest', 'setProfile', 'setOnceProfile', 'appendProfile', 'incrementProfile', 'deleteProfile', 'unsetProfile', 'identify', 'login', 'logout', 'trackLink', 'clearAllRegister'];
+            for (var i = 0; i < ifs.length; i++) {
+                w[n][ifs[i]] = w[n].call(null, ifs[i]);
+            }
+            if (!w[n]._t) {
+                x = d.createElement(s), y = d.getElementsByTagName(s)[0];
+                x.async = 1;
+                x.src = p;
+
+                w[n].para = para;
+                y.parentNode.insertBefore(x, y);
+            }
+        })({
+            sdk_url: '../../js/sensorsdata.min.js',
+            name: 'sensorsdata',
+            // server_url: 'http://172.22.243.150:8107/index.html?project=production'//神策数据接收地址
+            server_url: receiveUrl,//神策数据接收地址
+            heatmap_url: "../../js/heatmap.min.js",
+            heatmap:{
+                clickmap:'default',
+                scroll_notice_map:'default',
+                collect_elements:"all"
+            }
+        });
+
+        if(sensorsdata){
+            Util.ajax.getJson(Constants.AJAXURL + '/user/session' + "?t=" + new Date().getTime(), {}, function (data, state) {
+                if (state) {
+                    if (data && data.bean) {
+                        //神策用户关联的方法，其中 user_id 为用户的真实 id，字符串或者数值类型都可以。
+                        sensorsdata.identify(data.bean.staffCode, true);
+                        if (!tmpltName){
+                            if (!paramTplNm) {
+                                Util.ajax.postJson(Constants.AJAXURL + '/knowledge/getKnowledgeAttr',{ knwldgeId: knwledgeId},function (data,textStatus) {
+                                    tmpltName = data && data.object && data.object.tmpltNm;
+                                    sensorsdata.registerPage({
+                                        staff_id: data.bean.staffCode,
+                                        staff_name: data.bean.staffName,
+                                        provnce: data.bean.provnce,
+                                        knwlgNm: knwlgNm,
+                                        tmpltName: tmpltName,
+                                    });
+                                    sensorsdata.quick("autoTrack");
+                                })
+                            }else {
+                                sensorsdata.registerPage({
+                                    staff_id: data.bean.staffCode,
+                                    staff_name: data.bean.staffName,
+                                    provnce: data.bean.provnce,
+                                    knwlgNm: knwlgNm,
+                                    tmpltName: paramTplNm,
+                                });
+                                sensorsdata.quick("autoTrack");
+                            }
+                        }else {
+                            sensorsdata.registerPage({
+                                staff_id: data.bean.staffCode,
+                                staff_name: data.bean.staffName,
+                                provnce: data.bean.provnce,
+                                knwlgNm: knwlgNm,
+                                tmpltName: tmpltName,
+                            });
+                            sensorsdata.quick("autoTrack");
+                        }
+
+                    }
+                }
+            });
+        }
+    }
+
+    var oCioherFunc=function ($callType,$callerNo,$calledNo,$subsNumber) {
+       var  callingNum = $callType == "0" ?$callerNo : $calledNo;
+       if($subsNumber){
+           //if(callingNum==$subsNumber){ 处理特殊场景的手机号 进行模糊比较
+           if(callingNum.indexOf($subsNumber)!=-1){
+               oCipher ='1'
+           }else{
+               oCipher ='0'
+           }
+       }else{
+           oCipher="";
+       }
+    }
+    //</editor-fold>
+    var  callInfoDataCallBack= function (obj) {
+        if(obj){
+            callInfoData =  obj
+        }
+        if(callInfoData && callInfoData.isCalling){
+            callType = callInfoData.callType;
+            callerNo = callInfoData.callerNo;
+            calledNo =  callInfoData.calledNo;
+            var lastSeriaNo = localStorage.getItem("ngkm_seriaNo") || "-1";
+            var callBack = function(requestId,accessToken){
+                var sceneCodeAndPopFlag = localStorage.getItem("sceneCodeAndPopFlag");
+                if(sceneCodeAndPopFlag && sceneCodeAndPopFlag != 'undefined'){
+                    sceneCodeAndPopFlag = encodeURIComponent(sceneCodeAndPopFlag);
+                }else{
+                    sceneCodeAndPopFlag = '';
+                }
+                var param = {
+                    acptNum: callInfoData.subsNumber,
+                    channelCode: "ngkm",
+                    mcdsId: baseData[order].mcdsId,
+                    prodCode: baseData[order].suplerProdCode,
+                    callType: callInfoData.callType,
+                    callFlow: callInfoData.serialNo,
+                    isNgFrame:  "1",//是否一体化客服框架内办理 0是，1否
+                    opStaffId: baseUserData.opStaffId,
+                    orgId: baseUserData.orgaId,
+                    provCode: baseUserData.provCode,
+                    crmStaffId: baseUserData.crmStaffId,
+                    requestId:requestId,
+                    accessToken:accessToken,
+                    calledNumber:calledNo,
+                    operatSerialNo:lastSeriaNo,
+                    orgName:encodeURI(baseUserData.orgName),
+                    sceneCodeAndPopFlag:sceneCodeAndPopFlag
+                };
+                if(callInfoData.oCipher){
+                    oCipher=callInfoData.oCipher;
+                }
+                if(callType){
+                    if(callType=="0"){
+                        param.callerNo=callerNo;
+                    }
+                    if(callType=="1"){
+                        param.callerNo=calledNo;
+                    }
+                }
+                param.oCipher=oCipher;
+                if(regnCode){
+                    param.cityCode=regnCode;
+                }else{
+                    param.cityCode="";
+                }
+
+
+                if(Constants.getEnvment() == Constants.NGKM_ENVIROMENT_TEST){
+                    window.open(testUrl + buildParam(param) + suffix );
+                }else{
+                    //灰度和生产
+                    Util.ajax.getJson(Constants.AJAXURL + '/staticDispose/getEnvironment', {}, function(data){
+                        if(data.returnCode == "0"){
+                            if(data.returnMessage) {
+                                if("huidu"==data.returnMessage){
+                                    window.open(huiduUrl + buildParam(param) + suffix );
+
+                                }else{
+                                    window.open(productUrl + buildParam(param) + suffix );
+
+                                }
+                            }else{
+                                window.open(productUrl + buildParam(param) + suffix );
+                            }
+                        }
+                    });
+                }
+                }
+            if(!baseUserData){
+                getUserInfo(getRequstIdByBusiCtr(callBack));
+            }else{
+                getRequstIdByBusiCtr(callBack);
+            }
+        }else{
+            var paramValue="";
+            if(paramList){
+                var paramListObj =JSON.parse(paramList);
+                if(paramListObj&&paramListObj.length>0){
+                    for (var i = 0; i < paramListObj.length; i++) {
+                        if ("AL_BJHRDG" == paramListObj[i].paramCode) {
+                            paramValue = paramListObj[i].paramValue;
+                        }
+                    }
+                }
+            }
+            //存在不认证方式，则可直接打开订购页面
+            if (paramValue&&paramValue.indexOf("5")!=-1) {
+                if (callInfoData.acceptNum && callInfoData.serialNo) {
+                    var callBack = function (requestId, accessToken) {
+                        var sceneCodeAndPopFlag = localStorage.getItem("sceneCodeAndPopFlag");
+                        if(sceneCodeAndPopFlag && sceneCodeAndPopFlag != 'undefined'){
+                            sceneCodeAndPopFlag = encodeURIComponent(sceneCodeAndPopFlag);
+                        }else{
+                            sceneCodeAndPopFlag = '';
+                        }
+                        var param = {
+                            acptNum: callInfoData.acceptNum,
+                            channelCode: "ngkm",
+                            mcdsId: baseData[order].mcdsId,
+                            prodCode: baseData[order].suplerProdCode,
+                            callType: "0",//非通话状态但是有受理号码默认呼入场景
+                            callFlow: callInfoData.serialNo,
+                            isNgFrame: "1",//是否一体化客服框架内办理 0是，1否
+                            opStaffId: baseUserData.opStaffId,
+                            orgId: baseUserData.orgaId,
+                            provCode: baseUserData.provCode,
+                            crmStaffId: baseUserData.crmStaffId,
+                            requestId: requestId,
+                            accessToken: accessToken,
+                            callerNo: callInfoData.acceptNum,
+                            orgName:encodeURI(baseUserData.orgName),
+                            sceneCodeAndPopFlag:sceneCodeAndPopFlag
+                        };
+                           /* oCioherFunc(callType,callerNo,calledNo,callInfoData.acceptNum)
+                        if(oCipher){
+                              param.oCipher=oCipher;
+                        }*/
+                        if(regnCode){
+                            param.cityCode=regnCode;
+                        }else{
+                            param.cityCode="";
+                        }
+                        if (Constants.getEnvment() == Constants.NGKM_ENVIROMENT_TEST) {
+                            window.open(testUrl + buildParam(param) + suffix);
+                        } else {
+                            //灰度和生产
+                            Util.ajax.getJson(Constants.AJAXURL + '/staticDispose/getEnvironment', {}, function (data) {
+                                if (data.returnCode == "0") {
+                                    if (data.returnMessage) {
+                                        if ("huidu" == data.returnMessage) {
+                                            window.open(huiduUrl + buildParam(param) + suffix);
+
+                                        } else {
+                                            window.open(productUrl + buildParam(param) + suffix);
+
+                                        }
+                                    } else {
+                                        window.open(productUrl + buildParam(param) + suffix);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    if (!baseUserData) {
+                        getUserInfo(getRequstIdByBusiCtr(callBack));
+                    } else {
+                        getRequstIdByBusiCtr(callBack);
+                    }
+                }else{
+                    // new MyAlert(
+                    //     {'type':'success','text':"仅通话状态可办理",'width':"200px"}
+                    // );
+                    new Dialog({
+                        mode: 'tips',
+                        tipsType: 'error',
+                        content: '仅通话状态可办理'
+                    });
+                }
+            }else{
+                // new MyAlert(
+                //     {'type':'success','text':"仅通话状态可办理",'width':"200px"}
+                // );
+                new Dialog({
+                    mode: 'tips',
+                    tipsType: 'error',
+                    content: '仅通话状态可办理'
+                });
+            }
+
+        }
+    };
+    var clickProcessClick = false;
+    var callBackFun = function(data){
+        var startTime= new Date().getTime();
+        console.log("callBackFun开始执行。");
+        if(clickProcessClick){
+            clickProcessClick = false;
+
+            callInfoDataCallBack(data);
+        }else{
+
+            if (isLoading){
+                getRelateProduct(data);
+                console.log("callBackFun执行结束。用时"+(new Date().getTime()-startTime)/1000+"秒");
+            }
+        }
+    };
+
+    var showDialogFunc=function (paramUrl,_param){
+        CrossAPI.showDialog({
+            id:"clickProcess",        //弹框唯一键值
+            title:"一键办理",   //弹出窗标题
+            url:paramUrl ,
+            param:JSON.stringify(_param),    //要传递的参数，可以是json对象
+            modal:true,  //定义弹框是否要遮罩，默认为false
+            width:1024,  //对话框宽度
+            height:600  //对话框高度
+        });
+    }
+
+    /**
+     * 事件初始化
+     *
+     */
+    var eventInit = function(isBackStage){
+        $("#click-process").unbind("click").click(function(){
+            if($(".article-onekey").is(":visible")){
+                $(".article-onekey").hide();
+            }else{
+                $(".article-onekey").show();
+                if($("#screCardList") && $("#screCardList").is(":visible")){
+                    $("#screCardList").hide();
+                }
+            }
+
+            //<editor-fold desc="ngkm_clickProcessBtn_click 一键办理按钮点击事件">
+            var click_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+            Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                if (data.returnCode == 0 && data.object == "true") {
+                    if (sensorsdata) {
+                        if (!Kmutil.getUrlParamter("sysCode")) {
+                            chnlCode = 'ngkm';
+                        }
+                        sensorsdata.track("ngkm_clickProcessBtn_click", {
+                            click_time: click_time,
+                            knwledgeId: knwledgeId,
+                            chnlCode: chnlCode
+                        });
+                    }
+                }
+            });
+            //</editor-fold>
+
+            return false;
+        });
+        //一键办理操作
+        if(!isBackStage){
+            $(".article-onekey-list").find("li").click(function(){
+                clickProcessClick = true;
+                order = $(this).find("a").attr("order");
+                prodName = $(this).attr("title");
+                paramList = $(this).find("a").attr("paramList");
+                if(Kmutil.getOpenMode() == "1"){
+                    Kmutil.getSerialNo("2",callBackFun)
+                }else{
+                    CrossAPI.getContact("getAgentState",Constants.PARAMJSONAGENT, function (agentState) {
+                        if(agentState && agentState.agentState == "7"){
+                            CrossAPI.getContact("getCallingInfo",Constants.PARAMJSONCALL, function(callingInfo) {
+                                var serialNo = "";
+                                var acceptNum;
+                                if (callingInfo) {
+                                    serialNo = callingInfo.serialNo ? callingInfo.serialNo : "";
+                                    acceptNum = callingInfo.subsNumber;//受理号码；
+                                    callType = callingInfo.callType;//呼入呼出类型
+                                    callerNo = callingInfo.callerNo;//主叫号码
+                                    calledNo = callingInfo.calledNo;//被叫号码
+                                    oCioherFunc(callType,callerNo,calledNo,acceptNum);
+                                    var callBack = function(requestId,accessToken){
+                                        var sceneCodeAndPopFlag = localStorage.getItem("sceneCodeAndPopFlag");
+                                        if(sceneCodeAndPopFlag && sceneCodeAndPopFlag != 'undefined'){
+                                            sceneCodeAndPopFlag = encodeURIComponent(sceneCodeAndPopFlag);
+                                        }else{
+                                            sceneCodeAndPopFlag = '';
+                                        }
+                                        var param = {
+                                            acptNum: acceptNum,
+                                            channelCode: "ngkm",
+                                            mcdsId: baseData[order].mcdsId,
+                                            prodCode: baseData[order].suplerProdCode,
+                                            callType: callingInfo.callType,
+                                            callFlow: serialNo,
+                                            isNgFrame:  "0",//是否一体化客服框架内办理 0是，1否
+                                            opStaffId: baseUserData.opStaffId,
+                                            orgId: baseUserData.orgaId,//工号归属部门编码
+                                            provCode: baseUserData.provCode,
+                                            crmStaffId: baseUserData.crmStaffId,
+                                            requestId:requestId,
+                                            accessToken:accessToken,
+                                            oCipher:oCipher,
+                                            operatSerialNo:serialNo,//操作流水号
+                                            calledNumber:calledNo,//被叫号码
+                                            orgName:encodeURI(baseUserData.orgName),//工号归属部门名称
+                                            sceneCodeAndPopFlag:sceneCodeAndPopFlag
+                                        };
+                                        if(callType){
+                                            if(callType=="0"){
+                                                param.callerNo=callerNo;
+                                            }
+                                            if(callType=="1"){
+                                                param.callerNo=calledNo;
+                                            }
+                                        }
+                                        if(regnCode){
+                                            param.cityCode=regnCode;
+                                        }else{
+                                            param.cityCode="";
+                                        }
+                                        //测试
+                                        if(Constants.getEnvment() == Constants.NGKM_ENVIROMENT_TEST){
+                                            showDialogFunc(testUrl + buildParam(param) + suffix);
+                                        }else{
+                                            //灰度和生产
+                                            Util.ajax.getJson(Constants.AJAXURL + '/staticDispose/getEnvironment', {}, function(data){
+                                                if(data.returnCode == "0"){
+                                                    if(data.returnMessage) {
+                                                        if("huidu"==data.returnMessage){
+                                                            showDialogFunc(huiduUrl + buildParam(param) + suffix,param);
+                                                        }else{
+                                                            showDialogFunc(productUrl + buildParam(param) + suffix,param);
+                                                        }
+                                                    }else{
+                                                        showDialogFunc(productUrl + buildParam(param) + suffix,param);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                   };
+                                    if(!baseUserData){
+                                        getUserInfo(getRequstIdByBusiCtr(callBack));
+                                    }else{
+                                        getRequstIdByBusiCtr(callBack);
+                                    }
+                                }else{
+                                    // new MyAlert(
+                                    //     {'type':'success','text':"仅通话状态可办理",'width':"200px"}
+                                    // );
+                                    new Dialog({
+                                        mode: 'tips',
+                                        tipsType: 'error',
+                                        content: '仅通话状态可办理'
+                                    });
+                                }
+                            });
+                        }else {
+                            var paramValue="";
+                            if(paramList){
+                                var paramListObj =JSON.parse(paramList);
+                                if(paramListObj&&paramListObj.length>0){
+                                    for (var i = 0; i < paramListObj.length; i++) {
+                                        if ("AL_BJHRDG" == paramListObj[i].paramCode) {
+                                            paramValue = paramListObj[i].paramValue;
+                                        }
+                                    }
+                                }
+                            }
+                            //存在不认证方式，则可直接打开订购页面
+                            if (paramValue&&paramValue.indexOf("5")!=-1) {
+                                CrossAPI.getContact("cross_data",Constants.PARAMJSONINDEX,function (info) {
+                                    CrossAPI.getContact("getClientBusiInfo", Constants.PARAMJSONBUSINFO, function (clientBusiInfo) {
+                                        var phoneNum = clientBusiInfo.bean.msisdn;
+                                        var lastSeriaNo = localStorage.getItem("ngkm_seriaNo") || "-1";
+                                        if (phoneNum && lastSeriaNo) {
+                                            var callBack = function(requestId,accessToken){
+                                                var sceneCodeAndPopFlag = localStorage.getItem("sceneCodeAndPopFlag");
+                                                if(sceneCodeAndPopFlag && sceneCodeAndPopFlag != 'undefined'){
+                                                    sceneCodeAndPopFlag = encodeURIComponent(sceneCodeAndPopFlag);
+                                                }else{
+                                                    sceneCodeAndPopFlag = '';
+                                                }
+                                                var param = {
+                                                    acptNum: phoneNum,
+                                                    channelCode: "ngkm",
+                                                    mcdsId: baseData[order].mcdsId,
+                                                    prodCode: baseData[order].suplerProdCode,
+                                                    callType:"0",//非通话状态默认使用本机呼入
+                                                    callFlow: lastSeriaNo,
+                                                    isNgFrame:  "0",//是否一体化客服框架内办理 0是，1否
+                                                    opStaffId: baseUserData.opStaffId,
+                                                    orgId: baseUserData.orgaId,
+                                                    provCode: baseUserData.provCode,
+                                                    crmStaffId: baseUserData.crmStaffId,
+                                                    requestId:requestId,
+                                                    accessToken:accessToken,
+                                                    callerNo: phoneNum,
+                                                    orgName:encodeURI(baseUserData.orgName),
+                                                    sceneCodeAndPopFlag:sceneCodeAndPopFlag
+                                                };
+                                                /*oCioherFunc(callType,callerNo,calledNo,phoneNum);
+                                                if(oCipher){
+                                                    param.oCipher=oCipher;
+                                                }*/
+                                                if(regnCode){
+                                                    param.cityCode=regnCode;
+                                                }else{
+                                                    param.cityCode="";
+                                                }
+                                                //测试
+                                                if(Constants.getEnvment() == Constants.NGKM_ENVIROMENT_TEST){
+                                                    showDialogFunc(testUrl + buildParam(param) + suffix);
+                                                }else{
+                                                    //灰度和生产
+                                                    Util.ajax.getJson(Constants.AJAXURL + '/staticDispose/getEnvironment', {}, function(data){
+                                                        if(data.returnCode == "0"){
+                                                            if(data.returnMessage) {
+                                                                if("huidu"==data.returnMessage){
+                                                                    showDialogFunc(huiduUrl + buildParam(param) + suffix,param);
+                                                                }else{
+                                                                    showDialogFunc(productUrl + buildParam(param) + suffix,param);
+                                                                }
+                                                            }else{
+                                                                showDialogFunc(productUrl + buildParam(param) + suffix,param);
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            };
+                                            if(!baseUserData){
+                                                getUserInfo(getRequstIdByBusiCtr(callBack));
+                                            }else{
+                                                getRequstIdByBusiCtr(callBack);
+                                            }
+                                        }else{
+                                            // new MyAlert(
+                                            //     {'type': 'success', 'text': "仅通话状态可办理", 'width': "200px"});
+                                            new Dialog({
+                                                mode: 'tips',
+                                                tipsType: 'error',
+                                                content: '仅通话状态可办理'
+                                            });
+                                        }
+                                    })
+                                });
+                            } else {
+                                // new MyAlert(
+                                //     {'type': 'success', 'text': "仅通话状态可办理", 'width': "200px"});
+                                    new Dialog({
+                                        mode: 'tips',
+                                        tipsType: 'error',
+                                        content: '仅通话状态可办理'
+                                    });
+                            }
+                        }
+                    });
+                }
+
+                //<editor-fold desc="ngkm_clickProcess_handledBtn_click 一键办理按钮点击事件">
+                var click_time = new Date().Format("yyyy-MM-dd HH:mm:ss");
+                Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + +new Date().getTime(), {}, function (data) {
+                    if (data.returnCode == 0 && data.object == "true") {
+                        if (sensorsdata) {
+                            if (!Kmutil.getUrlParamter("sysCode")) {
+                                chnlCode = 'ngkm';
+                            }
+                            sensorsdata.track("ngkm_clickProcess_handledBtn_click", {
+                                click_time: click_time,
+                                knwledgeId: knwledgeId,
+                                chnlCode: chnlCode,
+                                prodCode: baseData[order].suplerProdCode,
+                                prodName: prodName
+                            });
+                        }
+                    }
+                });
+                //</editor-fold>
+
+            });
+        }
+        $("body").click(function(e){
+            if(!$(this).parents(".article-onekey").length){
+                if(e.target.id == 'inputBox' || e.target.id == 'oneKeySearchBtn' || e.target.id == 'oneKeyClearBtn'){
+                    return;
+                }
+                $(".article-onekey").hide();
+            }
+        });
+        //一键办理中搜索点击事件
+        $("#oneKeySearchBtn").click(function(){
+            getSearchRelateProduct($("#inputBox").val());
+        });
+        //一键办理中根据输入框是否有值判断清空图标是否显示
+        $('#inputBox').on('input', function() {
+            if ($(this).val().trim().length > 0) {
+                $('#oneKeyClearBtn').show();
+            } else {
+                $('#oneKeyClearBtn').hide();
+            }
+        });
+        $('#oneKeyClearBtn').click(function(){
+            $('#inputBox').val("");
+            $('#oneKeyClearBtn').hide();
+        })
+
+    };
+/*    /!**
+     * 获取受理号码的商品中心的归属地市转换
+     * @param subsNumber
+     *!/
+    var phoneAreaQueryBySubNumber = function (validType,subsNumber) {
+        if(subsNumber){
+            Util.ajax.getJson(Constants.AJAXURL + '/knowledge/phoneAreaQueryBySubNumber', {subsNumber: subsNumber}, function(data) {
+                if (data.returnCode == "0") {
+                    if(data.object){
+                        //执行商品关联的dom操作
+                        domInit(validType,data.object);
+                    }else{
+                        domInit(validType);
+                    }
+                }
+            });
+        }else{
+            //执行商品关联的dom操作
+            domInit(validType);
+        }
+
+    }*/
+
+    /**
+     * dom初始化
+     */
+    var domInit = function() {
+        var startTime=new Date().getTime();
+        console.log("for循环执行开始。");
+        $("#click-process").show();
+        processHtml(baseData);
+        // var html = "";
+        // if (baseData && baseData.length > 0) {
+        //     for (var i = 0; i < baseData.length; i++) {
+        //         //只展示商品生效的和展示目录下的商品
+        //         if (!_isBackStage) {
+        //             if (baseData[i].paramList && baseData[i].paramList.length > 0) {
+        //                 var inconStr = JSON.stringify(baseData[i].paramList);
+        //                 inconStr = inconStr.replace(/\s*/g, "");//去除字符串中所有空格
+        //                 html += '<li><span titile="' + baseData[i].mcdsNm + '">' + baseData[i].mcdsNm + '</span><em title="' + baseData[i].suplerProdCode + '">' + baseData[i].suplerProdCode + '</em><a order="' + i + '" id="' + baseData[i].mcdsId + '" paramList=' + inconStr + ' href="#nogo" class="km-btn km-btn-green ">办理</a></li>';
+        //             } else {
+        //                 html += '<li><span titile="' + baseData[i].mcdsNm + '">' + baseData[i].mcdsNm + '</span><em title="' + baseData[i].suplerProdCode + '">' + baseData[i].suplerProdCode + '</em><a order="' + i + '" id="' + baseData[i].mcdsId + '" href="#nogo" class="km-btn km-btn-green ">办理</a></li>';
+        //             }
+        //         }else{
+        //             html += '<li><span titile="' + baseData[i].mcdsNm + '">' + baseData[i].mcdsNm + '</span><em title="' + baseData[i].suplerProdCode + '">' + baseData[i].suplerProdCode + '</em><a order="' + i + '" id="' + baseData[i].mcdsId + '" href="#nogo" class="km-btn km-btn-green ">办理</a></li>';
+        //         }
+        //     }
+        //     if (html) {
+        //         $(".article-onekey-list").empty();
+        //     }
+        //     if (html == "") {
+        //         html = '<span style="color:#000;margin-left:5%;">您的账号，无可办理商品<span>';
+        //     }
+        //     $(".article-onekey-list").html(html);
+        // } else {
+        //     html = '<span style="color:#000;margin-left:5%;">您的账号，无可办理商品<span>';
+        //     $(".article-onekey-list").html(html);
+        // }
+        console.log("for循环执行结束。用时"+(new Date().getTime()-startTime)/1000+"秒");
+        //点击事件放在数据渲染之后
+        eventInit(_isBackStage);
+    }
+    //一键办理下拉内容
+    var processHtml = function (baseData){
+        var html = "";
+        if (baseData && baseData.length > 0) {
+            $("#searchDiv").show();
+            for (var i = 0; i < baseData.length; i++) {
+                //只展示商品生效的和展示目录下的商品
+                if (!_isBackStage) {
+                    if (baseData[i].paramList && baseData[i].paramList.length > 0) {
+                        var inconStr = JSON.stringify(baseData[i].paramList);
+                        inconStr = inconStr.replace(/\s*/g, "");//去除字符串中所有空格
+                        html += '<li><span titile="' + baseData[i].mcdsNm + '">' + baseData[i].mcdsNm + '</span><em title="' + baseData[i].suplerProdCode + '">' + baseData[i].suplerProdCode + '</em><a order="' + i + '" id="' + baseData[i].mcdsId + '" paramList=' + inconStr + ' href="#nogo" class="km-btn km-btn-green ">办理</a></li>';
+                    } else {
+                        html += '<li><span titile="' + baseData[i].mcdsNm + '">' + baseData[i].mcdsNm + '</span><em title="' + baseData[i].suplerProdCode + '">' + baseData[i].suplerProdCode + '</em><a order="' + i + '" id="' + baseData[i].mcdsId + '" href="#nogo" class="km-btn km-btn-green ">办理</a></li>';
+                    }
+                }else{
+                    html += '<li><span titile="' + baseData[i].mcdsNm + '">' + baseData[i].mcdsNm + '</span><em title="' + baseData[i].suplerProdCode + '">' + baseData[i].suplerProdCode + '</em><a order="' + i + '" id="' + baseData[i].mcdsId + '" href="#nogo" class="km-btn km-btn-green ">办理</a></li>';
+                }
+            }
+            if (html) {
+                $(".article-onekey-list").empty();
+            }
+            if (html == "") {
+                html = '<span style="color:#000;margin-left:5%;">您的账号，无可办理商品<span>';
+            }
+            $(".article-onekey-list").html(html);
+        } else {
+            html = '<span style="color:#000;margin-left:5%;">您的账号，无可办理商品<span>';
+            $(".article-onekey-list").html(html);
+        }
+    }
+
+
+    var getUserInfo = function(callBack){
+        Util.ajax.getJson(Constants.AJAXURL + '/knowledge/getRelateProductInfo', {}, function(data){
+            if(data.returnCode == "0"){
+                baseUserData = data.object;
+                if(callBack){
+                    callBack();
+                }
+            }
+        });
+    };
+    var getValidType = function(callBack){
+       var authType="";
+        CrossAPI.getContact("getAgentState",Constants.PARAMJSONAGENT, function (agentState) {
+            //通话状态
+            if(agentState && agentState.agentState == "7" && agentState.waitState != "1") {
+                CrossAPI.getContact("getCallingInfo",Constants.PARAMJSONCALL, function(callingInfo) {
+                    //呼叫类型 0 呼入 1呼出
+                    var callType = callingInfo && callingInfo.callType;
+                    //受理号码
+                    var subsNumber = callingInfo.subsNumber;
+                    //主叫号码
+                     callerNo = callingInfo.callerNo;
+                    //被叫号码
+                     calledNo = callingInfo.calledNo;
+                    //操作流水号
+                    operatSerialNo =callingInfo.serialNo;
+                    //00 本机呼入 01本机呼出  02他机呼入 03他机呼出
+                    //呼入状态
+                    if("0"==callType){
+                        //如果受理号码和主叫号码一致 本机呼入
+                        if(subsNumber==callerNo){
+                            authType="00-00";
+                        }
+                        //如果受理号码和主叫号码不一致 他机呼入
+                        if(subsNumber!=callerNo){
+                            authType="00-02";
+                        }
+                    }
+                    //外呼状态
+                    if("1"==callType){
+                        // 如果受理号码和被叫号码一致 本机呼出
+                        if(subsNumber==calledNo){
+                            authType="00-01";
+                        }
+                        //如果受理号码和被叫号码不一致 他机呼出
+                        if(subsNumber!=calledNo){
+                            authType="00-03";
+                        }
+                    }
+                    //var regnCode="";
+                    crossAPI.getContact("getClientBusiInfo",Constants.PARAMJSONBUSINFO,function(clientBusiInfo){
+                        phoneNumber = clientBusiInfo.bean.msisdn
+                        if(phoneNumber){
+                            regnCode= clientBusiInfo.bean.numAssignmentCode;
+                        }
+                        callBack({authType:authType,subsNumber:subsNumber,regnCode:regnCode});
+                    });
+
+                });
+            }else{
+                   //待接听状态
+                   if(agentState && agentState.agentState == "7" && agentState.waitState == "1"){
+                       //外呼状态  本机呼出
+                        authType = "00-01";
+                     }else{
+                        //非外呼状态  本机呼入
+                        authType = "00-00";
+                    }
+                    //获取受理号码
+                CrossAPI.getContact("getClientBusiInfo", Constants.PARAMJSONBUSINFO, function (clientBusiInfo) {
+                    var phoneNum = clientBusiInfo.bean.msisdn;
+                    var lastSeriaNo = localStorage.getItem("ngkm_seriaNo") || "-1";
+                    var regnCode= clientBusiInfo.bean.numAssignmentCode;
+                    if (phoneNum && lastSeriaNo) {
+                        callBack({authType:authType,subsNumber:phoneNum,regnCode:regnCode});
+                    }else{
+                    callBack({authType:authType,regnCode:regnCode});
+                    }
+
+                });
+
+            }
+        });
+
+    };
+
+    var _isPublish;
+    var _isBackStage;
+    var _verNo;
+    var _knwlgId;
+    var validType;
+    var getRelateProduct = function(obj){
+        var startTime=new Date().getTime();
+        console.log("接口请求开始。");
+        // var validType;
+        var subsNumber;
+
+        if(obj && obj.authType){
+            validType = obj.authType;
+            subsNumber = obj.subsNumber;
+            callInfoData=obj;
+            regnCode= obj.regnCode;
+        }
+        //页面加载 获取商品信息 后台根据是否发布 查询不同接口获取商品信息
+        Util.ajax.getJson(Constants.AJAXURL + '/knowledge/getRelateProduct', {knwlgId: _knwlgId, isPublished: _isPublish, verNo: _verNo,authType:validType,regnCode:regnCode}, function(data){
+            if(data.returnCode == "0"){
+                baseData = data.beans;
+                isLoading = false;
+            }
+            if(data.object){
+                //取用户信息
+                getUserInfo();
+               // phoneAreaQueryBySubNumber(validType,subsNumber);
+                console.log("接口请求结束。用时"+(new Date()-startTime)/1000+"秒");
+                domInit();
+
+            }
+            // <editor-fold desc="神策埋点开关控制">
+            if(Kmutil.getOriginType("http://") || Kmutil.getOriginType("https://")){
+                Util.ajax.getJson(Constants.AJAXURL + "/sensorsdata/getSensorsdata?t=" + + new Date().getTime(),{},function (data) {
+                    if(data.returnCode == 0 && data.object == "true"){
+                        sensorsDataInit();
+                    }
+                });
+            }
+            // </editor-fold>
+        });
+    };
+    //获取一键办理下拉框中搜索框中数据
+    var getSearchRelateProduct = function (searchKeyWord) {
+
+        Util.ajax.getJson(Constants.AJAXURL + '/knowledge/getRelateProduct', {knwlgId: _knwlgId, isPublished: _isPublish, verNo: _verNo,authType:validType,regnCode:regnCode,searchKeyWord:searchKeyWord}, function(data){
+            if(data.returnCode == "0"){
+                baseData = data.beans;
+                if ($("#inputBox").val().trim() != "" && (baseData == null || baseData.length == 0) == true){
+                    var html = '<span style="color:red;margin-left:5%;">未搜索到相关内容<span>';
+                    $(".article-onekey-list").html(html);
+                }else{
+                    processHtml(baseData);
+                }
+            }
+        });
+    }
+    var getData = function(){
+        getValidType(getRelateProduct);
+    };
+    var getRequstIdByBusiCtr = function (callback) {
+        Util.ajax.getJson(Constants.AJAXURL + '/knowledge/getRequstIdByBusiCtr', {}, function(data){
+            if(data.returnCode == "0"){
+                if(data.object&&data.object.respCode=="0"){
+                    var tokenData=data.object.result[0];
+                    if(tokenData.requestId&&tokenData.accessToken){
+                       callback(tokenData.requestId,tokenData.accessToken);
+                    }
+                }else{
+                    callback();
+                }
+            }
+        });
+    }
+
+    /**
+     * 监听受理号码变更
+     */
+    var initListener = function(){
+        /*CrossAPI.on("acceptNumberChange", function () {
+            //存在校验
+            getData();
+        });*/
+        if(window.addEventListener){//IE8+
+            var currCallNum = localStorage.getItem("ngkm_call") || "0_0";
+            window.addEventListener("storage",function (e) {
+                var targetCallNum = localStorage.getItem("ngkm_call") || "0_0";
+                if(currCallNum != targetCallNum){
+                    if (Kmutil.getFocusFalg()){
+                        getData();
+                    }
+                    currCallNum = targetCallNum;
+                }
+                /*if(e.key == "ngkm_call"){
+                    // getClientInfo();
+                    //存在校验
+                    if (Kmutil.getFocusFalg()){
+                        getData();
+                    }
+                }*/
+            });
+        }else{//IE8
+            var currCallNum = localStorage.getItem("ngkm_call") || "0_0";
+            $(document).on("storage",function () {
+                var targetCallNum = localStorage.getItem("ngkm_call") || "0_0";
+                if(currCallNum != targetCallNum){
+                    //存在校验
+                    if (Kmutil.getFocusFalg()){
+                        getData();
+                    }
+                    currCallNum = targetCallNum;
+                }
+            });
+        }
+    };
+
+    //渲染一键优化下拉框中的搜索框
+    var oneKeySearch = function () {
+        var searchDiv = $('<div id="searchDiv"></div>');
+        var inputBox = $('<input type="text" id="inputBox" placeholder="搜索关键字" value=""></input>');
+        var oneKeyClearBtn = $('<a href="javascript:void(0);"  title="清除"><i class="icon km-cuowu" id="oneKeyClearBtn"></i></a>');
+        var oneKeySearchBtn = $('<a href="javascript:void(0);"  title="搜索"><i class="icon km-sousuo" id="oneKeySearchBtn"></i></a>');
+
+        searchDiv.append(inputBox);
+        searchDiv.append(oneKeyClearBtn);
+        searchDiv.append(oneKeySearchBtn);
+        searchDiv.insertBefore(".article-onekey ul");
+        $("#searchDiv").css({"border":"2px solid rgb(132,131,132)","width":"240px","height":"30px","border-radius":"3px","line-height":"25px","margin-left":"120px"});;
+        $("#inputBox").css({"border":"none","width":"200px","height":"19px","padding-left":"50px"});
+        $(".km-cuowu,.km-sousuo").css({"color":"rgb(132,131,132)","font-size":"15px"});
+        $("#searchDiv").hide();
+        $("#oneKeyClearBtn").hide();
+    }
+
+    /**
+     * 页面初始化加载 判断知识状态和前后台
+     *
+     * @param knwlgId
+     */
+    var initialize = function(knwlgId, isPublish, isBackStage, verNo,knwlgName,tmpltNm){
+        paramTplNm = tmpltNm;
+        isLoading = true;
+        knwledgeId = knwlgId;
+        knwlgNm= knwlgName;
+        _isBackStage = isBackStage;
+        _isPublish = isPublish;
+        _verNo = verNo;
+        _knwlgId = knwlgId;
+        //open方式  直接返回
+        if(!isBackStage && Kmutil.getOpenMode() == "1"){
+           oneKeySearch();
+           Kmutil.getSerialNo("2",callBackFun);
+           return;
+        }
+        //非后台
+        if(!_isBackStage){
+            //初始化来电号码变更监听 TODO
+            initListener();
+            getData();
+        }else{
+            getRelateProduct();
+        }
+        oneKeySearch();
+    };
+
+    return {
+        initialize:initialize,
+        getData:getData
+    }
+});

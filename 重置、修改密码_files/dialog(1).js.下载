@@ -1,0 +1,43 @@
+define([
+        "jquery",
+        "text!modules/knowledge/dialog/dialog.tpl"
+    ],
+    function ($, dialogTpl) {
+
+        var $body = $(document.body);
+        var $dialog = null;
+        var t = null;
+
+        var destory = function () {
+            if (t) {
+                clearTimeout(t);
+                t = null;
+            }
+            if ($dialog) {
+                $dialog.remove();
+                $dialog = null;
+            }
+        };
+
+        var alert = function (options) {
+            destory();
+            $dialog = $(dialogTpl);
+            $dialog.addClass("knowledge-" + options.type);
+            $dialog.find(".text").text(options.message);
+            $body.append($dialog);
+            t = setTimeout(function () {
+                destory();
+            }, 2000);
+        };
+
+        var confirm = function (options) {
+
+        };
+
+        return {
+            alert: alert,
+            confirm: confirm,
+            destory: destory
+        }
+    }
+);

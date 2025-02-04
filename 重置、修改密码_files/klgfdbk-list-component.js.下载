@@ -1,0 +1,437 @@
+define(['Util','js/constants/constants','js/personalCenter/MyAlert','dialog'],
+    function(Util,Constants,MyAlert,Dialog){
+
+    var trim = function(str){
+        if(str){
+            return str.replace(/(^\s*)|(\s*$)/g, "");
+        }
+    };
+
+
+
+    // 根据taskId获取反馈回复的不满意原因拼接内容
+    var getDissatisfaction = function(fdbkId) {
+        return Util.ajax.getJsonAsync(Constants.AJAXURL+'/klgfdbk/getDissatisfactionByFdbkId?time='+new Date().getTime(),{'fdbkId':fdbkId}).then(function(data) {
+            return data;
+        }).then(function (data) {
+            return data;
+        }).fail(function () {
+            new Dialog({
+                mode: 'tips',
+                tipsType: 'error',
+                content: data.returnMessage
+            })
+        })
+    }
+
+    //根据反馈Id获取反馈回复信息
+    var getFdbkReply = function(fdbkId){
+        return Util.ajax.getJsonAsync(Constants.AJAXURL+'/klgfdbk/getFBReplyByFbId?time='+new Date().getTime(),{'fdbkId':fdbkId}).then( function (data) {
+            return data;
+        }).then(function (data) {
+            return data;
+        }).fail(function (data) {
+            new Dialog({
+                mode: 'tips',
+                tipsType:'error',
+                content: data.returnMessage
+            });
+        });
+    };
+
+    //根据反馈Id获取反馈回复信息
+    var getFdbkAppend = function(fdbkId){
+        return Util.ajax.getJsonAsync(Constants.AJAXURL+'/klgfdbk/getFBAppendByFbId?time='+new Date().getTime(),{'fdbkId':fdbkId}).then( function (data) {
+            return data;
+        }).then(function (data) {
+            return data;
+        }).fail(function (data) {
+            new Dialog({
+                mode: 'tips',
+                tipsType:'error',
+                content: data.returnMessage
+            });
+        });
+    };
+
+    //获取反馈配置
+    var getClsmtrEmvryFlag = function(){
+        var clsmtrEmvryFlag = false;
+        return Util.ajax.getJsonAsync(Constants.AJAXURL+'/klgfdbk/getClsmtrEmvryFlag?time='+new Date().getTime()).then( function (data) {
+            if(data.returnCode == "0"){
+                if(data.bean == true){
+                    clsmtrEmvryFlag = true;
+                }else{
+                    clsmtrEmvryFlag  = false;
+                }
+            }
+            return clsmtrEmvryFlag;
+        }).then(function (data) {
+            return data;
+        }).fail(function (data) {
+            new Dialog({
+                mode: 'tips',
+                tipsType:'error',
+                content: data.returnMessage
+            });
+        });
+    };
+
+    /**
+     * 更新反馈未读状态
+     * @returns {boolean}
+     */
+    var updateMyFdbkReadFlag = function(readFlag,fdbkId,operateType,taskFlag){
+        if(readFlag == "0" && (operateType == "0" || operateType == "1")){
+            Util.ajax.ajax({
+                url:Constants.AJAXURL+'/klgfdbk/updateMyFdbkReadFlag?time='+new Date().getTime(),
+                async: true,
+                success:function(data){
+                    if(data.returnCode == "0"){
+                        $("input[type=checkbox][value='"+fdbkId+"']").attr("readFlag","1");
+                        $("input[type=checkbox][value='"+fdbkId+"']").parent().find("span").remove();
+                    }
+                },
+                error:function(){
+                    return;
+                },
+                data:{fdbkId:fdbkId,operateType:operateType,taskFlag:taskFlag},
+                dataType:'json', //返回值的数据类型
+                timeout:30000,  //超时时间
+                type:'get'  //请求类型
+            });
+        }
+    };
+
+    var getPrevDspsStsCd = function(beans){
+        for(var i = beans.length - 1; i >= 0; i --){
+            if(beans[i].dspsStsCd != '9' && beans[i].dspsStsCd != '7'){
+                return beans[i].dspsStsCd;
+            }
+        }
+
+    };
+
+    var fdbkDspsStatusIfShow = function(dspsStsCd,fdbkId){
+    getFdbkReply(fdbkId).then(function (replyInfo){
+        var clsmtrEmvryFlag = false;
+        var fdbkDspsStsCd = replyInfo.beans.length == 0 ?"":replyInfo.beans[0].dspsStsCd;
+        //已失效
+        var isInvalid = false;
+        if(dspsStsCd == '9' || dspsStsCd == '7'){
+            isInvalid = true;
+            dspsStsCd = getPrevDspsStsCd(replyInfo.beans);
+        }
+
+        if(fdbkDspsStsCd == "1" || dspsStsCd == "1"){
+            clsmtrEmvryFlag = true;
+        }
+
+        //显示所有节点
+        $("#myFdbkDspsStatusApproved .r-steps-label").children().show();
+        $("#monitorDspsStatusUnApproved .r-steps-label").children().show();
+        var approved01 = $("#approved01");
+        var youjiantou01 = $("#youjiantou01");
+        var approved02 = $("#approved02");
+        var approved03 = $("#approved03");
+        var approved04 = $("#approved04");
+        var approved07 = $("#approved07");
+        var approved08 = $("#approved08");
+
+            if(dspsStsCd == "1"){
+                approved01.hide();
+                approved01.parent().addClass('ongoing');
+                if(clsmtrEmvryFlag){
+                    approved01.parent().show();
+                    youjiantou01.show();
+                }else{
+                    approved01.parent().hide();
+                    youjiantou01.hide();
+                }
+                approved02.hide();
+                approved03.hide();
+                approved04.hide();
+                approved04.parent().show();
+                approved07.parent().hide();
+                approved08.parent().hide();
+                //移除其他的ongoing
+                approved02.parent().removeClass();
+                approved03.parent().removeClass();
+                approved04.parent().removeClass();
+                approved07.parent().removeClass();
+                approved08.parent().removeClass();
+                if(clsmtrEmvryFlag){
+                    approved01.parent().html('<i class="icon km-zhengque" id="approved01" ></i>待班长审核');
+                }
+            }
+            if(dspsStsCd == "2" || dspsStsCd == "20" || dspsStsCd == "21"){
+                approved01.show();
+                approved01.addClass('has-gone');
+                if(clsmtrEmvryFlag){
+                    approved01.parent().show();
+                    youjiantou01.show();
+                }else{
+                    approved01.parent().hide();
+                    youjiantou01.hide();
+                }
+                approved02.hide();
+                approved02.parent().addClass('ongoing');
+                approved03.hide();
+                approved04.hide();
+                approved04.parent().show();
+                approved07.parent().hide();
+                approved08.parent().hide();
+                //移除其他的ongoing
+                approved01.parent().removeClass();
+                approved03.parent().removeClass();
+                approved04.parent().removeClass();
+                approved07.parent().removeClass();
+                approved08.parent().removeClass();
+                if(clsmtrEmvryFlag){
+                    approved01.parent().html('<i class="icon km-zhengque has-gone" id="approved01" style="display: inline;"></i>审核通过');
+                }
+            }
+            if(dspsStsCd == "3" || dspsStsCd == "22" || dspsStsCd == "23" || dspsStsCd == "24"){
+                approved01.show();
+                approved01.addClass('has-gone');
+                if(clsmtrEmvryFlag){
+                    approved01.parent().show();
+                    youjiantou01.show();
+                }else{
+                    approved01.parent().hide();
+                    youjiantou01.hide();
+                }
+                approved02.show();
+                approved02.addClass('has-gone');
+                approved03.hide();
+                approved03.parent().addClass('ongoing');
+                approved04.hide();
+                approved04.parent().show();
+                approved07.parent().hide();
+                approved08.parent().hide();
+                //移除其他的ongoing
+                approved01.parent().removeClass();
+                approved02.parent().removeClass();
+                approved04.parent().removeClass();
+                approved07.parent().removeClass();
+                approved08.parent().removeClass();
+                if(clsmtrEmvryFlag){
+                    approved01.parent().html('<i class="icon km-zhengque has-gone" id="approved01" style="display: inline;"></i>审核通过');
+                }
+            }
+            if(dspsStsCd == "4" || dspsStsCd == "26"){//未采纳
+                approved01.show();
+                approved01.addClass('has-gone');
+                if(clsmtrEmvryFlag){
+                    approved01.parent().show();
+                    youjiantou01.show();
+                }else{
+                    approved01.parent().hide();
+                    youjiantou01.hide();
+                }
+                approved02.show();
+                approved02.addClass('has-gone');
+                approved03.show();
+                approved03.addClass('has-gone');
+                approved04.parent().hide();//是否采纳
+                approved07.parent().show();//未采纳
+                approved07.show();
+                approved07.parent().addClass('ongoing');
+                approved08.parent().hide();//已采纳
+                //移除其他的ongoing
+                approved01.parent().removeClass();
+                approved02.parent().removeClass();
+                approved03.parent().removeClass();
+                approved04.parent().removeClass();
+                approved07.parent().removeClass();
+                approved08.parent().removeClass();
+                if(clsmtrEmvryFlag){
+                    approved01.parent().html('<i class="icon km-zhengque has-gone" id="approved01" style="display: inline;"></i>审核通过');
+                }
+            }
+            if(dspsStsCd == "5" || dspsStsCd == "25"){//已采纳
+                approved01.show();
+                approved01.addClass('has-gone');
+                if(clsmtrEmvryFlag){
+                    approved01.parent().show();
+                    youjiantou01.show();
+                }else{
+                    approved01.parent().hide();
+                    youjiantou01.hide();
+                }
+                approved02.show();
+                approved02.addClass('has-gone');
+                approved03.show();
+                approved03.addClass('has-gone');
+                approved04.parent().hide();
+                approved07.parent().hide();
+                approved08.parent().show();
+                approved08.show();
+                approved08.parent().addClass('ongoing');
+                //移除其他的ongoing
+                approved01.parent().removeClass();
+                approved02.parent().removeClass();
+                approved03.parent().removeClass();
+                approved04.parent().removeClass();
+                approved07.parent().removeClass();
+                approved08.parent().removeClass();
+                if(clsmtrEmvryFlag){
+                    approved01.parent().html('<i class="icon km-zhengque has-gone" id="approved01" style="display: inline;"></i>审核通过');
+                }
+            }
+            if(dspsStsCd == "6"){//驳回
+                $("#monitorDspsStatusUnApproved").show();
+                $("#monitorDspsStatusApproved").hide();
+                $("#myFdbkDspsStatusApproved").hide();
+            }
+            //已失效 添加失效节点 删除后续nogoing节点
+            if(isInvalid){
+                if(dspsStsCd == "6"){
+                    var contentDom = $("#monitorDspsStatusUnApproved");
+                    //最后一个已执行节点及其后  全部 隐藏
+                    contentDom.find(".stoped").hide();
+                    contentDom.find(".has-invalid").show();
+                }else{
+                    var contentDom = $("#myFdbkDspsStatusApproved");
+                    var $last = contentDom.find(".ongoing");
+                    if($last.length != 1){
+                        $last = contentDom.find(".ongoing:first");
+                        //修改当前节点状态
+                        $last.removeClass("ongoing");
+                        $last.css({"display": "inline-block"});
+                        $last.find("i").addClass("has-gone");
+                        $last.find("i").css("display", "inline");
+
+                        $last.nextAll().hide();
+                        $last.next().show();
+                        contentDom.find(".has-invalid").show();
+                    }else{
+                        contentDom.find(".stoped").hide();
+                        contentDom.find(".has-invalid").show();
+                    }
+                }
+            }else{
+                $(".has-invalid").hide();
+            }
+    });
+
+    }
+
+    var getcovData = function(codeTypeCd){
+        var result = {};
+        return Util.ajax.getJsonAsync(Constants.AJAXURL+'/kmConfig/getDataByCode?codeTypeCd='+codeTypeCd+'&time='+new Date().getTime()).then( function (data) {
+            for(var i=0;i<data.beans.length;i++){
+                if(data.beans[i].value != null && data.beans[i].name != null){
+                    result[data.beans[i].value] = data.beans[i].name;
+                }
+            }
+            return result;
+        }).then(function (data) {
+            return data;
+        }).fail(function (data) {
+            new Dialog({
+                mode: 'tips',
+                tipsType:'error',
+                content: data.returnMessage
+            });
+        });
+    };
+
+    /**
+     * 通过知识id获取发布表知识
+     * @returns {boolean}
+     */
+    var getDocEditPusByKnwlgId = function(klgId){
+        var docEditPus = {};
+        return Util.ajax.getJsonAsync(Constants.AJAXURL+'/klgfdbk/getDocEditPusByKnwlgId?time='+new Date().getTime(),{knwlgId:klgId}).then( function (data) {
+            if(data.returnCode == "0"){
+                if(data.bean){
+                    docEditPus = data.bean;
+                }
+            }
+            return docEditPus;
+        }).then(function (data) {
+            return data;
+        }).fail(function (data) {
+            new Dialog({
+                mode: 'tips',
+                tipsType:'error',
+                content: data.returnMessage
+            });
+        });
+    };
+
+    //发送短信
+    var fdbkSendMsg = function(fdbkId,dspsStsCd,isAppend,appendInfo){
+        var param = {
+            fdbkId:fdbkId,
+            dspsStsCd:dspsStsCd,
+            isAppend:isAppend,
+            appendInfo:appendInfo
+        };
+        return Util.ajax.postJsonAsync(Constants.AJAXURL+'/klgfdbk/fdbkSendMsg?time='+new Date().getTime(),param).then( function (data) {
+            if(data.returnCode == "0"){
+
+            }
+        }).fail(function (data) {
+
+        });
+    };
+
+    //附件预览
+    var fjPreview = function (fjPreviewDom) {
+        //var fjPreviewDom = $('.fj-preview a');
+        fjPreviewDom.unbind();
+        fjPreviewDom.click(function () {
+            var href = $(this).attr("id");
+            if(href) {
+                var hrefArr = href.split("?")
+                if(hrefArr && hrefArr.length == 2) {
+                    var params = hrefArr[1];
+                    Util.ajax.getJsonAsync(Constants.AJAXURL + "/file/getFileSize?"+params,{}).then(function (data) {
+                        if(data.returnCode == "0"){
+                           var  hrefNew = "../knowledgeManage/"+href;
+                            window.open(hrefNew);
+                        }else if(data.returnCode == "BIG_FILE"){
+                            new myAlert({type: 'error', text: "您预览的文件过大，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                        } else if(data.returnCode == "MORE_SHEET_FILE"){
+                            new myAlert({type: 'error', text: "您预览的文件sheet页过多，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                        } else {
+                            new MyAlert({'type': 'error', 'text': data.returnMessage});
+                        }
+                    }).then(function (data) {
+                        return data;
+                    }).fail(function (data) {
+                        if(data && data.returnCode == 'BIG_FILE') {
+                            new myAlert({type: 'error', text: "您预览的文件过大，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                        } else if(data.returnCode == "MORE_SHEET_FILE"){
+                            new myAlert({type: 'error', text: "您预览的文件sheet页过多，请手动下载查看！", falseShow: false, trueName: "知道了"});
+                        } else {
+                            new Dialog({
+                                mode: 'tips',
+                                tipsType:'error',
+                                content: data.returnMessage
+                            });
+                        }
+                    });
+                }
+            }
+
+        });
+    };
+
+    return {
+        trim:trim,
+        getFdbkReply:getFdbkReply,
+        getFdbkAppend:getFdbkAppend,
+        getClsmtrEmvryFlag: getClsmtrEmvryFlag,
+        updateMyFdbkReadFlag: updateMyFdbkReadFlag,
+        fdbkDspsStatusIfShow:fdbkDspsStatusIfShow,
+        getcovData:getcovData,
+        getDocEditPusByKnwlgId:getDocEditPusByKnwlgId,
+        fdbkSendMsg:fdbkSendMsg,
+        fjPreview:fjPreview,
+        getDissatisfaction:getDissatisfaction
+    }
+
+});

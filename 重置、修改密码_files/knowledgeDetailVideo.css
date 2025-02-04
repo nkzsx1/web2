@@ -1,0 +1,37 @@
+.video-player-box {
+    width: 100%;
+    max-width: 300px;
+    height: 150px;
+    background-color: #000000;
+    position: relative;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.play-button-box {
+    width: 80px;
+    height: 80px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -40px;
+    margin-left: -40px;
+}
+
+.play-button-box:before {
+    content: "";
+    width: 0;
+    height: 0;
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+    border-left: 30px solid #000000;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -19px;
+    margin-left: -12px;
+}

@@ -1,0 +1,107 @@
+var start = new Date();
+var closeFlag=false;
+var knowledgeTitle = null;
+define([
+    'Util',
+    'dialog',
+    'js/constants/constants',
+    'js/knowledge/messageSendNew',
+    "js/knowledge/conMethod",
+    "js/knowledge/header/header",
+    "js/knowledge/content/content",
+    "js/knowledge/search/knowledgeSearch",
+    "js/knowledge/jumpTo/navigateBars",
+    "js/knowledge/offside/offside"
+], function (Util, Dialog, Constants, msgSd, conMethod, header, content, knowledgeSearch, navigateBars , offside) {
+
+    //点击短信图标
+    var dialog = null;
+    var $body = $("body");
+
+    content.fireEvent.msgCount = function (obj, e) {
+        header.msgCount && header.msgCount(obj, e);
+    };
+
+    var destoryDialog = function () {
+        if (dialog) {
+            dialog.remove();
+            dialog = null;
+        }
+    };
+
+    $body.on("mouseenter", "[tip]", function () {
+        destoryDialog();
+        var text = null;
+        if($(this).find("i.km-hmleft").length > 0){
+            text = "左移";
+        }else if($(this).find("i.km-hmright").length > 0){
+            text = "右移";
+        }else if($(this).hasClass("fj-preview")){
+            return;
+        }else if($(this).attr("id")=="knwlgNm-copy"){
+            text = "复制";
+        }else{
+            text = $(this).text();
+        }
+
+        var config = {
+            delayRmove: 0,  //延迟删除秒数设定 normal弹窗和confirm弹窗默认无，tips弹窗默认3秒。
+            content: text, //弹窗内容 tips弹窗和confirm弹窗中只能是string类型。
+            height:"auto",
+            width:"auto",
+            maxWidth:500
+        };
+        dialog = new Dialog(config);
+        dialog.show(this);
+    });
+
+    $body.on("mouseleave ", "[tip]", function () {
+        destoryDialog();
+    });
+    //关键词高亮
+    content.keyWordHighLight();
+
+    // $(function () {
+    //     setTimeout(function () {
+    //         console.log('你好开始');
+    //         navigateBars.getKlgAtoms();
+    //     }, 2000);
+    // })
+    // window.onload = function () {
+    //     navigateBars.getKlgAtoms();
+    // }
+
+    function freeMemory() {
+        $body = null;
+        destoryDialog = null;
+        header.freeMemory();
+        content.freeMemory();
+        offside.freeMemory();
+        msgSd.freeMemory();
+        navigateBars.freeMemory();
+        conMethod.freeMemory();
+        // knowledgeSearch.freeMemory();
+    }
+
+    var isIE = function(){
+        if (!!window.ActiveXObject || "ActiveXObject" in window){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    window.onbeforeunload = function () {
+        localStorage.setItem('tipsFlag','false');
+        if(isIE() && document.documentMode == 11) {
+            if(!closeFlag){
+                freeMemory();
+            }
+            closeFlag = false;
+        }
+    }
+
+    return {
+        freeMemory:freeMemory
+    }
+});

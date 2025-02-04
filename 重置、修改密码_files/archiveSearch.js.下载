@@ -1,0 +1,48 @@
+define([],function () {
+    //分块搜索
+    var blockSearch = function (searchKeys, htmlTarget) {
+        htmlTarget = htmlTarget.replace(/>/gi, ">>");
+        var patt = new RegExp(">[^<>]*" + searchKeys + "[^<>]*(<[^<>]*>)", "gi");
+        var result;
+        while (result = patt.exec(htmlTarget)) {
+            var splits = result[0].split("<");
+            var ignore;
+            if(splits.length < 1){
+                //搜索结果未达预期
+                continue;
+            }
+            result[0] = splits[0];
+            ignore = splits[1];
+
+            //style标签中的内容是不需要替换的，跳过
+            if (("<" + ignore) == "</style>"){
+                continue;
+            }
+
+            var addTimes = 0;
+            var left = htmlTarget.substring(0, result.index);
+            var target = htmlTarget.substring(result.index, result.index + result[0].length);
+            var right = htmlTarget.substring(result.index + result[0].length);
+            //处理单个子句中的多个关键字高亮
+            var pattInner = new RegExp(searchKeys, "i");
+            while (pattInner.test(target)) {
+                var resultInner = pattInner.exec(target);
+                if (resultInner.index != 0) {
+                    left = left + target.substring(0, resultInner.index);
+                    target = target.substring(resultInner.index);
+                }
+                var targetLength = resultInner[0].length;
+                target = target.replace(eval("/" + searchKeys + "/i"), "<span class='ar-high' style='color:#cc0000'>" + target.substring(0, targetLength) + "</span>");
+                left = left + target.substring(0, 44 + targetLength + 7);
+                target = target.substring(44 + targetLength + 7);
+                addTimes++;
+            }
+            htmlTarget = left + target + right;
+            //指针向后移动addTimes个"<spanclass='sr-high'>"
+            patt.lastIndex = patt.lastIndex + (44 + 7) * addTimes;
+        }
+        return htmlTarget.replace(/>>/gi, ">");
+    };
+
+    return blockSearch;
+})

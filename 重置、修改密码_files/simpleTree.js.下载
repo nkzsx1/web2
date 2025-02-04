@@ -1,0 +1,423 @@
+
+define('lib/requirejs/css.min!lib/zTree_v3/css/zTreeStyle/zTreeStyle',[],function(){});
+
+/**
+ * Created by lizhao on 2016/1/21.
+ * update by wangyakun on 2017/5/11
+ */
+define('simpleTree',[
+    'jquery',
+    'zTree',
+    'lib/requirejs/css.min!lib/zTree_v3/css/zTreeStyle/zTreeStyle.css'
+], function ($,zTree) {
+    var settings={};
+    var tools={
+        isArray:function(arr) {
+            return Object.prototype.toString.apply(arr) === "[object Array]";
+        },
+        isObject:function(arr) {
+            return Object.prototype.toString.apply(arr) === "[object Object]";
+        }
+    };
+    zTree=(zTree?zTree: $.fn.zTree);
+    
+    // 处理async 设置
+    var asyncTree=function(setting,url,option){
+        if(typeof url =='string'){
+            setting.async={
+                enable: true,
+                url:url,
+                type:'post',
+                autoParam:["id=id","level=level"],
+                dataFilter: function(treeId, parentNode, childNodes){
+                    return childNodes.beans;
+                }
+            };
+            if(option.async){
+                option.async.autoParam&&(setting.async.autoParam=option.async.autoParam);
+                option.async.otherParam&&(setting.async.otherParam=option.async.otherParam);
+                option.async.type&&(setting.async.type=option.async.type);
+                option.async.dataType&&(setting.async.dataType=option.async.dataType);
+            }
+        }
+
+        return setting;
+    };
+    
+    var objClass = function(obj, setting, zTreeNodes){
+        if(obj){
+            if(obj instanceof jQuery){
+                //存在的jQuery对象的length=1
+                if (obj.length>0) {
+                    this.$obj = obj;
+                }else {
+                // 不存在的jQuery对象的length=0
+                    alert(obj.selector +'  容器不存在，请重新设置');
+                    return ;
+                }
+            }else if(isDOM(obj)){
+                this.$obj = $(obj);
+            }else if (typeof(obj) == 'string' && $(obj).length>0) {
+                this.$obj = $(obj);
+            }
+        }else{
+            this.$obj = $("<div></div>");            
+        }
+        this.setting=setting;
+        this.init(obj);
+        settings=this.setting;
+        tools.isArray(zTreeNodes)&&(this.zTreeNodes=zTreeNodes);
+        this.tree=zTree.init(this.$obj,this.setting,this.zTreeNodes&&zTreeNodes);
+        return this.tree;
+    };
+    
+    $.extend(objClass.prototype,{
+            constructor:objClass,
+            init:function(obj){
+                if(this.$obj.length){
+                    this.$obj.addClass("ztree");
+                }
+            },
+            getZTreeObj: function(treeId){
+                zTree.getZTreeObj(treeId)
+            },
+            destroy:function(treeId){
+                zTree.destroy(treeId)
+            },
+            _z:zTree._z,
+            
+        }
+    );
+    
+    // 重写zTree的_z.tools.clone()方法
+    objClass.prototype._z.tools.clone = function (obj) {       
+        if (obj === null) return null;
+        var o = tools.isArray(obj) ? [] : {};
+
+        var is_data = (tools.isArray(obj) && obj.length);
+        var is_filter = (settings.callback && settings.callback.beforeInit);
+        for (var i in obj) {
+            if (obj[i] instanceof Date) {
+                o[i] = new Date(obj[i].getTime())
+            } else {
+                if (is_data && is_filter) {
+                    var filterData = settings.callback.beforeInit(obj[i]);
+                    obj[i] = filterData ? filterData : obj[i];
+                }
+                o[i] = (typeof obj[i] === "object" ? arguments.callee(obj[i]) : obj[i]);
+            }
+        }
+        return o;
+    };
+    
+    var isDOM = function(obj){
+        return obj.tagName ?true:false
+    } 
+     //解决ie下报错问题
+    window.console = window.console || (function(){
+        var c = {};
+        c.log = c.warn = c.debug = c.info = c.error = c.time = c.dir = c.profile = c.clear = c.exception = c.trace = c.assert = function(){};
+        return c;
+    })();
+    return {
+        zTree: function (obj, setting, zTreeNodes) {
+            return new objClass(obj, setting, zTreeNodes)
+        },
+        checkTree: function (obj, zTreeNodes, option) {
+            var setting = {
+                check: {
+                    enable: true
+                }
+            };
+            if (typeof option == "function") {
+                setting.callback ={onCheck:option} ;
+            }
+            if (tools.isObject(option)) {
+                setting = $.extend(setting, option);
+                (option.check)&&( setting.check.enable =true,setting.check.chkStyle ='checkbox');
+                //兼容之前的写法
+                setting.callback||(setting.callback={});
+                option.onCheck&&(setting.callback.onCheck=option.onCheck);
+                option.beforeInit&&(setting.callback.beforeInit=option.beforeInit);
+            }
+            setting=asyncTree(setting,zTreeNodes,option);
+            return new objClass(obj, setting,zTreeNodes)
+        },
+        radioTree: function (obj, zTreeNodes, option) {
+            var setting = {
+                check: {
+                    enable: true,
+                    chkStyle:"radio"
+                }
+            };
+            if (typeof option == "function") {
+                setting.callback ={onCheck:option} ;
+            }
+            if (tools.isObject(option)) {
+                setting = $.extend(setting, option);
+                (option.check)&&( setting.check.enable =true,setting.check.chkStyle ='radio');
+
+                //兼容之前的写法
+                setting.callback||(setting.callback={});
+                option.onCheck&&(setting.callback.onCheck=option.onCheck);
+                option.beforeInit&&(setting.callback.beforeInit=option.beforeInit);
+
+            }
+            setting=asyncTree(setting,zTreeNodes,option);
+
+            return new objClass(obj, setting, zTreeNodes)
+        },
+        tierTree: function (obj, zTreeNodes, option) {
+            var treeInitData = zTreeNodes;// 保存树初始化的节点数据
+            var treeInitSetting = option;// 保存树初始化的配置
+            
+            var setting = {
+                view: {
+                    dblClickExpand: false
+                },
+                check: {
+                    enable: false
+                },
+                callback: {
+	                onClick: onClick,
+                    onRightClick: onRightClick
+	            }
+            };
+            var funArr1 = []; 
+                funArr1.push(setting.callback.onClick);
+            //右键弹窗
+            var funArr2 = [];
+                funArr2.push(setting.callback.onRightClick);
+            
+            var instance ;   //实例化的对象
+            function onClick(e,treeId, treeNode) {
+				var zTree = $.fn.zTree.getZTreeObj(obj.attr("id"));
+                zTree.expandNode(treeNode, {}, false, false);
+                if(funArr1[1]){
+                    funArr1[1](e,treeId, treeNode);
+                }
+			}
+            function onRightClick(event, treeId, treeNode) {
+                if(funArr2[1]){
+                    instance = funArr2[1](event, treeId, treeNode);
+                };
+                if(instance.clientDefine&&instance.clientDefine.addText){
+                    $('.m_add').html(instance.clientDefine.addText);
+                }else{
+                    $('.m_add').hide();
+                };
+                if(instance.clientDefine&&instance.clientDefine.removeText){
+                    $('.m_del').html(instance.clientDefine.removeText);
+                }else{
+                    $('.m_del').hide();
+                };
+                if(instance.clientDefine&&instance.clientDefine.checkText){
+                    $('.m_check').html(instance.clientDefine.checkText);
+                }else{
+                    $('.m_check').hide();
+                };
+                if(instance.clientDefine&&instance.clientDefine.uncheckText){
+                    $('.m_unCheck').html(instance.clientDefine.uncheckText);
+                }else{
+                    $('.m_unCheck').hide();
+                };
+                if(instance.clientDefine&&instance.clientDefine.resetText){
+                    $('.m_reset').html(instance.clientDefine.resetText);
+                }else{
+                    $('.m_reset').hide();
+                };
+                if(event.target.nodeName != "UL"){
+                    var boxTarget = $(event.target).parents('.ztree')[0];
+                    var left =  event.clientX - boxTarget.getBoundingClientRect().left; 
+                    var top =  event.clientY - boxTarget.getBoundingClientRect().top; 
+                    var boxscrollTop = $('.sn-simpletree-rmenu').scrollTop();
+                    var boxscrollLeft = $('.sn-simpletree-rmenu').scrollLeft();
+                    if (!treeNode && event.target.tagName.toLowerCase() != "button" && $(event.target).parents("a").length == 0) {
+                        // zTree.cancelSelectedNode(); //取消节点的选中状态,如果省略此参数，则将取消全部被选中节点的选中状态。
+                        // showRMenu("root", left, top);
+                    } else if (treeNode && !treeNode.noR) {
+                        instance.instanceObj.selectNode(treeNode,false,true); // 选中指定节点
+                        showRMenu("node", left + boxscrollLeft,  top + boxscrollTop);
+                    }
+                    
+                }
+                
+            }
+            function showRMenu(type, x, y) {
+                    $(".rmenu ul").show();
+                    if (type=="root") {
+                        $(".m_del").hide();
+                        $(".m_check").hide();
+                        $(".m_unCheck").hide();
+                        $(".m_reset").hide();
+                    } 
+                    $(".rmenu").css({"top":y+"px", "left":x+"px", "display":"block"});
+                    $("body").bind("mousedown", onBodyMouseDown);
+            }
+            function hideRMenu() {
+                if ($(".rmenu")) $(".rmenu").css({"display":"none"});
+                $("body").unbind("mousedown", onBodyMouseDown);
+            }
+            function onBodyMouseDown(event){
+                if (!($(event.target).attr('class') == "rmenu" || $(event.target).parents(".rmenu").length>0)) {
+                    $(".rmenu").css({"display":"none"});
+                }
+            }
+            
+            function addTreeNode() {
+                hideRMenu();
+                var newNode;
+                if(instance.clientDefine&&instance.clientDefine.newNodes){
+                    if(typeof instance.clientDefine.newNodes == "object"){
+                        newNode = instance.clientDefine.newNodes;
+                        addInit();
+                    }
+                    if(typeof instance.clientDefine.newNodes == "string"){
+                        $.ajax({
+                            url: instance.clientDefine.newNodes,
+                            type: 'post',
+                            dataType: "json",
+                            async: true,
+                            success:function(data){
+                                newNode = data.beans;
+                                addInit();
+                            }   
+                        });
+                    }
+                    
+                }
+                function addInit(){                   
+                    if (instance.instanceObj.getSelectedNodes()[0]) {  //获取 zTree 当前被选中的节点数据集合
+                        for(var i=0, len = newNode.length; i<len; i++){
+                            newNode[i].checked = instance.instanceObj.getSelectedNodes()[0].checked;
+                        }
+                        instance.instanceObj.addNodes(instance.instanceObj.getSelectedNodes()[0], newNode);
+                    } else {
+                        instance.instanceObj.addNodes(null, newNode);
+                    }
+                    if(instance.clientDefine&&(typeof (instance.clientDefine.addCallback) == 'function')){
+                        instance.clientDefine.addCallback();
+                    }   
+                }
+                
+            }
+            function removeTreeNode() {
+                hideRMenu();
+                var nodes = instance.instanceObj.getSelectedNodes();
+                if (nodes && nodes.length>0) {
+                    if (nodes[0].children && nodes[0].children.length > 0) {
+                        var msg = "要删除的节点是父节点，如果删除将连同子节点一起删掉。\n\n请确认！";
+                        if (confirm(msg)==true){
+                            instance.instanceObj.removeNode(nodes[0]);
+                        }
+                    } else {
+                        instance.instanceObj.removeNode(nodes[0]);
+                    }
+                }
+                if(instance.clientDefine&&(typeof (instance.clientDefine.removeCallback) == 'function')){
+                    instance.clientDefine.removeCallback();
+                }
+            }
+            function checkTreeNode(checked) {
+                var nodes = instance.instanceObj.getSelectedNodes();
+                if (nodes && nodes.length>0) {
+                    instance.instanceObj.checkNode(nodes[0], checked, true); //勾选 或 取消勾选 单个节点。[setting.check.enable = true 时有效]
+                }
+                hideRMenu();
+                if(instance.clientDefine&&(typeof (instance.clientDefine.checkCallback) == 'function')&& checked){
+                    instance.clientDefine.checkCallback();
+                }
+                if(instance.clientDefine&&(typeof (instance.clientDefine.uncheckCallback) == 'function')&& (!checked)){
+                    instance.clientDefine.uncheckCallback();
+                }
+            }
+            function resetTree() {
+                hideRMenu();
+                
+                $.fn.zTree.init(obj, treeInitSetting , treeInitData);
+                var resetTimer =setTimeout(function(){
+                    obj.append('<li class="rmenu"><ul><li class="m_add"></li><li class="m_del"></li><li class="m_check"></li><li class="m_unCheck"></li><li class="m_reset"></li></ul></li>');    
+                    $('.m_add').click(function(){
+                        addTreeNode();
+                    });
+                    $('.m_del').click(function(){
+                            removeTreeNode();
+                    });
+                    $('.m_check').click(function(){
+                            checkTreeNode(true);
+                    });
+                    $('.m_unCheck').click(function(){
+                            checkTreeNode(false);
+                    });
+                    $('.m_reset').click(function(){
+                            resetTree();
+                    });
+                    resetTimer = null;
+                },100);
+                if(instance.clientDefine&&(typeof (instance.clientDefine.resetCallback) == 'function')){
+                    instance.clientDefine.resetCallback();
+                }
+            }
+
+            if (typeof option == "function") {
+                setting.callback ={onClick:option} ;
+            }
+            if (tools.isObject(option)) {
+                if(!option.view){
+                    option.view = {};
+                }
+                if(option.view&&typeof(option.view.showLine)=='undefined'){
+                    option.view.showLine = false;
+                }
+                setting = $.extend(setting, option);
+
+                //兼容之前的写法
+                setting.callback||(setting.callback={});
+                if(option.callback&&option.callback.onClick){
+                    funArr1.push(option.callback.onClick); 
+                	setting.callback.onClick= funArr1[0];
+                }else{
+                	setting.callback.onClick=onClick;
+                }
+                //右键弹窗功能
+                if(option.callback&&option.callback.onRightClick){
+                    funArr2.push(option.callback.onRightClick);
+                    setting.callback.onRightClick = funArr2[0];
+                    obj.addClass('sn-simpletree-rmenu');
+                        var timer =setTimeout(function(){
+                            obj.append('<li class="rmenu"><ul><li class="m_add"></li><li class="m_del"></li><li class="m_check"></li><li class="m_unCheck"></li><li class="m_reset"></li></ul></li>');    
+                            $('.m_add').click(function(){
+                                addTreeNode();
+                            });
+                            $('.m_del').click(function(){
+                                    removeTreeNode();
+                            });
+                            $('.m_check').click(function(){
+                                    checkTreeNode(true);
+                            });
+                            $('.m_unCheck').click(function(){
+                                    checkTreeNode(false);
+                            });
+                            $('.m_reset').click(function(){
+                                    resetTree();
+                            });
+                            timer = null;
+                        },100);
+                        
+                }else{
+                    setting.callback.onRightClick = null;
+                }
+
+                option.beforeInit&&(setting.callback.beforeInit=option.beforeInit);
+            }
+            setting=asyncTree(setting,zTreeNodes,option);
+            
+            return new objClass(obj, setting, zTreeNodes);
+        }
+    };
+
+});
+
+
+(function(c){var d=document,a='appendChild',i='styleSheet',s=d.createElement('style');s.type='text/css';d.getElementsByTagName('head')[0][a](s);s[i]?s[i].cssText=c:s[a](d.createTextNode(c));})
+('/*-------------------------------------\r\nzTree Style\r\n\r\nversion:\t3.5.19\r\nauthor:\t\tHunter.z\r\nemail:\t\thunter.z@263.net\r\nwebsite:\thttp://code.google.com/p/jquerytree/\r\n\r\n\r\n修改记录：\r\n\r\n1、根据中移在线UI规范，对ztree样式进行了修改，去掉了竖线和很多状态 20170111\r\n2、根据中移在线UI规范，增加了竖线、文件夹展开闭合状态、背景图base64处理等 20171010\r\n\r\n-------------------------------------*/\r\n\r\n.ztree li span.button, span.tmpzTreeMove_arrow { background-image: url(\"data:image/png;base64,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\"); }\r\n\r\n.ztree * {padding:0; margin:0; font-size:12px;}\r\n.ztree {margin:0; padding:5px; color:#333;}\r\n.ztree li{padding:0; margin:0; list-style:none; line-height:22px; text-align:left; white-space:nowrap; outline:0;}\r\n.ztree li ul{ margin:0; padding:0 0 0 18px;}\r\n.ztree li ul.line{ background: url(\"data:image/gif;base64,R0lGODlhCQAFAPABAM/W2QAAACH5BAUAAAEALAAAAAAJAAUAAAIIjB+AqGvtIioAOw==\") 0 0 repeat-y;}\r\n\r\n.ztree li a {padding:0 3px 0 0; margin:0; margin-top: 2px; cursor:pointer; height:17px; color:#333; background-color: transparent;\r\n\ttext-decoration:none; vertical-align:top; display: inline-block;}\r\n.ztree li a:hover {/*text-decoration:underline;*/ color:#000;}\r\n.ztree li a.curSelectedNode {padding-top:0px; background-color:#c4e4f5; color:black; height:19px; }\r\n.ztree li a.curSelectedNode_Edit {padding-top:0px; background-color:#c4e4f5; color:black; height:16px; }\r\n.ztree li a.tmpTargetNode_inner {padding-top:0px; background-color:#c4e4f5; color:white; height:16px; }\r\n.ztree li a.tmpTargetNode_prev {}\r\n.ztree li a.tmpTargetNode_next {}\r\n.ztree li a input.rename {height:14px; width:80px; padding:0; margin:0;\r\n\tfont-size:12px; border:1px #7EC4CC solid; *border:0px}\r\n.ztree li span {line-height:16px; margin-right:2px}\r\n.ztree li span.button {line-height:0; margin:0; width:16px; height:16px; display: inline-block; vertical-align:middle;\r\n\tborder:0 none; cursor: pointer;outline:none;\r\n\tbackground-color:transparent; background-repeat:no-repeat; background-attachment: scroll;\r\n\t/*background-image:url(\"../../../src/lib/zTree_v3/css/zTreeStyle/img/zTreeStandard.png\"); *background-image:url(\"../../../src/lib/zTree_v3/css/zTreeStyle/img/zTreeStandard.gif\")*/}\r\n\r\n.ztree li span.button.chk {width:16px; height:16px; margin:0 5px 0 0; cursor: auto;}\r\n.ztree li span.button.chk.checkbox_false_full {background-position:0 0;}\r\n.ztree li span.button.chk.checkbox_false_full_focus {background-position:0 -17px;}\r\n.ztree li span.button.chk.checkbox_false_part {background-position:0 0;}\r\n.ztree li span.button.chk.checkbox_false_part_focus {background-position:0 -17px;}\r\n.ztree li span.button.chk.checkbox_false_disable {background-position:0 -34px;}\r\n.ztree li span.button.chk.checkbox_true_full {background-position:-17px 0;}\r\n.ztree li span.button.chk.checkbox_true_full_focus {background-position:-17px 0;}\r\n.ztree li span.button.chk.checkbox_true_part {background-position:-17px 0;}\r\n.ztree li span.button.chk.checkbox_true_part_focus {background-position:-17px 0;}\r\n.ztree li span.button.chk.checkbox_true_disable {background-position:-17px -17px;}\r\n\r\n.ztree li span.button.chk.radio_false_full {background-position:-34px 0;}\r\n.ztree li span.button.chk.radio_false_full_focus {background-position:-34px -17px;}\r\n.ztree li span.button.chk.radio_false_part {background-position:-34px 0;}\r\n.ztree li span.button.chk.radio_false_part_focus {background-position:-34px -17px;}\r\n.ztree li span.button.chk.radio_false_disable {background-position:-34px -34px;}\r\n.ztree li span.button.chk.radio_true_full {background-position:-51px 0;}\r\n.ztree li span.button.chk.radio_true_full_focus {background-position:-51px 0;}\r\n.ztree li span.button.chk.radio_true_part {background-position:-51px 0;}\r\n.ztree li span.button.chk.radio_true_part_focus {background-position:-51px 0;}\r\n.ztree li span.button.chk.radio_true_disable {background-position:-51px -17px;}\r\n\r\n.ztree li span.button.switch {width:18px; height:18px;}\r\n.ztree li span.button.root_open{background-position:-106px -60px;}\r\n.ztree li span.button.root_close{background-position:-88px -60px;}\r\n.ztree li span.button.roots_open{background-position:-106px 1px;}\r\n.ztree li span.button.roots_close{background-position:-90px 1px;}\r\n.ztree li span.button.center_open{background-position:-106px -18px;}\r\n.ztree li span.button.center_close{background-position:-90px -18px;}\r\n.ztree li span.button.bottom_open{background-position:-106px -42px;}\r\n.ztree li span.button.bottom_close{background-position:-90px -42px;}\r\n.ztree li span.button.noline_open{background-position:-108px -78px;}\r\n.ztree li span.button.noline_close{background-position:-92px -78px;}\r\n.ztree li span.button.root_docu{ background:none; margin-right: 3px;}\r\n.ztree li span.button.roots_docu{background-position:-68px 1px;}\r\n.ztree li span.button.center_docu{background-position:-68px -18px;}\r\n.ztree li span.button.bottom_docu{background-position:-68px -38px;}\r\n.ztree li span.button.noline_docu{ background:none; margin-right: 3px;}\r\n\r\n.ztree li span.button.ico_open{width:20px; margin-right:2px; background-position:-130px -15px; vertical-align:top; *vertical-align:middle}\r\n.ztree li span.button.ico_close{width:20px; margin-right:2px; background-position:-130px 1px; vertical-align:top; *vertical-align:middle}\r\n.ztree li span.button.ico_docu{margin-right:5px; background-position:-128px -32px; vertical-align:top; *vertical-align:middle}\r\n.ztree li span.button.edit {}\r\n.ztree li span.button.remove {}\r\n\r\n.ztree li span.button.ico_loading{margin-right:5px; background:url(\'data:image/gif;base64,R0lGODlhEAAQAKIGAMLY8YSx5HOm4Mjc88/g9Ofw+v///wAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFCgAGACwAAAAAEAAQAAADMGi6RbUwGjKIXCAA016PgRBElAVlG/RdLOO0X9nK61W39qvqiwz5Ls/rRqrggsdkAgAh+QQFCgAGACwCAAAABwAFAAADD2hqELAmiFBIYY4MAutdCQAh+QQFCgAGACwGAAAABwAFAAADD1hU1kaDOKMYCGAGEeYFCQAh+QQFCgAGACwKAAIABQAHAAADEFhUZjSkKdZqBQG0IELDQAIAIfkEBQoABgAsCgAGAAUABwAAAxBoVlRKgyjmlAIBqCDCzUoCACH5BAUKAAYALAYACgAHAAUAAAMPaGpFtYYMAgJgLogA610JACH5BAUKAAYALAIACgAHAAUAAAMPCAHWFiI4o1ghZZJB5i0JACH5BAUKAAYALAAABgAFAAcAAAMQCAFmIaEp1motpDQySMNFAgA7\') no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}\r\n\r\nul.tmpTargetzTree {background-color:#FFE6B0; opacity:0.8; filter:alpha(opacity=80)}\r\n\r\nspan.tmpzTreeMove_arrow {width:16px; height:16px; display: inline-block; padding:0; margin:2px 0 0 1px; border:0 none; position:absolute;\r\n\tbackground-color:transparent; background-repeat:no-repeat; background-attachment: scroll;\r\n\tbackground-position:-110px -80px; /*background-image:url(\"../../../src/lib/zTree_v3/css/zTreeStyle/img/zTreeStandard.png\"); *background-image:url(\"../../../src/lib/zTree_v3/css/zTreeStyle/img/zTreeStandard.gif\")*/}\r\n\r\nul.ztree.zTreeDragUL {margin:0; padding:0; position:absolute; width:auto; height:auto;overflow:hidden; background-color:#cfcfcf; border:1px #00B83F dotted; opacity:0.8; filter:alpha(opacity=80)}\r\n.zTreeMask {z-index:10000; background-color:#cfcfcf; opacity:0.0; filter:alpha(opacity=0); position:absolute}\r\n\r\n/* level style*/\r\n/*.ztree li span.button.level0 {\r\n\tdisplay:none;\r\n}\r\n.ztree li ul.level0 {\r\n\tpadding:0;\r\n\tbackground:none;\r\n}*/');

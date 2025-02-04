@@ -1,0 +1,153 @@
+define(["js/knowledgeAppNew/util"], function(Util){
+    //按钮初始化
+    var $feedBackBtn = $("#feedback-select");
+    var startObj;
+
+    var trim = function (str) {
+        if (str) {
+            return str.replace(/(^\s*)|(\s*$)/g, "");
+        }
+    };
+
+    var getSelect = function(){
+        var text = "";
+        var pNode;
+        var htmlSelect;
+        if (window.getSelection) {
+            text = window.getSelection().toString();
+            if(window.getSelection().anchorNode){
+                pNode = $(window.getSelection().anchorNode).parent();
+                htmlSelect = $("<div></div>").html(window.getSelection().getRangeAt(0).cloneContents());
+            }
+        } else if (document.selection && document.selection.type != "Control") {
+            var range = document.selection.createRange();
+            //IE打的补丁 IE浏览器bug 在隐藏的窗口中选中内容  会出现empty报错
+            var position = range.boundingHeight || range.boundingLeft || range.boundingTop || range.boundingWidth;
+            if(position && range.text){
+                text = range.text;
+            }
+            if(document.selection.createRange()){
+                pNode = $(document.selection.createRange().parentElement());
+                htmlSelect = $("<div></div>").html(document.selection.createRange().htmlText);
+            }
+        }
+        if(pNode && text && pNode.attr("id") == "knwlgNm" && trim(text) == pNode.text()){
+            return $("#knwlgNm").parent().attr("title");
+        }
+
+        if(htmlSelect && htmlSelect.find("#knwlgNm").length != 0 && trim(text) == $("#knwlgNm").text()){
+            return $("#knwlgNm").parent().attr("title");
+        }
+
+        return text;
+    };
+
+    /**
+     * 内容选择公共方法
+     *
+     * @param $obj 范围对象
+     * @param callBack 回调 函数
+     */
+    var contentSelect = function($obj, $disobj, callBack){
+        //绑定事件
+        $obj.on("mouseup", function(e){
+            if($feedBackBtn.css("display") == "block"){
+                return;
+            }
+            var text = getSelect();
+            if (Util.trim(text)) {
+                callBack(text, e, startObj);
+            }
+        });
+        //鼠标按下的事件  清除内容选择
+        $disobj.on("mousedown", function(e){
+            if(e.which == "1"){
+                $feedBackBtn.hide();
+                startObj = $(e.target);
+                clearSelect();
+            }
+        });
+    };
+
+    var clearSelect = function(){
+        $(document).unbind('mousewheel');
+        if(getSelect()){
+            if (window.getSelection) {
+                window.getSelection().removeAllRanges();
+            } else if (document.selection && document.selection.type != "Control") {
+                document.selection.empty();
+            }
+        }
+    };
+
+    /**
+     * 默认内容选择方法，用于选择之后填入反馈内容
+     *
+     */
+    var defaultSelect = function(fdbkSend){
+        var content;
+        var callBack = function(selectContent, e){
+            //校验按钮位置
+            if(startObj && startObj.parents(".left-content-wrap").length == 0 && !startObj.hasClass("left-content-wrap")){
+                return;
+            }
+            //1  显示按钮
+            $feedBackBtn.css({"left": (e.pageX - 54) + "px", "top": (e.pageY - 44) + "px"});
+            $feedBackBtn.show();
+            $(document).bind('mousewheel', function() {return false;});
+            content = selectContent;
+        };
+        //2  按钮点击事件
+        $feedBackBtn.click(function(){
+            $feedBackBtn.hide();
+            $(document).unbind('mousewheel');
+            fdbkSend.open();
+            //3  触发切换和内容填入
+            //$('#sendFeedback #feedback-tab li').eq(1).trigger("click");
+            var fdbkContent = "该知识存在问题：“" + content + "”";
+            $("#fdbkCntt").val(fdbkContent);
+            $("#fdbkCntt").css('color','');
+            content = "";
+        });
+        var $obj = $(".left-content-wrap");
+        contentSelect($obj, $(".km-detail"), callBack);
+    };
+
+    var copy = function(content, $input){
+        if(!content){
+            return;
+        }
+        if(!$input){
+            $input = $("#copyvalue");
+        }
+        $input.val(content.replace(/\n/gi, "").replace(/\r/gi, ""));
+        $input.show();
+        $input.select(); // 选中文本
+        document.execCommand ("Copy");
+        $input.val("");
+        $input.hide();
+        copySuccess();
+    };
+
+    var copyKnwlgNm = function(){
+        copy(knowledgeTitle);
+    };
+
+    var copySuccess = function(){
+        $feedBackBtn.hide();
+        $(document).unbind('mousewheel');
+        $("#copy-success").show();
+        //设置定时器
+        setTimeout(function () {
+            $("#copy-success").hide();
+        },2000);
+    };
+
+    return {
+        contentSelect: contentSelect,
+        defaultSelect: defaultSelect,
+        clearSelect: clearSelect,
+        getSelect: getSelect,
+        copyKnwlgNm: copyKnwlgNm
+    };
+});
