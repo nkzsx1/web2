@@ -1,0 +1,14 @@
+.sn-pagination {font-size: 12px;}
+.sn-pagination .sn-pagebox-right span,
+.sn-pagination .sn-pagebox-right a {display: inline-block;}
+.sn-pagination .current,
+.sn-pagination a { padding: 0 8px; line-height: 22px; height: 22px; text-decoration: none; }
+.sn-pagination .current,
+.sn-pagination a.current:hover { background: #FFF; color:#000; border: 1px solid transparent; font-weight: 700;}
+.sn-pagination a { color: #666; background: #FFF; border: 1px solid #d0d6d9;}
+.sn-pagination a:hover { text-decoration: none; color: #fff; background-color: #008DDD; border: 1px solid #008DDD;}
+.sn-pagination .prev:after{ content:"<上一页"; }
+.sn-pagination .next:before{ content:"下一页>"; }
+.noword .sn-pagination .prev:after{ content:"<"; }
+.noword .sn-pagination .next:before{ content:">"; }
+.sn-pagination .sn-pagebox-right a.hide { display: none;}

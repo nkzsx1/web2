@@ -1,0 +1,139 @@
+/*-------------------------------------
+zTree Style
+
+version:	3.5.19
+author:		Hunter.z
+email:		hunter.z@263.net
+website:	http://code.google.com/p/jquerytree/
+
+
+修改记录：
+
+根据中移在线UI规范对ztree样式进行了修改 20170111
+
+-------------------------------------*/
+
+.ztree * {padding:0; margin:0; font-size:12px;}
+.ztree {margin:0; padding:5px; color:#333;}
+.ztree li{padding:0; margin:0; list-style:none; line-height:22px; text-align:left; white-space:nowrap; outline:0;}
+.ztree li ul{ margin:0; padding:0 0 0 18px;}
+.ztree li ul.line{ /*UI规范不再显示竖向虚线*/}
+
+.ztree li a {padding:0 3px 0 0; margin:0; margin-top: 2px; cursor:pointer; height:17px; color:#333; background-color: transparent;
+	text-decoration:none; vertical-align:top; display: inline-block;}
+.ztree li a:hover {color:#008DDD;}
+.ztree li a.curSelectedNode {padding-top:0px; color:#008DDD; font-weight:bold; height:19px; }
+.ztree li.radioNoBtn a.curSelectedNode span.button.chk.radio_false_full{background-position:-17px 2px;}
+.ztree li a.curSelectedNode_Edit {padding-top:0px;color:black; height: 22px; }
+.ztree li a.tmpTargetNode_inner {padding-top:0px; background-color:#c4e4f5; color:white; height:16px; }
+.ztree li a.tmpTargetNode_prev {}
+.ztree li a.tmpTargetNode_next {}
+.ztree li a input.rename {height:22px;line-height: 21px; width:90px; padding:0; margin:0; border:1px #7EC4CC solid; *border:0px;}
+.ztree li span {line-height:16px; margin-right:2px;}
+.ztree li span.button {line-height:0; margin:0; /*width:16px; height:16px;*/ display: inline-block; vertical-align:middle;
+	border:0 none; cursor: pointer;outline:none;
+	background-color:transparent; background-repeat:no-repeat; background-attachment: scroll;
+	background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHQAAAAyCAYAAACNm/9WAAAFSElEQVR4nO2ZP2hbRxyAvxflpZGE8SvmOWBL9C2WUTRUGkzHOGQMhi6RR9PFf7IkoKHJkKFT3EHUU2x1SkZLQ+dADMqSwSHEHWTTJ4NlJAWqF5DA6CXwENfBkpD8V2kVW1Lvg+M9vbt3d+LTne5+B5KBQgEQQlx2PySAoijNeyHED8CS4zhzuVwO0zQBCAQCGIaBqqrPgVVFUTbb6qi/fFF9bqABc8ALoHLRjfcqR4Q+39zcnLMsi/HxcSYmJgDIZrMUi0VGR0eZmpp6rijKT8cqEkJcZJqvVqvi1atXolqtCiGEdsHt92xq8TFdKpVEMpkUpmkKIURZCPFbPZVN0xTJZFKUSiUhhJhudXm1fp0EloDvz/kR/QmsAn998c/vkHnbthPxeJxCoYDP52NycjIMpP9lfQPP1tYWmUxGMwzjIUAul2NsbIzh4eETyzeELq2vrz8oFApnVu7z+aZnZ2cBHp6Qfd40ekym3+8H2Orki/3PuNb6wXEcstksY2Nj3L17F1VVX6fT6Vsnlb1Sv67OzMzw8eNHTNM8Mdm2zczMDByO0KNotm2XNzY2VmzbLgPzR/KPyYzFYng8nkXkf2gTIcS8EOK9ZVkvG4ugVjRNAyCbzd6qVCqYpollWS+FEO+FEPPQvij6OZ/PL8fjcT59+tRWkdvt5smTJ4yMjCwCiRP68uPW1tYfq6urrbIWgN85W+ZJdfUMqVSq3Em5e/fufduN9orFotje3kZVVQzDQNd1MpkMHz58wHEcPB4PALquEwqFsCyLXC6H4zjcvHkTn8+nXGmp71e/378ci8Vwu93Nh263m1gsxsjIyDKnC0gHAgF8Ph+FQoF4PI5t2wn6WGYdrcPUFd68eQNAOBzGMIy01+tdiUQihEIhAGzbJhAIEIlE8Hq9K4ZhpMPhcNu7J21bnubz+UfxeByAWCyG3+9fBh6f058F27bXWuXdv3+fZ8+e9avMCyeVSjVF6LqOpmkUi0V0XQdgf38foDmCK5UK1WqVUCjE27dviUajymn70Kf5fP4R0KnMBm1SG0iZndEqFGB4eJjbt2+jquqLTCYzt7293VZ+amoKwzD2ge9SqRTRaLRtym3lsd/vj/j9/gidywRIeDyexVgshs/nA6TM/8K1a9dQVfW14zhzlcrxtaPX6wXYsyyr+exrRYoWbNte29jY4M6dO1Jmh1iWJTKZDA1BmqYxPj7O3t4ehmEAh5Eix3EACIVClEql5v3o6OipU243uMFhsGIV+PtrNDCAzAJLlmXdymQyVCoVJiYmCAQCqKr6C/CN4ziPTNMkm82iaRqhUAhd119zGNddBy489CfT+WlWCJEWQlSEEE+FEDda8m7Un1XqZWYbeSBPWwYKRVE4bVEk6VOk0AFDCh0wLkuoBjygi2Gzr4GiKM30JXmXyWUIna/VamXLslZqtVqZHpfaQFEUUqlUOZVKlXtNYisXLXS+VqsldnZ22N3d5fPnzwDhC+7DQNNNoedNo02ZBwcHDA0Ncf36dZAH3F2lW0K1I9PosQPuozKDwSAul0secHeZq+cX6YjparXK7u5uQ1bC5XJB/YD7DJk9Hd9NJpNHD7iHT3nelQPubtCtEZr2er0MDQ1xcHDAzs4OtVotQR/L7Fe6GfpbqNVqa63yAoEApmn2rcyjq9nGyIxGo20jsldCp90O/SVcLtdiMBhsjtR37971rcx+pdvbljapQN/K7OW95ll0a1HUSsLlchEMBtcsy0LX9b6T2c/IA+4Bol9nFYlEIpFIJBKJRCKRSCQSiUQikUgkEolEIpFIJBJJT/EPlwgAvxMsWJEAAAAASUVORK5CYII='); *background-image:url("./img/zTree.gif")}
+.ztree li span.button.chk {width:16px; height:16px; margin:0 5px 0 0; cursor: auto;}
+.ztree li span.button.chk.checkbox_false_full {background-position:0 -17px;}
+.ztree li span.button.chk.checkbox_false_full_focus {background-position:0 -17px;}
+.ztree li span.button.chk.checkbox_false_part {background-position:0 0;}
+.ztree li span.button.chk.checkbox_false_part_focus {background-position:0 -17px;}
+.ztree li span.button.chk.checkbox_false_disable {background-position:0 -34px;}
+.ztree li span.button.chk.checkbox_true_full {background-position:-17px 0;}
+.ztree li span.button.chk.checkbox_true_full_focus {background-position:-17px 0;}
+.ztree li span.button.chk.checkbox_true_part {background-position:-17px 0;}
+.ztree li span.button.chk.checkbox_true_part_focus {background-position:-17px 0;}
+.ztree li span.button.chk.checkbox_true_disable {background-position:-17px -17px;}
+
+.ztree li span.button.chk.radio_false_full {background-position:0 -17px;}
+.ztree li span.button.chk.radio_false_full_focus {background-position:-17px -15px;}
+.ztree li span.button.chk.radio_false_part {background-position:-34px 0;}
+.ztree li span.button.chk.radio_false_part_focus {background-position:-17px -15px;}
+.ztree li span.button.chk.radio_false_disable {background-position:-35px -34px;}
+.ztree li span.button.chk.radio_true_full {background-position:-17px 2px;}
+.ztree li span.button.chk.radio_true_full_focus {background-position:-17px -15px;}
+.ztree li span.button.chk.radio_true_part {background-position:-17px 2px;}
+.ztree li span.button.chk.radio_true_part_focus {background-position:-17px -15px;}
+.ztree li span.button.chk.radio_true_disable {background-position:-51px -17px;}
+
+.ztree li span.button.switch {width:18px; height:18px;}
+.ztree li.radioNoBtn span.button.switch {width:0; height:0;}
+.ztree li span.button.root_open{background-position:-68px 1px;}
+.ztree li span.button.root_close{background-position:-68px -16px;}
+.ztree li span.button.roots_open{background-position:-68px 1px;}
+.ztree li span.button.roots_close{background-position:-68px -16px;}
+.ztree li span.button.center_open{background-position:-68px 1px;}
+.ztree li span.button.center_close{background-position:-68px -16px;}
+.ztree li span.button.bottom_open{background-position:-68px 1px;}
+.ztree li span.button.bottom_close{background-position:-68px -16px;}
+.ztree li span.button.noline_open{background-position:-68px 1px;}
+.ztree li span.button.noline_close{background-position:-68px -16px;}
+.ztree li span.button.root_docu{ background:none; margin-right: 3px;}
+.ztree li span.button.roots_docu{background:none; margin-right: 3px;}
+.ztree li span.button.center_docu{background: none; }
+.ztree li span.button.bottom_docu{background-position:-56px -36px;}
+.ztree li span.button.noline_docu{ background:none; margin-right: 3px;}
+
+.ztree li span.button.ico_open{margin-right:3px; background-position:-99px 1px; vertical-align:middle;}
+.ztree li span.button.ico_close{ background-position:-99px 1px; vertical-align:middle;}
+.ztree li span.button.ico_docu{margin-right:3px; background-position:-99px -16px; vertical-align:middle;}
+.ztree li span.button.edit {}
+.ztree li span.button.remove {}
+
+.ztree li span.button.ico_loading{margin-right:5px; background:url('data:image/gif;base64,R0lGODlhEAAQAKIGAMLY8YSx5HOm4Mjc88/g9Ofw+v///wAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFCgAGACwAAAAAEAAQAAADMGi6RbUwGjKIXCAA016PgRBElAVlG/RdLOO0X9nK61W39qvqiwz5Ls/rRqrggsdkAgAh+QQFCgAGACwCAAAABwAFAAADD2hqELAmiFBIYY4MAutdCQAh+QQFCgAGACwGAAAABwAFAAADD1hU1kaDOKMYCGAGEeYFCQAh+QQFCgAGACwKAAIABQAHAAADEFhUZjSkKdZqBQG0IELDQAIAIfkEBQoABgAsCgAGAAUABwAAAxBoVlRKgyjmlAIBqCDCzUoCACH5BAUKAAYALAYACgAHAAUAAAMPaGpFtYYMAgJgLogA610JACH5BAUKAAYALAIACgAHAAUAAAMPCAHWFiI4o1ghZZJB5i0JACH5BAUKAAYALAAABgAFAAcAAAMQCAFmIaEp1motpDQySMNFAgA7') no-repeat scroll 0 0 transparent; vertical-align:middle;}
+
+ul.tmpTargetzTree {background-color:#FFE6B0; opacity:0.8; filter:alpha(opacity=80)}
+
+span.tmpzTreeMove_arrow {width:16px; height:16px; display: inline-block; padding:0; margin:2px 0 0 1px; border:0 none; position:absolute;
+	background-color:transparent; background-repeat:no-repeat; background-attachment: scroll;
+	background-position:-110px -80px; background-image:url('data:image/png;base64,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'); *background-image:url("./img/zTree.gif")}
+
+ul.ztree.zTreeDragUL {margin:0; padding:0; position:absolute; width:auto; height:auto;overflow:hidden; background-color:#cfcfcf; border:1px #00B83F dotted; opacity:0.8; filter:alpha(opacity=80)}
+.zTreeMask {z-index:10000; background-color:#cfcfcf; opacity:0.0; filter:alpha(opacity=0); position:absolute;}
+
+/* level style*/
+/*.ztree li span.button.level0 {
+	display:none;
+}
+.ztree li ul.level0 {
+	padding:0;
+	background:none;
+}*/
+.ztree li.hasLine{
+	border-left:1px solid #ddd;
+}
+.ztree li.hasLine a span.button{
+	font-style: normal;
+    width: 10px;
+    border-top: 1px solid #ddd;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 5px 0;
+}
+.ztree li.hasLine a span.button.chk{
+	border:none;
+}
+.ztree li.isroot {
+	border-left:none;
+}
+/*.ztree li.isroot>a>.node_name{
+	color:#008DDD;
+}*/
+.ztree li a span.button{
+	font-style: normal;
+    display: inline-block;
+    vertical-align: top;
+}
+.ztree li.hasLine.isroot a span.button.isroot{
+	width: 16px;
+	height: 16px;
+	border-top: none;
+	vertical-align: top;
+}
+.ztree li.isroot ul {
+	padding: 0 0 0 22px;
+}
+.ztree li.hasLine.isroot>ul {
+	padding: 0 0 0 10px;
+}

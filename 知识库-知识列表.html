@@ -1,0 +1,2785 @@
+<!DOCTYPE html>
+<!-- saved from url=(0082)http://ngkm.cs.cmos/ngkm/src/modules/knowledgeAppNew/kmKnowledgeSecondListNew.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <link rel="shortcut icon" href="http://ngkm.cs.cmos/ngkm/src/modules/knowledgeAppNew/favicon.ico" type="image/x-icon">
+  <link href="./知识库-知识列表_files/km-two.css" rel="stylesheet" type="text/css">
+  <link href="./知识库-知识列表_files/zTreeStyle.css" rel="stylesheet" type="text/css">
+  <title>知识库-知识列表</title>
+<script async="" src="./知识库-知识列表_files/sensorsdata.min.js.下载"></script><script type="text/javascript" async="" src="./知识库-知识列表_files/ngans.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/kmKnowledgeSecondListNew" src="./知识库-知识列表_files/kmKnowledgeSecondListNew.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="Util" src="./知识库-知识列表_files/util.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/secKmMainNav" src="./知识库-知识列表_files/secKmMainNav.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/secKmToolBar" src="./知识库-知识列表_files/secKmToolBar.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/personalCenter/KMFooter" src="./知识库-知识列表_files/KMFooter.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/constants/constants" src="./知识库-知识列表_files/constants.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/personalCenterNew/favKlgAdd" src="./知识库-知识列表_files/favKlgAdd.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/personalCenterNew/favBusiAdd" src="./知识库-知识列表_files/favBusiAdd.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/personalCenter/MyAlert" src="./知识库-知识列表_files/MyAlert.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/constants/kmUtil" src="./知识库-知识列表_files/kmUtil.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/kmCompareNew" src="./知识库-知识列表_files/kmCompareNew.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="dialog" src="./知识库-知识列表_files/dialog.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/knwlgIsFavorite" src="./知识库-知识列表_files/knwlgIsFavorite.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="crossAPI" src="./知识库-知识列表_files/crossAPI.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="pagination" src="./知识库-知识列表_files/page.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="loading" src="./知识库-知识列表_files/loading.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="form" src="./知识库-知识列表_files/form_amd.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="json2" src="./知识库-知识列表_files/json2.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="assets/common/znyd_dialog" src="./知识库-知识列表_files/znyd_dialog.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="event" src="./知识库-知识列表_files/event.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="hdb" src="./知识库-知识列表_files/handlebars.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/phoneEvent" src="./知识库-知识列表_files/phoneEvent.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/errCode" src="./知识库-知识列表_files/errCode.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/personCfg" src="./知识库-知识列表_files/personCfg.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="Log" src="./知识库-知识列表_files/log.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/btnAuthority" src="./知识库-知识列表_files/btnAuthority.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="tip" src="./知识库-知识列表_files/tip.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/secKmSearchBar" src="./知识库-知识列表_files/secKmSearchBar.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="upload" src="./知识库-知识列表_files/upload.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="knowledgeTree" src="./知识库-知识列表_files/knowledgeTree.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="checkboxes" src="./知识库-知识列表_files/checkboxes.js.下载"></script><style type="text/css">/*!
+ * ui-dialog.css
+ * Date: 2014-07-03
+ * https://github.com/aui/artDialog
+ * (c) 2009-2014 TangBin, http://www.planeArt.cn
+ *
+ * This is licensed under the GNU LGPL, version 2.1 or later.
+ * For details, see: http://www.gnu.org/licenses/lgpl-2.1.html
+ */
+.ui-dialog {
+    *zoom:1;
+    _float: left;
+    position: relative !important;
+    background-color: #FFF;
+    border: 1px solid #d5dce5;
+    border-radius: 6px;
+    outline: 0;
+    background-clip: padding-box;
+    
+    font-size: 14px;
+    line-height: 1.428571429;
+    color: #333;
+    opacity: 0;
+    -webkit-transform: scale(0);
+    transform: scale(0);
+    -webkit-transition: -webkit-transform .15s ease-in-out, opacity .15s ease-in-out;
+    transition: transform .15s ease-in-out, opacity .15s ease-in-out;
+}
+.ui-popup-show .ui-dialog {
+    opacity: 1;
+    -webkit-transform: scale(1);
+    transform: scale(1);
+}
+.ui-popup-focus .ui-dialog {
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+.ui-popup-modal .ui-dialog {
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1), 0 0 256px rgba(255, 255, 255, .3);
+}
+.ui-dialog-grid {
+    width: auto;
+    margin: 0;
+    border: 0 none;
+    border-collapse:collapse;
+    border-spacing: 0;
+    background: transparent;
+}
+.ui-dialog-header,
+.ui-dialog-body,
+.ui-dialog-footer {
+    position: relative;
+    padding: 0;
+    border: 0 none;
+    text-align: left;
+    background: transparent;
+    overflow: hidden;
+}
+.ui-dialog-header {
+    white-space: nowrap;
+    border-bottom: 1px solid #d0d6d9;
+}
+.ui-dialog-close {
+    position: absolute;
+    _position: absolute;
+    top: 0;
+    right: 0;
+    _height: 26px;
+    padding: 10px 16px 14px 6px;
+    font-size: 28px;
+    line-height: 1;
+    color: #78909c;
+    text-shadow: 0 1px 0 #FFF;
+    cursor: pointer;
+    background: transparent;
+    _background: #FFF;
+    border: 0;
+    -webkit-appearance: none;
+}
+.ui-dialog-close:hover,
+.ui-dialog-close:focus {
+    color: #000000;
+    text-decoration: none;
+    cursor: pointer;
+    outline: 0;
+}
+.ui-dialog-title {
+    -moz-box-sizing: border-box;  
+    -webkit-box-sizing: border-box; 
+    -o-box-sizing: border-box; 
+    -ms-box-sizing: border-box; 
+    box-sizing: border-box;
+    margin: 0;
+    color: #222;
+    font-size: 16px;
+    line-height: 1.428571429;
+    min-height: 16.428571429px;
+    padding: 14px 40px 14px 14px;
+    overflow:hidden; 
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: bold;
+    cursor: move;
+}
+.ui-dialog-content {
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+    *zoom: 1;
+    *display: inline;
+    text-align: left;
+    overflow: auto;
+}
+.ui-dialog-content-drag {
+    display: none;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    background:#ff0000; 
+    opacity:0;
+    filter:alpha(opacity=0); 
+}
+.ui-dialog-footer {
+    padding: 9px 10px 10px 10px;
+    text-align: center;
+    background: #ebf1f5; 
+    border-top: 1px solid #d5dce5; 
+    border-radius: 0 0 4px 4px;
+}
+.ui-dialog-statusbar {
+    float: left;
+    margin-right: 20px;
+    padding: 6px 0;
+    line-height: 1.428571429;
+    font-size: 14px;
+    color: #888;
+    white-space: nowrap;
+}
+.ui-dialog-statusbar label:hover {
+    color: #333;
+}
+.ui-dialog-statusbar input,
+.ui-dialog-statusbar .label {
+    vertical-align: middle;
+}
+.ui-dialog-button {
+    /*float: right;*/
+    white-space: nowrap;
+}
+.ui-dialog-footer button+button {
+    margin-bottom: 0;
+    margin-left: 20px;
+}
+.ui-dialog-footer button {
+    overflow:visible;
+    display: inline-block;
+    padding: 9px 51px;
+    _margin-left: 5px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.428571429;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 3px;
+}
+
+.ui-dialog-footer button:hover,
+.ui-dialog-footer button:focus {
+  color: #333333;
+  text-decoration: none;
+}
+
+.ui-dialog-footer button:active {
+  background-image: none;
+  outline: 0;
+}
+.ui-dialog-footer button[disabled] {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.65;
+  filter: alpha(opacity=65);
+}
+
+.ui-dialog-footer button {
+  color: #0085d0;
+  background-color: #ffffff;
+  border-color: #d0d6d9;
+  outline: none;
+}
+
+.ui-dialog-footer button:hover,
+.ui-dialog-footer button:focus {
+  color: #0085d0;
+  background-color: #e5f3fa;
+  border-color: #d0d6d9;
+}
+
+.ui-dialog-footer button:active {
+  color: #0085d0;
+  background-color: #eaeef1;
+  border-color: #d0d6d9;
+}
+
+.ui-dialog-footer button:active{
+  background-image: none;
+}
+
+.ui-dialog-footer button[disabled],
+.ui-dialog-footer button[disabled]:hover,
+.ui-dialog-footer button[disabled]:focus,
+.ui-dialog-footer button[disabled]:active {
+  background-color: #ffffff;
+  border-color: #cccccc;
+}
+
+.ui-dialog-footer button.ui-dialog-autofocus {
+  color: #ffffff;
+  background-color: #0085d0;
+  border-color: #0085d0;
+}
+
+.ui-dialog-footer button.ui-dialog-autofocus:hover,
+.ui-dialog-footer button.ui-dialog-autofocus:focus {
+  color: #ffffff;
+  background-color: #1a91d4;
+  border-color: #1a91d4;
+}
+
+.ui-dialog-footer button.ui-dialog-autofocus:active {
+  color: #ffffff;
+  background-color: #0085d0;
+  border-color: #0085d0;
+}
+.ui-popup-top-left .ui-dialog,
+.ui-popup-top .ui-dialog,
+.ui-popup-top-right .ui-dialog {
+    top: -8px;
+}
+.ui-popup-bottom-left .ui-dialog,
+.ui-popup-bottom .ui-dialog,
+.ui-popup-bottom-right .ui-dialog {
+    top: 8px;
+}
+.ui-popup-left-top .ui-dialog,
+.ui-popup-left .ui-dialog,
+.ui-popup-left-bottom .ui-dialog {
+    left: -8px;
+}
+.ui-popup-right-top .ui-dialog,
+.ui-popup-right .ui-dialog,
+.ui-popup-right-bottom .ui-dialog {
+    left: 8px;
+}
+
+.ui-dialog-arrow-a,
+.ui-dialog-arrow-b {
+    position: absolute;
+    display: none;
+    width: 0;
+    height: 0;
+    overflow:hidden;
+    _color:#FF3FFF;
+    _filter:chroma(color=#FF3FFF);
+    border:8px dashed transparent;
+}
+.ui-popup-follow .ui-dialog-arrow-a,
+.ui-popup-follow .ui-dialog-arrow-b{
+    display: block;
+}
+.ui-popup-follow .ui-dialog-title{
+    cursor:initial;
+}
+.ui-popup-top-left .ui-dialog-arrow-a,
+.ui-popup-top .ui-dialog-arrow-a,
+.ui-popup-top-right .ui-dialog-arrow-a {
+    bottom: -16px;
+    border-top:8px solid #d5dce5;
+}
+.ui-popup-top-left .ui-dialog-arrow-b,
+.ui-popup-top .ui-dialog-arrow-b,
+.ui-popup-top-right .ui-dialog-arrow-b {
+    bottom: -15px;
+    border-top:8px solid #fff;
+}
+.ui-popup-top-left .ui-dialog-arrow-a,
+.ui-popup-top-left .ui-dialog-arrow-b  {
+    left: 15px;
+}
+.ui-popup-top .ui-dialog-arrow-a,
+.ui-popup-top .ui-dialog-arrow-b  {
+    left: 50%;
+    margin-left: -8px;
+}
+.ui-popup-top-right .ui-dialog-arrow-a,
+.ui-popup-top-right .ui-dialog-arrow-b {
+    right: 15px;
+}
+.ui-popup-bottom-left .ui-dialog-arrow-a,
+.ui-popup-bottom .ui-dialog-arrow-a,
+.ui-popup-bottom-right .ui-dialog-arrow-a {
+    top: -16px;
+    border-bottom:8px solid #d5dce5;
+}
+.ui-popup-bottom-left .ui-dialog-arrow-b,
+.ui-popup-bottom .ui-dialog-arrow-b,
+.ui-popup-bottom-right .ui-dialog-arrow-b {
+    top: -15px;
+    border-bottom:8px solid #fff;
+}
+.ui-popup-bottom-left .ui-dialog-arrow-a,
+.ui-popup-bottom-left .ui-dialog-arrow-b {
+    left: 15px;
+}
+.ui-popup-bottom .ui-dialog-arrow-a,
+.ui-popup-bottom .ui-dialog-arrow-b {
+    margin-left: -8px;
+    left: 50%;
+}
+.ui-popup-bottom-right .ui-dialog-arrow-a,
+.ui-popup-bottom-right .ui-dialog-arrow-b {
+    right: 15px;
+}
+.ui-popup-left-top .ui-dialog-arrow-a,
+.ui-popup-left .ui-dialog-arrow-a,
+.ui-popup-left-bottom .ui-dialog-arrow-a {
+    right: -16px;
+    border-left:8px solid #d5dce5;
+}
+.ui-popup-left-top .ui-dialog-arrow-b,
+.ui-popup-left .ui-dialog-arrow-b,
+.ui-popup-left-bottom .ui-dialog-arrow-b {
+    right: -15px;
+    border-left:8px solid #fff;
+}
+.ui-popup-left-top .ui-dialog-arrow-a,
+.ui-popup-left-top .ui-dialog-arrow-b {
+    top: 15px;
+}
+.ui-popup-left .ui-dialog-arrow-a,
+.ui-popup-left .ui-dialog-arrow-b {
+    margin-top: -8px;
+    top: 50%;
+}
+.ui-popup-left-bottom .ui-dialog-arrow-a,
+.ui-popup-left-bottom .ui-dialog-arrow-b {
+    bottom: 15px;
+}
+.ui-popup-right-top .ui-dialog-arrow-a,
+.ui-popup-right .ui-dialog-arrow-a,
+.ui-popup-right-bottom .ui-dialog-arrow-a {
+    left: -16px;
+    border-right:8px solid #d5dce5;
+}
+.ui-popup-right-top .ui-dialog-arrow-b,
+.ui-popup-right .ui-dialog-arrow-b,
+.ui-popup-right-bottom .ui-dialog-arrow-b {
+    left: -15px;
+    border-right:8px solid #fff;
+}
+.ui-popup-right-top .ui-dialog-arrow-a,
+.ui-popup-right-top .ui-dialog-arrow-b {
+    top: 15px;
+}
+.ui-popup-right .ui-dialog-arrow-a,
+.ui-popup-right .ui-dialog-arrow-b {
+    margin-top: -8px;
+    top: 50%;
+}
+.ui-popup-right-bottom .ui-dialog-arrow-a,
+.ui-popup-right-bottom .ui-dialog-arrow-b {
+    bottom: 15px;
+}
+
+
+@-webkit-keyframes ui-dialog-loading {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+@keyframes ui-dialog-loading {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.ui-dialog-loading {
+    vertical-align: middle;
+    position: relative;
+    display: block;
+    *zoom: 1;
+    *display: inline;
+    overflow: hidden;
+    width: 32px;
+    height: 32px;
+    top: 50%;
+    margin: -16px auto 0 auto;
+    font-size: 0;
+    text-indent: -999em;
+    color: #666;
+}
+.ui-dialog-loading {
+    width: 100%\9;
+    text-indent: 0\9;
+    line-height: 32px\9;
+    text-align: center\9;
+    font-size: 12px\9;
+}
+
+.ui-dialog-loading::after {
+    position: absolute;
+    content: '';
+    width: 3px;
+    height: 3px;
+    margin: 14.5px 0 0 14.5px;
+    border-radius: 100%;
+    box-shadow: 0 -10px 0 1px #ccc, 10px 0px #ccc, 0 10px #ccc, -10px 0 #ccc, -7px -7px 0 0.5px #ccc, 7px -7px 0 1.5px #ccc, 7px 7px #ccc, -7px 7px #ccc;
+    -webkit-transform: rotate(360deg);
+    -webkit-animation: ui-dialog-loading 1.5s infinite linear;
+    transform: rotate(360deg);
+    animation: ui-dialog-loading 1.5s infinite linear;
+    display: none\9;
+}
+.ui-dialog-tip-error .ui-dialog-content{
+    background-color: #ffe4e2;
+    color: #F08D89;
+    border-radius:5px;
+}
+.ui-dialog-tip-error .ui-dialog{
+    border: 2px solid #ff8a85;
+}
+.ui-dialog-tip-success .ui-dialog-content{
+    background-color: #f0f6df;
+    color: #8fc11d;
+    border-radius:5px;
+}
+.ui-dialog-tip-success .ui-dialog{
+    border: 2px solid #b1d361;
+}
+.ui-dialog-tip-icon{
+    position: absolute;
+    width: 38px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background-position: center right;
+    background-repeat: no-repeat;
+}
+.ui-dialog-tip-text{
+    margin-left: 48px;
+    padding: 15px 20px 15px 0;
+    font-size: 14px;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+.ui-dialog-tip-error .ui-dialog-tip-icon{
+    background-image: url('data:img/jpg;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAa5JREFUeNqslr1LQmEUxs+9OdqWHxXoXi5WtPsPRC1p0docDUG0NFZDhFNLa2EtQYRDQzZLo61l0qCWRtQmXHtO90gk977ve9MHfni4Hp/j+3mu1c0ukkIJsAoyYApEQAe8gGdwB87Bk5+B5VOAjffBMhghtRwpsg1q/V/aHj9YABWwYmDe8+DcB/lUFtgAl2CUgisMTsGmX4EsOPIZlakscChefwrwnJ9IwqCyxIs9KSQP92SI/orGiOLjblyvEzXruuk64DXhESRBTvu/0rNEO7su6RmTkfAOTNpirp/3Vts7Vu+unC2HSK/Wm3esVoYLpIxS2y3vWK0UL/KYUerHOy6Jzm9spkgo0AbkqbGCHRMuwBM6aZRdvA56Ul5DcoeYFbgpBj10FR7vrVFqfIIof+zCsZlKtly1jjZ1bp4oFnfhWK+fa5wLVMGFNv2+TNRouHCsF3tWew0nIWsRpuHoC0xzA+rtOe5E66A7BPOueNX6+0FBmoUzoPmWeHl2tDxYAp//nJY1aTjKnnwl91PBcDSO5PKcn5m+VXi9trBBVJ43ZVOUZLc8+hl8CzAAn81phfEdoTYAAAAASUVORK5CYII=');
+}
+.ui-dialog-tip-success .ui-dialog-tip-icon{
+    background-image: url('data:img/jpg;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAdBJREFUeNpi7D8oy4AHyAFxFBA7ArEWEIsC8W8gfgLED4H4ABCvBOL7uAxgxGEByOAOIA4DYmYG/OAf1JIKIH6ELsmERYMfEF8B4kgiDIeZAVJ7FUrjtSAfiNcDMS8D6YAHiJcCcSEuC8KBuB+Hr4gFjEDcCzULxQJQmM+BKqAUMELNkkO2oB3qRWoBkFmdMAvkgTiCgfoAlALlmaCGkxXujIzMDFbypQycrMK4UlcEEzQTkWW4h/oEBjP5XAYlIWdcyhxBFuiQa7i6mD/DkXvtDFdfrsKlVAdkgQjOmGKTZJDmt8Br+Jkn0/G5RRRv2DuoNDIE6i5kkBewJcdweES8wSW593Ylw4dvDxh8deYALbEj2XAgeA0q7HYCGW64VIBSSLDuMgYRHg1wHiLBcBDYCfLBPnwqvv9+y7D2chTDmy83SDUcBPaDfKAAZNwllBdYmDgY/vz7QYrhoGJcGWToAyBeRUg1iYYzQM18AHN1ORB/oWIx8QVqJjxYQDVRKhD/p4Lh/6FmPUKvD1ZAK4t/FBpeCjULa402EYgDgfgzmcESA61w8NbJm6Dl0woiffMPqlYbiJcR26rA1mwBGSAGFX8FreT3Q1PLPVwGAAQYAPvzfadv2PlnAAAAAElFTkSuQmCC');
+}
+.ui-dialog-confirm-icon{
+    position: absolute;
+    width: 84px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background-position: center right;
+    background-repeat: no-repeat;
+    background-image: url('data:img/jpg;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABIFJREFUeNrUWs1LVFEUv449LWfG79QMkiAxaWFaULSzVatqURRl0SopEIpcVbQwoqAWgVDYIsnMiIqiPyB3UdDnxj7sgyIETS360ObN6HSOc95978w8Hcd3RqcDP+Z9zb3n9+75uve+rOhtJSFlgEbARsBqwErAUoCf7v8BfAN8ArwBPAb0Aoa8dpzlgUAJYD9gD2AdtpXi/6OAZ4AeQBdgZL4ILAO0Apodb9irjAGuAs4CBtJFYBHgKOAUIJBwNxewBGDQkz7HmOC7ngREAGHAOCDk2sdvQBvgIj0pRqAacAtQz67mAPJJ8bkIEvkJMBPuvATsBfQla8I3i262AZ4y5Q1y23IPyiv6bzm1ZbA7awFPANu9EjgIuEvvOSbFgAoyGSnJpTZL2FU00zukw4x2PZ0cAlxiTxYLKx4vedTPCPmLUtmADvq9nMoIbAW0M1svTbPy8X3lsKvtpNOsCNQCbhDrWEPlCTaaXjGoT5tENulUm4wA/vWmDpOW2SyUFDMjD5BuxkwEjgDqWK41FpCAkeDYdZSLXPNAJeCtfvsl5FSZIGOs0MBkV2NlbOcIHNfKGxmkvBWdDGZKJ+JHAP3+i05LZd4jzpoDK9VfM1ZL5BpR1Xftk7cGQ6x2xRy+AjBsjUCTVj5HJlwW5k3q4yL/pEyyy2E5vMlpQk36Vr5QAAlGbAKOY0/CddtrEUCDaWDcBKQgYCtdGBAiwHXDOUglEtisC1/BTFsYmHA9FjEl8l+cBSKBDdJvP2b3DgJ+QQJcx/U+msPaiUNI8gOmw5xM2eRmSw0SWDWr2jRFKQ3aSpcEBQlwHat9VDbZJZOScuKw67Fn4TqWI4EgcwsxJ3b4Q0AwK3Mdgz6VJnESKPALNhxlZyYS+DXNTW8E/O5khAn8QgKD+lQw2hUFHVlZkgCvSr4jgff6NJImE5IkwHXsx6CEa5Vbpk4xWCwW8jWI1x96Pso7Fw9ob320/mIXqZkuXMdnSKBXu0boPyAQYu780HLi59Kj8OiVUpsOV00Bj9Pw9lHnASsPdOvLP2X6au2oUoM/sqeAxyLCdetxTmi6NT9T3pSiUqZjsrHochIYBnTa0dV7f+cPflZlhROqoiiiLsCxZ+E6dZLOMyyr4KKSP0McFzeoRpMvq+CFNn02miFRyWTKo5xWjl2c+A0Og/JCva69S9XCrc6FyVDs7PuCZpA6nflc/rJL+3skgf38yihTHovO3fG52K2c7gfs06WdSZkiPM9vfpBFnQla+nkX/+h084EHgBZmh8Pz5BNWX3wW2kI6qdkSQMEdkWY9EjiUQxQR0iVj9OYj7M03q2l2Z5IRQLkC2MFy4Ch1IjkaIWqTb3VjuNxJOqi5EkC5j+svFAHsYR6iTr3UTuPUxlCCybyiaHMvadmewkY3Lq3iDv1J5bYEJrPRjXfOYCJXbrvHHglYshxwTMW2PyU/NcDy4Bzga0oTJw8fe5RSuMVV4gY1t489sCTGzbvrVm2T8sxP6HMbXBxrJLvFnUTrc5uAwyGtz21eU7bvZQsKc5R/AgwAiGkWNMMsevgAAAAASUVORK5CYII=');
+}
+.ui-dialog-confirm-text{
+    font-size: 12px;
+    margin-left: 104px;
+    padding: 62px 20px 50px 0;
+    color: #666666;
+}
+.ui-dialog-confirm-text-t{
+    font-size: 14px;
+    color: #000000;
+    line-height: 1;
+    margin-bottom: 10px;
+}</style><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="artDialog" src="./知识库-知识列表_files/dialog-plus.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="gwm" src="./知识库-知识列表_files/gwm.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="waterMarks" src="./知识库-知识列表_files/waterMarks.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="waterMarksNew" src="./知识库-知识列表_files/waterMarksNew.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="assets/lib/requirejs/css.min" src="./知识库-知识列表_files/css.min.js.下载"></script><style type="text/css">.sn-ui-loading,
+.sn-ui-loading .ui-loading-backdrop { display:none; position:absolute; top:0; right:0; bottom:0; left:0; }
+.sn-ui-loading .ui-loading-backdrop { background:#000; opacity:0.6;filter:Alpha(opacity=50);}
+.sn-ui-loading .ui-loading-content { position:relative; padding:15px; margin:30px auto 0; border:1px solid #ccc; border-radius:6px; background-color:#fff; }
+.sn-ui-loading .ui-loading-icon { display:inline-block; vertical-align:middle; width:24px; height:24px; margin-right:5px; background-repeat:no-repeat; background-size:cover; }
+.sn-ui-loading .ui-loading-icon-dotCycle { background-image:url(data:image/gif;base64,R0lGODlhGAAYAMQAAP/////89Pb4//L67//xx//opv/mmtzl/9Pe///deb3nr//XY//STbnK/5bYf4jUb5aw/2HFP4Sj/3uc/0e7H3OW/y2yAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJBwAXACwHAAYACgAKAAAFJuAlFgxTiOhVlqm4Mu1FmnFti01VNaJjWQ6dTvT7CSvEYm7X+zlCACH5BAkHABcALAQABQAOAAwAAAUt4CWOBcMUYzqapqqyjJuWp2zf9jFV03HvFd4tSFQ5LBYHUJhCInU8X9OJOyZDACH5BAkUABcALAAAAwAVABAAAAVV4CWO5BUkDJMEZUuiqerOcTy7dXq3cJrspZOPVUJIKhUJAjhCIJ+VJfMITTIv1ec1i2wNIhZLZHChQiUtcFh8cValpPVaZEQqXfLwVaQOR/YXX34DIQAh+QQJBwAXACwEAAUAEAAPAAAFQqAAVRUkXGiqjmSpBgnDJEHbqrE826Sq6ywSxPdjiISnVE6WUDkvMGbgSaU+LNhHFXXFZrfeMDiMHZO3Xa8WraaGAAAh+QQJFAAXACwAAAMAFQAQAAAFVeAljuQlQFUFCWVLoqnqznE8u3V6t3AK7aWTj1VSUCwWigI4UiCfliXzCE0yL9XnNYtsBRIMRiJwoUIpLXBYfHFWpaT1WmREKl3y8FWkDif2F19+ASEAIfkECQcAFwAsBAAFABAADwAABULgEFlWNFxoqo5kqQpQVUFC26qxPNukqussUsT3q4iEp1ROBlE5LzCm4EmlGhhYQxV1xWa33jA4jB2Tt12vFq2mhgAAIfkECRQAFwAsAAADABUAEAAABVXgJY7kNUSWFQ1lS6Kp6s5xPLt1erdwGu2lk49VIiwYjAUBOCIgn4wl8whNMi/V5zWLbAkglQpEcKFCFy1wWHxxVqWk9VpkRCpd8vBVpA5D9hdffgIhADs=); }
+.sn-ui-loading .ui-loading-icon-cmcc { background-image:url(data:image/gif;base64,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); }
+.sn-ui-loading .ui-loading-icon-cmccLarge { width:32px; height:32px; background-image:url(data:image/gif;base64,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); }
+.sn-ui-loading-progress { position:fixed; top:0; right:0; left:0; height:5px; border:0; background:transparent; }
+.sn-ui-loading-progress-content { position:relative; width:0%; height:100%; padding:0; margin:0; border:0; background:blue; }</style><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="hdbr" src="./知识库-知识列表_files/handlebars.runtime.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="ajax" src="./知识库-知识列表_files/ajax_amd.js.下载"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="js/knowledgeAppNew/trdSysInterface" src="./知识库-知识列表_files/trdSysInterface.js.下载"></script><style type="text/css">.tip .ui-tip-text{
+    padding: 8px;
+    font-size: 12px;
+    color: #333333;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+
+
+.tip .ui-dialog-close {
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    padding: 0;
+    font-size: 20px;
+    color: #cccccc;
+    position: absolute;
+    right: 0;
+    display: none;
+}
+
+.tip .show-close .ui-dialog-close{
+    display: block !important;
+}
+
+.show-close .ui-dialog-close{
+    display: block !important;
+}
+
+.show-close .ui-tip-text{
+    padding: 16px !important;
+}
+
+.tip-dialog{
+    border-radius: 4px;
+}
+
+.ui-container-tip{
+    position: absolute;
+}
+
+.tip-container-content{
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 4px;
+}
+
+.tip-hidden{
+    visibility: hidden;
+}
+
+.tip-dialog .ui-dialog-arrow-a, .tip-dialog .ui-dialog-arrow-b {
+    position: absolute;
+    display: none;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    _color: #FF3FFF;
+    _filter: chroma(color=#FF3FFF);
+    border: 4px dashed transparent;
+}
+
+.ui-popup-follow .tip-dialog .ui-dialog-arrow-a, .ui-popup-follow .tip-dialog .ui-dialog-arrow-b {
+    display: block;
+}
+
+.ui-popup-right-top .tip-dialog .ui-dialog-arrow-a, .ui-popup-right .tip-dialog .ui-dialog-arrow-a, .ui-popup-right-bottom .tip-dialog .ui-dialog-arrow-a {
+    left: -9px;
+    border-right: 4px solid #d5dce5;
+}
+
+.ui-popup-right-top .tip-dialog .ui-dialog-arrow-b, .ui-popup-right .tip-dialog .ui-dialog-arrow-b, .ui-popup-right-bottom .tip-dialog .ui-dialog-arrow-b {
+    left: -8px;
+    border-right: 4px solid #fff;
+}
+
+.ui-popup-left-top .tip-dialog .ui-dialog-arrow-a, .ui-popup-left .tip-dialog .ui-dialog-arrow-a, .ui-popup-left-bottom .tip-dialog .ui-dialog-arrow-a {
+    right: -9px;
+    border-left: 4px solid #d5dce5;
+}
+
+.ui-popup-left-top .tip-dialog .ui-dialog-arrow-b, .ui-popup-left .tip-dialog .ui-dialog-arrow-b, .ui-popup-left-bottom .tip-dialog .ui-dialog-arrow-b {
+    right: -7px;
+    border-left: 4px solid #fff;
+}
+
+.ui-popup-top-left .tip-dialog .ui-dialog-arrow-a, .ui-popup-top .tip-dialog .ui-dialog-arrow-a, .ui-popup-top-right .tip-dialog .ui-dialog-arrow-a {
+    bottom: -9px;
+    border-top: 4px solid #d5dce5;
+}
+
+.ui-popup-top-left .tip-dialog .ui-dialog-arrow-b, .ui-popup-top .tip-dialog .ui-dialog-arrow-b, .ui-popup-top-right .tip-dialog .ui-dialog-arrow-b {
+    bottom: -8px;
+    border-top: 4px solid #fff;
+}
+
+.ui-popup-top .tip-dialog .ui-dialog-arrow-a, .ui-popup-top .tip-dialog .ui-dialog-arrow-b {
+    left: 50%;
+    margin-left: -4px;
+}
+
+.ui-popup-right .tip-dialog .ui-dialog-arrow-a, .ui-popup-right .tip-dialog .ui-dialog-arrow-b {
+    margin-top: -4px;
+    top: 50%;
+}
+
+.ui-popup-left .tip-dialog .ui-dialog-arrow-a, .ui-popup-left .tip-dialog .ui-dialog-arrow-b {
+    margin-top: -4px;
+    top: 50%;
+}
+
+.ui-popup-bottom-left .tip-dialog .ui-dialog-arrow-a, .ui-popup-bottom .tip-dialog .ui-dialog-arrow-a, .ui-popup-bottom-right .tip-dialog .ui-dialog-arrow-a {
+    top: -9px;
+    border-bottom: 4px solid #d5dce5;
+}
+
+.ui-popup-bottom .tip-dialog .ui-dialog-arrow-a, .ui-popup-bottom .tip-dialog .ui-dialog-arrow-b {
+    margin-left: -4px;
+    left: 50%;
+}
+
+.ui-popup-bottom-left .tip-dialog .ui-dialog-arrow-b, .ui-popup-bottom .tip-dialog .ui-dialog-arrow-b, .ui-popup-bottom-right .tip-dialog .ui-dialog-arrow-b {
+    top: -8px;
+    border-bottom: 4px solid #fff;
+}</style><style type="text/css">@charset "UTF-8";
+
+.sn-checkboxes > .chk-list-checkboxes { margin: 0; padding: 0;  font-size: 12px;}
+.sn-checkboxes > .chk-list-checkboxes li { position: relative; display: inline-block; padding: 0 24px 12px 24px; list-style: none; }
+
+/* 全宽度竖向 */
+.sn-checkboxes.all-width > .chk-list-checkboxes li { display: block; }
+
+.sn-checkboxes > .chk-list-checkboxes li > div { position: absolute; top: 1px; left: 0;display: block; width: 16px; height: 20px; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAQCAYAAACBSfjBAAAAAXNSR0IArs4c6QAABBNpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iCiAgICAgICAgICAgIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIgogICAgICAgICAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iCiAgICAgICAgICAgIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj4KICAgICAgICAgPHhtcE1NOkRlcml2ZWRGcm9tIHJkZjpwYXJzZVR5cGU9IlJlc291cmNlIj4KICAgICAgICAgICAgPHN0UmVmOmluc3RhbmNlSUQ+eG1wLmlpZDo0NEQ2RDdGN0FBOTExMUU3QkE4OTlEQjUzMTIyNDI1Mzwvc3RSZWY6aW5zdGFuY2VJRD4KICAgICAgICAgICAgPHN0UmVmOmRvY3VtZW50SUQ+eG1wLmRpZDo0NEQ2RDdGOEFBOTExMUU3QkE4OTlEQjUzMTIyNDI1Mzwvc3RSZWY6ZG9jdW1lbnRJRD4KICAgICAgICAgPC94bXBNTTpEZXJpdmVkRnJvbT4KICAgICAgICAgPHhtcE1NOkRvY3VtZW50SUQ+eG1wLmRpZDo0NEQ2RDdGQUFBOTExMUU3QkE4OTlEQjUzMTIyNDI1MzwveG1wTU06RG9jdW1lbnRJRD4KICAgICAgICAgPHhtcE1NOkluc3RhbmNlSUQ+eG1wLmlpZDo0NEQ2RDdGOUFBOTExMUU3QkE4OTlEQjUzMTIyNDI1MzwveG1wTU06SW5zdGFuY2VJRD4KICAgICAgICAgPHhtcDpDcmVhdG9yVG9vbD5BZG9iZSBQaG90b3Nob3AgQ1M2IChNYWNpbnRvc2gpPC94bXA6Q3JlYXRvclRvb2w+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgogICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgoc7QsAAAACYklEQVRYCe2Yz0sbQRSA34T82oZepFRFSwjSBHOwCD2KSG960nOPltD2/+ifoZcq9uitPbWI7dUGwYRd6iGriTk0uWR3E0lw+94zW3YjViebDSt0IMwOmW/fzJf3ssuI4xN19UrAFgBM40emXURs2FzYv0TmaigeILJ5HXB4vvluFmzbHiq+EILj++KLJbVmmBbeQ64RQyx8KNYOdUMOxtnEEOuXbzQatW63Kx2fGGL98lHMgOnUI0Um83hun+GsXXqWkub7zEj4aJS2Idf6DMf3w0fkwv6fPWjgwQistrqw/PEXlH93BvcwljGWPKiqCp2ON/6DEEjyXu2ewuGZCYXP52MR5g5C8jRNA8MwoFKpuL+C0At05GnNS3g+kYC99bRnA0EPHHmUeYlEAjKZjCdkqASWsDxXdk6hbvZ4kYPyvr2eg9nHMc8GRjkgSZRpJI3aoLxcLgfxeNwTMlQC33+pwoFucLke1dvcO5lH8mYClEdWdF2HVqvFEi3L4t7JPJIXi9388UIl8NNGGuafJPlB8XJbg3HKI4FUnslkkh8U5XKZeyrb2+QREyqBU6kofMVMo97GxU1iP47MIxHUKMOy2ezfTKPxv+QREyqBtCBH4ounCssMumwpprs5EhVF8ch0z3Ffy7/Cu+mArqmMi2+yAd397ttSGefz+bsn4ozQZeC9Vh2iSSTwwrTa0ksy28zUif+OL7iy7cc5MjaMhO/1rl97ZNbQZzi+H178LKlrAvg4a0pmATi3in/0hcV9C0+zxBYIkOZB2AWO6YNvvk07x1nS8fE4i+PjUQ4dhw3F/wHLtCkCD75UiwAAAABJRU5ErkJggg==) no-repeat; cursor: pointer; }
+.sn-checkboxes > .chk-list-checkboxes li > div > input,.chk-list-checkboxes li > div > ins { position: absolute; left: 10%; top: -20%; display: block; width: 120%; height: 120%; margin: 0; padding: 0; background: #FFF; opacity: 0; filter: alpha(opacity=0); box-sizing: border-box; padding: 0; outline: none; }
+.sn-checkboxes > .chk-list-checkboxes li > div, .chk-list-checkboxes li > div.static:hover { background-position: left; }
+.sn-checkboxes > .chk-list-checkboxes li > div.hover, .chk-list-checkboxes li > div:hover { background-position: 25%; }
+.sn-checkboxes > .chk-list-checkboxes li > div.checked { background-position: center; }
+.sn-checkboxes > .chk-list-checkboxes li > div.disabled { background-position: 75%; cursor: default; }
+.sn-checkboxes > .chk-list-checkboxes li > div.checked.disabled { background-position: right; }
+.sn-checkboxes > .chk-list-checkboxes li > label { cursor: pointer; color: #333; }
+/* 高清屏支持 */
+@media only screen and (-webkit-min-device-pixel-ratio: 1.5),
+       only screen and (-moz-min-device-pixel-ratio: 1.5),
+       only screen and (-o-min-device-pixel-ratio: 3/2),
+       only screen and (min-device-pixel-ratio: 1.5) {
+    .sn-checkboxes > .chk-list-checkboxes li > div {
+        position: absolute; top: 1px; left: 0;display: block; width: 20px; height: 20px;
+        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAgCAYAAACVf3P1AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo0NEQ2RDdGREFBOTExMUU3QkE4OTlEQjUzMTIyNDI1MyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo0NEQ2RDdGRUFBOTExMUU3QkE4OTlEQjUzMTIyNDI1MyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjQ0RDZEN0ZCQUE5MTExRTdCQTg5OURCNTMxMjI0MjUzIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjQ0RDZEN0ZDQUE5MTExRTdCQTg5OURCNTMxMjI0MjUzIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+sir/5gAAA6hJREFUeNrsnM9P02AYx5/O7SAbyyiCIhYWElBQnAke8KxRE/EPMAY14sFEw9nwBxDP6NGfF71popgY4l0PHiQG/EFCwE4R4sp0WwzpaH2f0mIpMH6tfZv1+Sbv6HrYJ2/74Xn7ttsr6LoOo5++tgLAbdZOsRYHd/OHtTes3Uq1t03gDmFwlAtfH0j5gq8oChe+KIrc+cKH8S8H2Zt3rCXA22RZ6z72/C/w5Jvb3PiZ61Kg+x9mL4MIr45FQWrYC5Fw2FWqWiyCPDMLuXwhYbIxibMt1fCgR4KGWMRV/kxehavDMryezPmKH4lEIBqNQigUcpWvaRoUCgVQVdUXfKyAv7HsdrS2uC6fXcLxiUnczLMKqCH/R3+H6yffLsH+oXGDj8eEJ59VQIOfSCRcP/l2CbLZ7Ir+8+KHrTHfK/kcrJi14dXJd7B8w/fq5DtY3PneUSmUtWSkQ0AhASkkIKW8ufv+lzHbXdT1QPZ/bm4OpqamQN+g/2FSxR35+ke+Ax56jb3c7zkAuwQhUPLJsrz8vrm5GYR1+k8V0EX5MI8/KnDtVTqw8mUyGZienqYhmId8GPy/79q3O5DyWamqqiIBeck3dLoRbh7fE1j5JEmC+vp6EpDk8598JOAGwRnspRffjOu4IMqHM1icyeJ1nBvy0Sx4A/l6mXxPx7LwZMx4bgmXO8XAyacoitEwtbW1ZZWPKmCJXHkpG/JZMvYNp1dUwkofdi35LBlxJmuvhOWQjypgiZxMxgwBrRvJloSY3IJW8dd88Xgc5ufnl28kWxIax2JxsSzykYClKuDRpeEW7+E5JdTY30qfcFjDLUrnlHCtpxvbkY8E3KaE4JDvzplGuNFVebPd9SR0pqmpCerq6rbFoGvATUh479zaj9IqWT67hKUepe1EPhJwCxL2dtas2n/xSE1Fy2eXUBTFVftx307kIwG3EKyC9tswFw4n4NF5KTD9xypovw2D8iWTyR1/Ll0DbjI4BOO3WnAkKmq6IV+QvuGCQzBKaF0HonxCGfpPAm5Rwoc9UmD7j8KVo+rREEzxTUhACglICbaAuFaH8WNxr1L8z8pbfPyxtlf5WfAfH3+s7VVsLO58FBAXioH0zKxdDNeiqktLc5gZsfj4tMF2YlxLOqdC37DsOz4uV+GFBNbSGH7h49Ich9jGW+CzOM0Jc3EibnxzmxvfXJwosP0PpdrbPsPSKknPWMt5AM6ZrG5k6wMpbnxk8+aLosiNj2ze/H8CDADyb1h0vMrOzAAAAABJRU5ErkJggg==);
+        -webkit-background-size: 100px 20px;
+        background-size: 100px 20px;
+
+    }
+}
+</style><style type="text/css">/*.sn-upload {
+    display: inline-block;
+    position: relative;
+}
+.sn-upload a{
+    text-decoration: none;
+}
+.sn-upload .files>div>div {
+    display: inline-block;
+}
+
+.sn-upload .fileInput {
+    display: inline-block;
+    position: relative;
+    width: 50px;
+    height: 30px;
+}
+
+.sn-upload .fileInput a {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    line-height: 30px;
+}
+
+.sn-upload .fileInput input {
+    position: absolute;
+    opacity: 0;
+    -moz-opacity: 0;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    cursor: pointer;
+    width: 50px;
+    height: 30px;
+}
+
+.sn-upload .files .upload-progress {
+    display: none;
+    height: 15px;
+    width: 150px;
+    border: 1px solid #bbb;
+    color: #222;
+}
+
+.sn-upload .upload-progress .bar {
+    display: inline-block;
+    background-color: #6CAF00;
+    height: 15px;
+    width: 20;
+}
+
+.sn-upload .upload-btns button{
+    display: inline-block;
+    padding: 5px;
+}
+.sn-upload .upload-btns .cancel { display: none; }
+
+.sn-upload .sn-upload-progress .delete { display: none; }
+.sn-upload .sn-upload-progress .cancel { display: inline-block; }
+.sn-upload .sn-upload-progress .upload-progress { display:inline-block; }
+*/
+/* upload */
+  .sn-upload .files { margin-bottom: 6px; width: 100%; float: left; }
+  .sn-upload .template-upload:after { clear: both; display:block; visibility: hidden; height: 0; content: " "; }
+  .sn-upload .template-upload { width: 100%; }
+  .sn-upload .template-upload div { height: 28px; line-height: 28px; float: left; }
+  .sn-upload .template-upload { font-size: 12px; color: #222; }
+  .sn-upload .template-upload .upload-filename a { color: #222; text-decoration: none; }
+  .sn-upload .template-upload .upload-byte { color: #999; padding: 0 6px; }
+  .sn-upload .template-upload .upload-btns a { cursor: pointer; padding: 0 6px; color: #ee0000; text-decoration: none; }
+  .sn-upload .template-upload .upload-btns a:hover { color: #222; }
+  .sn-upload .template-upload .upload-progress { display: none; width: 200px; margin-top: 10px; box-sizing: border-box; height: 6px; font-size: 0; line-height: 0; background: #e7eff2; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07), inset 0 2px 2px rgba(0, 0, 0, 0.07); *zoom: 1; }
+  .sn-upload .template-upload .upload-progress:before,
+  .sn-upload .template-upload .upload-progress:after { content: ""; display: table; }
+  .sn-upload .template-upload .upload-progress:after { clear: both; overflow: hidden; }
+  .sn-upload .template-upload .upload-progress > span { display: block; height: 100%; height: 6px; font-size: 0; line-height: 0; background: #8ec500; float: left; box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.1); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);}
+  .sn-upload .fileInput { width: 100%; height: 30px; float: left; position: relative; overflow: hidden; }
+  .sn-upload .fileInput > a { display: inline-block; height: 26px; line-height: 26px; padding: 0 20px; font-size: 12px; background: #FFF; text-decoration: none; cursor: pointer; outline: none; color: #008ace; position: absolute; left: 0; top: 0; background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyhpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTM4IDc5LjE1OTgyNCwgMjAxNi8wOS8xNC0wMTowOTowMSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTcgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NENCM0ZERjMwODVCMTFFNzg1NEQ4OUJEMEFFQTg1OEYiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NENCM0ZERjQwODVCMTFFNzg1NEQ4OUJEMEFFQTg1OEYiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo0Q0IzRkRGMTA4NUIxMUU3ODU0RDg5QkQwQUVBODU4RiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo0Q0IzRkRGMjA4NUIxMUU3ODU0RDg5QkQwQUVBODU4RiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pko65TQAAAFrSURBVDjLpZI9SwNBFEV3DYraxCCCENEYBAsFAwpKbAP+AbESREglCDaCP2HXIlpYWFgqIqYypgpW2ohNYqPid6KQSitBbNbzZCKL+xZBi8N9M7tz586bsTzPs/7DdzHilK2UUwkodFHvom/oDaxQ2wGDxiI/zHWi5ym3so8OM56CW+pl1eBHgih6BnkMIr5EGbj77QjtcAKHjFtgAjLm2xBaDz0C2oYeoSVohTTjF5imbkJ3YE9NILsRt4geg6QYh1fqebBhi/EV2q0ZyDnz/HAKUeoxkMVZ6TpswjXEJa1msMjul3yMwShI7AWz84ZcIXM90BxmcAEz0gOow5JZvC5dR3vRAbQqTdUMPiAJCXg3SXLwAAlIQg0cNQGTT9Jxc9fbmHjSMLOwn/Ejutq4bi1BDg7og22uVJ5whLoP7r/SuOaqXd0gBtLEAjqJDsIsVGHN9xKtsCOISQcqTXsG6UkZnVOeedDgr3wCMLFA8LK6ugMAAAAASUVORK5CYII="); background-repeat: no-repeat; background-position: left 4px;}
+  .sn-upload .fileInput input { height: 28px; width: 200px; position: absolute; left: 0; top: 0; background: #F00; position: absolute; left: -130px; opacity: 0; filter:alpha(opacity=0);}
+
+  /* 高清屏支持 */
+  @media only screen and (-webkit-min-device-pixel-ratio: 1.5),
+         only screen and (-moz-min-device-pixel-ratio: 1.5),
+         only screen and (-o-min-device-pixel-ratio: 3/2),
+         only screen and (min-device-pixel-ratio: 1.5) {
+      .sn-upload .fileInput > a  {
+          background-image: url("data:image/png;base64,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");
+          -webkit-background-size: 16px 16px;
+          background-size: 16px 16px;
+      }
+  }
+
+/*This style for javascript program, don't rewrite or moving*/
+.sn-upload .sn-upload-fileResult { display:none; }
+.sn-upload .sn-upload-uploading .delete { display: none; }
+.sn-upload .sn-upload-uploading .upload-progress { display: inline-block; }
+.sn-upload .sn-upload-fail .sn-upload-fileResult { display: inline-block; }
+
+
+</style><style type="text/css">#repeat-watermark {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  /* height: 100%; */
+  overflow: hidden;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 1;
+  font-size: 15px;
+  font-family: 微软雅黑;
+  color: white;
+  text-align: center;
+  display: block;
+}
+#waterBackDrop {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  display: block;
+  z-index: -1;
+  overflow: hidden;
+  opacity: 0.8;
+  -khtml-opacity:0.8;
+  -moz-opacity:0.8;
+  filter:alpha(opacity=80);
+  filter:"alpha(opacity=80)";
+  filter: progid:DXImageTransform.Microsoft.Alpha(opacity=80);
+  color: white;
+}</style><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="hdbHelper" src="./知识库-知识列表_files/helpers.js.下载"></script><link type="text/css" rel="stylesheet" href="./知识库-知识列表_files/page.css"><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="encrypt" src="./知识库-知识列表_files/encrypt.js.下载"></script></head>
+
+<body class="skin-dark">
+
+<!-- 注意：页面中所有On事件及JS片段仅做效果演示使用，需要替换为JS -->
+<!-- toolbar start -->
+<!-- 工具栏 -->
+<div class="km-toolbar"><div class="wrap-inner">
+  <!-- 地域切换 start -->
+  <div class="area-switcher">
+    <div class="selected" id="selectedCity" scope="351" tid="000" sid="351" cid="#" leve="2" cname="山西">山西<i class="icon km-xiajiantou-copy"></i></div>
+    <!-- 省份 -->
+    <ul class="area-list" id="province" style="display: none;">
+      <li>全部省份&nbsp;<a class="locationa" id="allCounty" onclick="" scope="-1" sid="#" cid="#" gid="-1" leve="1" href="javascript:void(0);">全国</a></li>
+    </ul>
+    <!-- 地市 -->
+    <ul class="area-list" id="city" style="display: none;">
+      <li>
+      </li>
+      <li>
+        <dl class="city-list">
+        </dl>
+      </li>
+    </ul>
+  </div>
+  <!-- 地域切换 end -->
+  <a class="page-refresh">
+    <i class="icon km-refresh"></i>
+  </a>
+  <!-- 用户操作 start -->
+  <div class="user-handle">
+    <span class="user-name"><i class="icon km-icon-test"></i>成斌</span>
+    <!--
+    <a id="tbmynhid" href="JavaScript:void(0);">
+          测试新首页
+    </a>
+    -->
+    <a id="tbmyyzid" mo="000245005010" href="JavaScript:void(0);" style="display: none;">
+      授权短信
+    </a>
+    <a id="tbmyscid" href="JavaScript:void(0);">
+      收藏夹
+    </a>
+    <a id="tbmyfkid" href="javascript:void(0)" class="new-msg">我的反馈(2)</a>
+    <a id="tbmycjid" href="javascript:void(0)">
+      个性化设置
+    </a>
+  </div>
+  <!-- 用户操作 end -->
+</div></div>
+<!-- toolbar end -->
+<!-- header start -->
+<div class="km-header"><div class="wrap-inner">
+    <a class="logo" id="goBackHomeImg" style="cursor:pointer;">
+        <img id="goHomeImg" src="./知识库-知识列表_files/km-logo@2x.png" alt="">
+    </a>
+    <a class="logo" id="reloadScence"></a>
+    <ul class="nav-main">
+        <li id="logictree" class="nav-active">
+            <a href="javascript:void(0)">业务树</a>
+        </li>
+    <li><a id="kmBusinessHall" url="/src/modules/knowledgeAppNew/kmBusinessHallNEW.html" cname="营业厅" href="javascript:;">营业厅</a></li><li><a id="KmScenario" url="/src/modules/knowledgeAppNew/KmScenario.html" cname="套餐" href="javascript:;">套餐</a></li><li><a id="kmGoabroad" url="/src/modules/knowledgeAppNew/kmGoabroad.html" cname="国家或地区" href="javascript:;">国家或地区</a></li><li><a id="activitis" url="/src/modules/knowledgeAppNew/KmActivitis.html" cname="优惠活动" href="javascript:;">优惠活动</a></li><li><a id="consultQuery" url="/src/modules/knowledgeAppNew/kmOpenConsultQuery.html" cname="咨询表" href="javascript:;">咨询表</a></li><li><a id="rightInter" url="/src/modules/knowledgeAppNew/kmRightsAndInterests.html" cname="权益" href="javascript:;">权益</a></li></ul>
+    <!-- 逻辑树图 start -->
+    <div class="nav-sub" id="logictree-con">
+        <div class="km-nav-logictree">
+
+            <!-- 左侧一级菜单 -->
+            <div class="logictree-left">
+                <ul class="nav-lev1">
+                </ul>
+            </div>
+
+            <!-- 右侧菜单 -->
+            <div class="logictree-right">
+                <div class="logictree-right-inner">
+                    <!-- 当前子菜单 -->
+                    <div class="nav-container">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 逻辑树图 end -->
+
+    <!-- 搜索 start -->
+    <!-- 初始化加km-search-no-select 不展示下拉选 -->
+    <div class="km-search km-search-no-select"><div class="search-inner">
+    <!-- <select class="category" name="searchTitleType" id="searchTitleType">
+        <option value="2">全文</option>
+        <option value="1">标题</option>
+    </select> -->
+    <div class="km-tab categorynew" style="margin:4px 0 0 4px;" id="searchTitleType">
+        <ul>
+            <li class="active" value="2" style="height: 29px;">
+                <a style="font-size: 12px; line-height: 29px; height: 29px;" href="javascript:void(0)">全文</a>
+            </li>
+            <li value="1" style="height: 29px;">
+                <a style="font-size: 12px; line-height: 29px; height: 29px;" href="javascript:void(0)">标题</a>
+            </li>
+        </ul>
+    </div>
+    <div class="custom-button search-pic-bar" title="按图搜索" style="display: none;"><span></span></div>
+      <input id="kw" class="keyword gray" title="积分兑换流量" type="text" autocomplete="off" style="padding-right: 40px;">
+    <a id="topClear" style="transform: translateX(-33px);" class="clear" href="javascript:void(0);" title="清除">
+        <i class="icon km-cuowu"></i>
+    </a>
+    <a class="btn" id="search-btn" href="javascript:void(0);">
+         <i class="icon km-sousuo"></i>
+    </a>
+    <!-- 默认引导词显示 -->
+    <div class="guide-info" id="guidinfo" title="积分兑换流量" style="position: static;">积分兑换流量</div>
+</div>
+<div class="search-hotwords" style="display: none;">
+         <!-- 首字母自动补全时，去掉<p>热门搜索：</p> -->
+         <!--<p>热门</p> -->
+
+         <ul class="nav-group" id="navsearch">
+                <li class="actives">
+                    <a id="hotsearch" href="javascript:void(0);">热门搜索</a>
+                </li>
+                <li>
+                    <a id="guidword" href="javascript:void(0);">引导词</a>
+                </li>
+                <li>
+                    <a id="historysearch" href="javascript:void(0);">历史搜索</a>
+                </li>
+         </ul>
+
+         <ul id="hotKeys" class="search-ho search-ho1"></ul>
+         <!--secKmSearchBar.tpl-->
+         <!--<div class="guess-you-want-search-wrap">-->
+            <div class="guess-you-want-search-p" style="display: none;border-top: 1px dashed #bbb;padding: 5px 12px 0 12px;font-size:12px;color:#aaa;">猜你想搜</div>
+            <ul id="guess-you-want-search-hotKeys" style="display: none;" class="guess-you-want-search-search-ho search-ho">
+              <!--<li class="item"><a href="javascript:void(0);">向量</a></li>-->
+            </ul>
+         <!--</div>-->
+</div>
+<!-- 以图搜文 -->
+<div class="modal-overlay" style="display: none;min-width: 1040px;max-width: 1250px;padding: 0 10px;box-sizing: border-box;margin: 0 auto;list-style-type: none;right:0;bottom:0;top:0px;background-color: #00000050;">
+    <div class="modal-content" style="margin-right:0;height:auto;margin-top:80px;">
+        <div class="modal-header">
+            <span class="close-upload">×</span>
+        </div>
+        <div class="modal-title">
+            智能检索图片知识
+        </div>
+        <div class="modal-body" id="dropZone">
+            <img src="./知识库-知识列表_files/upload@2x.png" style="width: 70px;margin-top: 30px;" alt="">
+            <p id="pic-search"><a id="upload-anchor" style="color: #0e66d4;" href="javascript:void(0)">将图片拖到此处，或点击上传</a></p>
+            <div class="modal-footer">
+                <!--请上传以下格式的文件：jpg，png，gif，bmp-->
+                图片格式支持JPG、PNG
+            </div>
+        </div>
+       
+        <div id="pic-search-upload"></div>
+        <div class="lk-btn-wrap" style="display:none;">
+            <a href="javascript:;" class="t-btn t-btn-white" id="upload-img-cancel">取消</a>
+            <a href="javascript:;" class="t-btn t-btn-blue" id="upload-img-ok">确定</a>
+        </div>
+    </div>
+</div>
+<button style="display: none" class="logClick"></button></div>
+    <!-- 搜索 end -->
+</div></div>
+<!-- header end -->
+<!-- 知识列表 start -->
+<div class="km-article-list wrap-inner pr-relative">
+  <div class="article-list-left">
+    <!-- container -->
+    <div class="km-container km-left-tree">
+
+      <div class="inner-tab-title">
+
+        <!-- 业务搜索 -->
+        <div class="search-con" id="left_search_div">
+          <input id="leftSearchInput" type="text" class="search-input" placeholder="业务搜索">
+          <a class="clear" id="left_clear" href="http://ngkm.cs.cmos/ngkm/src/modules/knowledgeAppNew/kmKnowledgeSecondListNew.html#clear"><i class="icon km-cuowu"></i></a>
+          <a class="go" id="left_go" href="http://ngkm.cs.cmos/ngkm/src/modules/knowledgeAppNew/kmKnowledgeSecondListNew.html#sousuo"><i class="icon km-sousuo"></i></a>
+        </div>
+
+        <!-- 关闭按钮 -->
+        <a href="http://ngkm.cs.cmos/ngkm/src/modules/knowledgeAppNew/kmKnowledgeSecondListNew.html#nogo" class="layer-close" style="display: none"></a>
+
+        <!-- 菜单树弹出层 -->
+        <div class="left-tree-layer" id="layer" style="display: none">
+            <!-- <ul class="km-feedlist" id="leftKmFeedlist">
+             </ul>
+             <div class="km-page">
+               <div  id="left_per_id" class="fn-fr noword">
+               </div>
+               &lt;!&ndash; 数据量、总页数 &ndash;&gt;
+               <div class="total-pages" id="leftTotal">
+               </div>
+             </div>-->
+
+        </div>
+
+      </div>
+        <div class="inner-tab-container" style="height: 590px">
+            <div class="ztree leftTree" id="left-bussiness-tree"><li id="left-bussiness-tree_1" class="hasLine isroot level0" tabindex="0" hidefocus="true" treenode=""><a id="left-bussiness-tree_1_a" class="level0 curSelectedNode" treenode_a="" onclick="" target="_blank" style="" title="业务树图"><span id="left-bussiness-tree_1_ico" title="" treenode_ico="" class="isroot button ico_open" style=""></span><span id="left-bussiness-tree_1_span" class="node_name">业务树图</span></a><span id="left-bussiness-tree_1_switch" title="" class="button level0 switch root_open" treenode_switch=""></span><ul id="left-bussiness-tree_1_ul" class="level0 " style=""><li id="left-bussiness-tree_2" class="hasLine level1" tabindex="0" hidefocus="true" treenode=""><a id="left-bussiness-tree_2_a" class="level1" treenode_a="" onclick="" target="_blank" style="" title="政企知识专区"><span id="left-bussiness-tree_2_ico" title="" treenode_ico="" class="button ico_close" style=""></span><span id="left-bussiness-tree_2_span" class="node_name">政企知识专区</span></a><span id="left-bussiness-tree_2_switch" title="" class="button level1 switch center_close" treenode_switch=""></span><ul id="left-bussiness-tree_2_ul" class="level1 line" style="display:none"></ul></li><li id="left-bussiness-tree_3" class="hasLine level1" tabindex="0" hidefocus="true" treenode=""><a id="left-bussiness-tree_3_a" class="level1" treenode_a="" onclick="" target="_blank" style="" title="夜间全网公告"><span id="left-bussiness-tree_3_ico" title="" treenode_ico="" class="button ico_docu" style=""></span><span id="left-bussiness-tree_3_span" class="node_name">夜间全网公告</span></a><span id="left-bussiness-tree_3_switch" title="" class="button level1 switch bottom_docu" treenode_switch=""></span></li></ul></li></div>
+        </div>
+
+
+
+
+    </div>
+
+  </div>
+  <div class="article-list-right">
+    <div class="article-list-right-inner">
+
+        <!-- 菜单路径区域 2018/08/18 -->
+        <div class="km-container left-tree-path">
+            <div class="directory-search directory-search-path"><label for="" title="当前位置">当前位置：</label><div class="form-content">业务树图<span class="mr-20"><a href="javascript:void(0);"></a></span></div><div class="directory-search-btn" id="jumpDiv"></div></div>
+            <!--<ul class="path-folder path-folder-active no-ellipsis" id="child_file">-->
+            <!--</ul>-->
+        </div>
+
+      <!-- container -->
+      <div class="km-container">
+
+        <div class="right-box-inner">
+          <div class="right-top  tree-right-top">
+            <div class="search-out">
+              <!-- 搜索 -->
+              <!-- 默认的状态： search-con -->
+              <!-- 输入后状态： search-con search-typein -->
+              <div id="searchDiv" class="search-con closed">
+                <input type="text" class="search-input" id="topSearchKey" placeholder="搜索关键字">
+                <a class="clear" href="javascript:void(0)" id="clearSearchInput"><i class="icon km-cuowu"></i></a>
+                <a class="go" href="javascript:void(0)" id="goSearchInput"><i class="icon km-sousuo"></i></a>
+              </div>
+              </div>
+              <div class="km-list-top">
+                  <div class="km-tab">
+                      <ul>
+                          <li class="" id="showAll">
+                              <a href="javascript:void(0)">全部</a>
+                          </li>
+                          <li id="showNormal" class="green-active act-chked">
+                              <a href="javascript:void(0)">正常</a>
+                          </li>
+                          <li id="showExpire" class="">
+                              <a href="javascript:void(0)">已下线</a>
+                          </li>
+                          <li id="showPrepare" class="green-active act-chked">
+                              <a href="javascript:void(0)">未上线</a>
+                          </li>
+                      </ul>
+                  </div>
+                  <div class="km-tab">
+                      <ul>
+                          <li class="active" id="showCountryAll">
+                              <a href="javascript:void(0)">全部</a>
+                          </li>
+                          <li id="showCountry">
+                              <a href="javascript:void(0)">全国</a>
+                          </li>
+                          <li id="showProvince">
+                              <a href="javascript:void(0)">省份</a>
+                          </li>
+                          <li id="showVillage" class="has-submenu">
+                              <a href="javascript:void(0)" id="showVillageText">地市<i class="icon km-xiajiantou-copy" id="xiajiantou"></i></a>
+                              <!-- 更多菜单，默认隐藏-->
+                              <ul class="content hide" id="citylist">
+
+                              </ul>
+                          </li>
+                      </ul>
+                  </div>
+
+                  <!-- NGKM2019-1765 lizh23 20201104 -begin -->
+                  <div class="km-tab" id="faqList">
+                      <ul>
+                          <li id="allResultList" value="1" class="active"> <a href="javascript:void(0);">全部</a> </li>
+                          <li id="mainResulList" value="2" class=""> <a href="javascript:void(0);">主业务</a> </li>
+                          <li id="faqResultList" value="3"> <a href="javascript:void(0);">FAQ</a> </li>
+                      </ul>
+                  </div>
+                  <!-- NGKM2019-1765 lizh23 20201104 -end -->
+
+                  <label for="now-atc">
+                      <input id="now-atc" name="showCurKlg" type="checkbox"> 仅展示当前节点知识
+                  </label>
+                  <div class="km-result-sort" style="display: none">
+                      <a href="javascript:void(0)" id="sortByTime">按时间
+                          <i class="icon km-xjt" id="time_item"></i>
+                      </a>
+                      <a href="javascript:void(0)" id="sortByVisit">按点击量
+                          <i class="icon km-xjt" id="visit_item"></i>
+                      </a>
+                  </div>
+              </div>
+
+
+              <div class="km-table-list km-table qview-tab-list" style="max-height: 500px">
+                  <!--单列开始-->
+                  <table id="searchResultList" style="">
+                      <thead>
+                      <tr>
+                          <th width="50%">
+                              <div class="con"><a class="klgNmRuler" style="cursor:pointer;">知识标题<i class="icon km-xjt"></i></a></div>
+                          </th>
+                          <th width="15%">
+                              <div class="con">地区</div>
+                          </th>
+                          <th width="10%">
+                              <div class="con"><a id="klgTimeRuler" style="cursor:pointer;">时间<i class="icon km-xjt"></i></a></div>
+                          </th>
+                          <th width="10%">
+                              <div class="con"><a id="klgHitRuler" style="cursor: pointer; color: rgb(86, 182, 0);">点击量<i class="icon km-xjt"></i></a></div>
+                          </th>
+                          <th width="15%">
+                              <div class="con">操作</div>
+                          </th>
+                      </tr>
+                      </thead>
+                  <tbody>            <tr id="2308071911110145062" name="重置、修改密码">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+重置、修改密码                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-11-25</div></td>
+        <td><div class="con">9025459989020</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2308071911110145062" name="重置、修改密码" tmpid="44" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2308071911110145062">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2304251806270112245" name="金牌服务室" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+金牌服务室                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-09</div></td>
+        <td><div class="con">224986053509</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2304251806270112245" name="金牌服务室" tmpid="41" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2304251806270112245">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2403141432540129432" name="管理停机线上复通流程">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+管理停机线上复通流程                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-27</div></td>
+        <td><div class="con">24260572219</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2403141432540129432" name="管理停机线上复通流程" tmpid="46" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2403141432540129432">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2011171411460105530" name="全球通尊享礼遇活动 客服口径" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+全球通尊享礼遇活动 客服口径                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2025-01-27</div></td>
+        <td><div class="con">9085785554</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2011171411460105530" name="全球通尊享礼遇活动 客服口径" tmpid="44" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2011171411460105530">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2203231148000173845" name="温馨提醒">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+温馨提醒                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-11-25</div></td>
+        <td><div class="con">6596198386</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2203231148000173845" name="温馨提醒" tmpid="44" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2203231148000173845">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2205310942220199438" name="二次实人认证停机后如何开机？" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+二次实人认证停机后如何开机？                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-12-27</div></td>
+        <td><div class="con">95050967</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2205310942220199438" name="二次实人认证停机后如何开机？" tmpid="44" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2205310942220199438">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2412021429110120995" name="中国移动APP热门活动推荐">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+中国移动APP热门活动推荐                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-12-09</div></td>
+        <td><div class="con">18931373</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2412021429110120995" name="中国移动APP热门活动推荐" tmpid="43" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2412021429110120995">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2304282007060113690" name="太原小店大营盘金牌服务室" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+太原小店大营盘金牌服务室                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="太原">
+太原            </div>
+        </td>
+        <td><div class="con">2024-11-12</div></td>
+        <td><div class="con">18268051</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2304282007060113690" name="太原小店大营盘金牌服务室" tmpid="58" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2304282007060113690">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2304282007190113792" name="阳泉盂县金牌服务室--盂县西关直营厅">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+阳泉盂县金牌服务室--盂县西关直营厅                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="阳泉">
+阳泉            </div>
+        </td>
+        <td><div class="con">2024-11-19</div></td>
+        <td><div class="con">18077817</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2304282007190113792" name="阳泉盂县金牌服务室--盂县西关直营厅" tmpid="58" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2304282007190113792">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2204262004330186780" name="跨省宽带" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+跨省宽带                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-08-23</div></td>
+        <td><div class="con">17906285</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2204262004330186780" name="跨省宽带" tmpid="51" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2204262004330186780">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2401021650210198403" name="2024年全省全能贺岁包优惠活动">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+2024年全省全能贺岁包优惠活动                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-17</div></td>
+        <td><div class="con">17749023</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2401021650210198403" name="2024年全省全能贺岁包优惠活动" tmpid="43" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2401021650210198403">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2004032305470116626" name="全省“和金币计划”" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+全省“和金币计划”                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-12-26</div></td>
+        <td><div class="con">15581216</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2004032305470116626" name="全省“和金币计划”" tmpid="43" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2004032305470116626">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="180509085123020734" name="中国澳门">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+中国澳门                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2025-01-15</div></td>
+        <td><div class="con">12518605</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_180509085123020734" name="中国澳门" tmpid="180409165332000002" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_180509085123020734">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2402220936520123770" name="10086人工台--线上认证复机操作手册" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+10086人工台--线上认证复机操作手册                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-17</div></td>
+        <td><div class="con">8363691</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2402220936520123770" name="10086人工台--线上认证复机操作手册" tmpid="46" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2402220936520123770">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="180509085023020644" name="泰国">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+泰国                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2025-01-15</div></td>
+        <td><div class="con">8286373</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_180509085023020644" name="泰国" tmpid="180409165332000002" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_180509085023020644">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="406217" name="开户" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+开户                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-12-16</div></td>
+        <td><div class="con">7509192</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_406217" name="开户" tmpid="41" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_406217">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2301191617570178866" name="异地过户">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+异地过户                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2023-11-17</div></td>
+        <td><div class="con">6671002</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2301191617570178866" name="异地过户" tmpid="41" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2301191617570178866">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2204292148530189246" name="流量保险5元月包（超量关停）" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+流量保险5元月包（超量关停）                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-01-23</div></td>
+        <td><div class="con">6257808</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2204292148530189246" name="流量保险5元月包（超量关停）" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2204292148530189246">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2211080850330155718" name="幸福家庭加油包19.9元">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+                                         <div class="primary-key inline-blue recessive-title">
+                                            <span>
+幸福家庭加油包19.9元                                            </span>
+                                            <i class=""></i>
+                                         </div>
+
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2023-11-20</div></td>
+        <td><div class="con">5513319</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2211080850330155718" name="幸福家庭加油包19.9元" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2211080850330155718">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="142378" name="4G流量共享资费（多终端共享）" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+4G流量共享资费（多终端共享）                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-12-20</div></td>
+        <td><div class="con">5106227</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_142378" name="4G流量共享资费（多终端共享）" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_142378">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2111091739100133203" name="移动高清（爱家TV）">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+移动高清（爱家TV）                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-23</div></td>
+        <td><div class="con">4830840</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2111091739100133203" name="移动高清（爱家TV）" tmpid="51" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2111091739100133203">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2312181613080192545" name="一号双终端拨测内容" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+一号双终端拨测内容                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-01-04</div></td>
+        <td><div class="con">4752596</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2312181613080192545" name="一号双终端拨测内容" tmpid="44" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2312181613080192545">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2006241825140143922" name="（自付）家庭网成员1元网内语音2000分钟">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+（自付）家庭网成员1元网内语音2000分钟                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-06-07</div></td>
+        <td><div class="con">4646136</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2006241825140143922" name="（自付）家庭网成员1元网内语音2000分钟" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2006241825140143922">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2403291319030134728" name="如何查询赠费余额" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+如何查询赠费余额                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-12-18</div></td>
+        <td><div class="con">4006409</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2403291319030134728" name="如何查询赠费余额" tmpid="44" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2403291319030134728">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="1805251838560119590" name="国际/中国港澳台漫游">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+国际/中国港澳台漫游                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2024-12-12</div></td>
+        <td><div class="con">3868548</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_1805251838560119590" name="国际/中国港澳台漫游" tmpid="59" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_1805251838560119590">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2401080937340199906" name="电视随心看会员" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+                                         <div class="primary-key inline-blue recessive-title">
+                                            <span>
+电视随心看会员                                            </span>
+                                            <i class=""></i>
+                                         </div>
+
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-14</div></td>
+        <td><div class="con">3719711</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2401080937340199906" name="电视随心看会员" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2401080937340199906">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="1907311125110131215" name="太原和教育客服电话">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+太原和教育客服电话                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2022-09-15</div></td>
+        <td><div class="con">3637283</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_1907311125110131215" name="太原和教育客服电话" tmpid="56" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_1907311125110131215">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2204291431100188870" name="全家享套餐（2022）129元" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+全家享套餐（2022）129元                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-07-15</div></td>
+        <td><div class="con">3388235</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2204291431100188870" name="全家享套餐（2022）129元" tmpid="39" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2204291431100188870">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2008122050370167201" name="随心听会员">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+随心听会员                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2025-01-22</div></td>
+        <td><div class="con">3348483</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2008122050370167201" name="随心听会员" tmpid="51" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2008122050370167201">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="180509085049020679" name="韩国" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+韩国                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2025-01-15</div></td>
+        <td><div class="con">3037651</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_180509085049020679" name="韩国" tmpid="180409165332000002" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_180509085049020679">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2201061733060151631" name="无忧行 金蛇贺岁迎新春 境外流量7.99元起活动">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+无忧行 金蛇贺岁迎新春 境外流量7.99元起活动                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2025-01-20</div></td>
+        <td><div class="con">2937664</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2201061733060151631" name="无忧行 金蛇贺岁迎新春 境外流量7.99元起活动" tmpid="43" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2201061733060151631">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2304282007130113742" name="晋城城区金牌服务室--华街营业厅" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+晋城城区金牌服务室--华街营业厅                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="晋城">
+晋城            </div>
+        </td>
+        <td><div class="con">2024-11-19</div></td>
+        <td><div class="con">2823745</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2304282007130113742" name="晋城城区金牌服务室--华街营业厅" tmpid="58" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2304282007130113742">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2204291447560188905" name="全家享套餐（2022）199元">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+全家享套餐（2022）199元                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-07-15</div></td>
+        <td><div class="con">2686188</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2204291447560188905" name="全家享套餐（2022）199元" tmpid="39" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2204291447560188905">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2210011157060146484" name="家庭有线宽带（销户）" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+家庭有线宽带（销户）                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-11-29</div></td>
+        <td><div class="con">2682511</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2210011157060146484" name="家庭有线宽带（销户）" tmpid="54" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2210011157060146484">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2006161627280141655" name="权益超市黄金会员">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+权益超市黄金会员                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2024-04-23</div></td>
+        <td><div class="con">2562247</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2006161627280141655" name="权益超市黄金会员" tmpid="51" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2006161627280141655">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2002191434260196336" name="随心看会员" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+随心看会员                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="全国">
+全国            </div>
+        </td>
+        <td><div class="con">2025-01-22</div></td>
+        <td><div class="con">2557030</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2002191434260196336" name="随心看会员" tmpid="51" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2002191434260196336">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2304282007060113684" name="忻州定襄县金牌服务室--定襄县解放路加盟店">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+忻州定襄县金牌服务室--定襄县解放路加盟店                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="忻州">
+忻州            </div>
+        </td>
+        <td><div class="con">2024-11-19</div></td>
+        <td><div class="con">2507532</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2304282007060113684" name="忻州定襄县金牌服务室--定襄县解放路加盟店" tmpid="58" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2304282007060113684">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2106041638500179156" name="二次实人认证" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+二次实人认证                         </span>
+                         <i class="new new-hot"></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-03</div></td>
+        <td><div class="con">2447805</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2106041638500179156" name="二次实人认证" tmpid="41" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2106041638500179156">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2308091433230145411" name="移动高清增值业务退赔类咨询工单处理流程">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+移动高清增值业务退赔类咨询工单处理流程                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-03</div></td>
+        <td><div class="con">2303250</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2308091433230145411" name="移动高清增值业务退赔类咨询工单处理流程" tmpid="77" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2308091433230145411">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="179120" name="银信通 山西" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+银信通 山西                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-02-01</div></td>
+        <td><div class="con">2159483</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_179120" name="银信通 山西" tmpid="51" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_179120">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2211080921360155735" name="（集团小号）和飞信-专有5元(2017)">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+（集团小号）和飞信-专有5元(2017)                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-01-22</div></td>
+        <td><div class="con">2117432</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2211080921360155735" name="（集团小号）和飞信-专有5元(2017)" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2211080921360155735">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2304170827230107045" name="第二条家庭宽带收费标准" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+第二条家庭宽带收费标准                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2023-11-17</div></td>
+        <td><div class="con">2070299</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2304170827230107045" name="第二条家庭宽带收费标准" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2304170827230107045">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2401031001500198533" name="家庭有线宽带（线上销户）">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+家庭有线宽带（线上销户）                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-11-27</div></td>
+        <td><div class="con">1732244</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2401031001500198533" name="家庭有线宽带（线上销户）" tmpid="54" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2401031001500198533">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2304282007130113746" name="晋城阳城县金牌服务室--滨河东路营业厅" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+晋城阳城县金牌服务室--滨河东路营业厅                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="晋城">
+晋城            </div>
+        </td>
+        <td><div class="con">2024-11-19</div></td>
+        <td><div class="con">1630872</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2304282007130113746" name="晋城阳城县金牌服务室--滨河东路营业厅" tmpid="58" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2304282007130113746">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="1911070810210161499" name="5G特惠流量包">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+5G特惠流量包                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-04-10</div></td>
+        <td><div class="con">1539432</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_1911070810210161499" name="5G特惠流量包" tmpid="40" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_1911070810210161499">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2204291440570188878" name="全家享套餐（2022）169元" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+全家享套餐（2022）169元                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-07-15</div></td>
+        <td><div class="con">1443215</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2204291440570188878" name="全家享套餐（2022）169元" tmpid="39" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2204291440570188878">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2008171204000168671" name="副卡（总网页）">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+副卡（总网页）                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2025-01-03</div></td>
+        <td><div class="con">1392593</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2008171204000168671" name="副卡（总网页）" tmpid="43" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2008171204000168671">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2301091542270174385" name="畅享套餐29元 （2022）" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                               <em class="badge-newest" style="
+                                   float:  left;
+                                   margin-top: 9px;
+                               ">视</em>
+                         <span>
+畅享套餐29元 （2022）                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-07-15</div></td>
+        <td><div class="con">1256327</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2301091542270174385" name="畅享套餐29元 （2022）" tmpid="39" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2301091542270174385">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2301020004380172412" name="4.9元新动力自选包">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+4.9元新动力自选包                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-05-28</div></td>
+        <td><div class="con">1222822</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2301020004380172412" name="4.9元新动力自选包" tmpid="51" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2301020004380172412">收藏</a>
+            </div>
+        </td>
+    </tr>
+            <tr id="2309191707250163130" name="优质号码业务规则" class="cross">
+       <td>
+
+             <div class="td-state new-state">
+             </div>
+
+
+
+                      <div class="primary-key inline-blue">
+                         <span>
+优质号码业务规则                         </span>
+                         <i class=""></i>
+                      </div>
+
+        </td>
+        <td class="tree-right-top">
+            <div class="con" title="山西">
+山西            </div>
+        </td>
+        <td><div class="con">2024-08-20</div></td>
+        <td><div class="con">1211889</div></td>
+        <td>
+            <div class="con">
+                <a href="javascript:void(0)" class="compareCls" id="c_2309191707250163130" name="优质号码业务规则" tmpid="41" tmpnm="">对比</a>
+                    <a href="javascript:void(0)" class="collectCls" scflag="0" id="k_2309191707250163130">收藏</a>
+            </div>
+        </td>
+    </tr>
+</tbody></table>
+                  <!--单列 结束-->
+                  <!--双列 开始-->
+                  <table id="searchResultListLeft" style="display: none" class="tab-lft article-dob-tab">
+                      <thead>
+                      <tr>
+                          <th>
+                              <div class="con"><a class="klgNmRuler" style="cursor:pointer;">知识标题<i class="icon km-xjt"></i></a></div>
+                          </th>
+                          <th width="71px">
+                              <div class="con">地区</div>
+                          </th>
+                          <th width="83px">
+                              <div class="con">操作</div>
+                          </th>
+                      </tr>
+                      </thead>
+                  </table>
+                  <table id="searchResultListRight" style="display: none" class="tab-rgt article-dob-tab">
+                      <thead>
+                      <tr>
+                          <th>
+                              <div class="con"><a class="klgNmRuler" style="cursor:pointer;">知识标题<i class="icon km-xjt"></i></a></div>
+                          </th>
+                          <th width="71px">
+                              <div class="con">地区</div>
+                          </th>
+                          <th width="83px">
+                              <div class="con">操作</div>
+                          </th>
+                      </tr>
+                      </thead>
+                  </table>
+                  <!--双列 结束-->
+              </div>
+              <!--单列悬浮 开始-->
+              <div id="floatOne"><div style="position: absolute; display: none;" class="customClass"><div id="fltps2308071911110145062" class="float-tips" style="position: relative; width: 494.8px; top: -416px;"><h3><span>名称：</span>重置、修改密码</h3><h3><span>别名：</span>重置密码,修改密码</h3><div>密码问题，可以通过以下方式进行手机服务密码重置： 方式1：点击【 https://dx.10086.cn/A/6qzfFg 】 前往中国移动APP重置密码，即方便又安全。 方式2：编辑短信“CZSJMM#身份证号码#新密码#新密码”发送到10086进行重置。 方式3：关注“中国移动10086”微信公众号，对话框输入“密码重置”根据提示即可密码重置。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2304251806270112245" class="float-tips" style="position: relative; width: 494.8px; top: -380px;"><h3><span>名称：</span>金牌服务室</h3><div>退活动、退宽带等引导指定营业厅，具体见如下流程</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2403141432540129432" class="float-tips" style="position: relative; width: 494.8px; top: -344px;"><h3><span>名称：</span>管理停机线上复通流程</h3><h3><span>别名：</span>管理停机线上复通流程</h3></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2011171411460105530" class="float-tips" style="position: relative; width: 494.8px; top: -308px;"><h3><span>名称：</span>全球通尊享礼遇活动 客服口径</h3><div>您好！2024年7月1日-2025年6月30日，全球通礼遇机场休息室合作方为龙腾出行、中国东方航空；高铁休息室合作方为悦途出行和龙腾出行。2024年9月1日-2025年6月30日，全球通商旅礼遇合作方为飞猪旅行。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2203231148000173845" class="float-tips" style="position: relative; width: 494.8px; top: -272px;"><h3><span>名称：</span>温馨提醒</h3><h3><span>别名：</span>短信包,常用短信包,发送短信,服务指引</h3><div>问题由于系统原因断线，请您不要着急，我会在5-10分钟内给您回电，如果您没有接听我还会继续跟进回电话，请您注意接听。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2205310942220199438" class="float-tips" style="position: relative; width: 494.8px; top: -236px;"><h3><span>名称：</span>二次实人认证停机后如何开机？</h3><h3><span>别名：</span>断卡 要求实人认证如何操作？</h3><div>问题，按照国家主管部门“断卡”行动工作要求，为防止您的手机卡被不法分子非法利用，并保障您手机卡的正常使用，请本人携带本人有效身份证件、手机卡及密码到山西移动各自有营业厅进行实人核验。如在通知时间前未通过实人认证，您的手机卡将暂停通信服务；现场须签署涉诈风险告知书。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2412021429110120995" class="float-tips" style="position: relative; width: 494.8px; top: -200px;"><h3><span>名称：</span>中国移动APP热门活动推荐</h3><div>可通过中国移动APP办理活动，具体内容详见各活动网页。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2304282007060113690" class="float-tips" style="position: relative; width: 372.8px; top: -164px;"><h3><span>名称：</span>太原小店大营盘金牌服务室</h3></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2304282007190113792" class="float-tips" style="position: relative; width: 494.8px; top: -128px;"><h3><span>名称：</span>阳泉盂县金牌服务室--盂县西关直营厅</h3></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2204262004330186780" class="float-tips" style="position: relative; width: 494.8px; top: -92px;"><h3><span>名称：</span>跨省宽带</h3><h3><span>别名：</span>跨省宽带,全网跨省宽带业务</h3><div>跨省宽带业务是指客户使用归属省（下文统一简称A省）号码在业务落地省（下文统一简称B省）安装家庭宽带的业务。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2401021650210198403" class="float-tips" style="position: relative; width: 494.8px; top: -56px;"><h3><span>名称：</span>2024年全省全能贺岁包优惠活动</h3><div>活动期间，客户参加活动可享内含200M宽带，组网，监控和电视服务等优惠，另享限时礼包服务，合约期24个月。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2004032305470116626" class="float-tips" style="position: relative; width: 494.8px; top: -20px;"><h3><span>名称：</span>全省“和金币计划”</h3><div>      可通过微厅、山西移动公众号、手厅及其他渠道的金币类活动获得金币，可前往“中国移动APP-存钱罐-兑换”页面进行兑换，可也根据活动页面中的金币兑换入口，进入金币兑换页面兑换产品。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps180509085123020734" class="float-tips" style="position: relative; width: 494.8px; top: 16px;"><h3><span>名称：</span>中国澳门</h3></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2402220936520123770" class="float-tips" style="position: relative; width: 494.8px; top: -240.8px;"><h3><span>名称：</span>10086人工台--线上认证复机操作手册</h3></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps180509085023020644" class="float-tips" style="position:relative"><h3><span>名称：</span>泰国</h3></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps406217" class="float-tips" style="position:relative"><h3><span>名称：</span>开户</h3><h3><span>别名：</span>开户,办号,入网,办卡</h3><div>指凡在中国境内的合法单位和个人在办理相关手续后均可成为中国移动通信有限公司的客户，享受中国移动通信的相关服务。客户入网时应与我公司签订入网协议。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2301191617570178866" class="float-tips" style="position:relative"><h3><span>名称：</span>异地过户</h3><h3><span>别名：</span>省际异地过户,手机号码异地过户,跨区过户</h3><div>手机号码异地过户是指客户可以在非归属省进行客户主体的变更，以及权利和义务的转移。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2204292148530189246" class="float-tips" style="position: relative; width: 494.8px; top: -243.2px;"><h3><span>名称：</span>流量保险5元月包（超量关停）</h3><h3><span>别名：</span>银发畅享流量包</h3><div>月功能费5元，内含5G国内通用流量；当主套餐内含流量及5G国内通用流量使用完毕后，自动关闭上网功能；如需恢复上网功能，可订购流量激活包，或订购任意一档通用流量包； 温馨提示：国内不含港澳台。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2211080850330155718" class="float-tips" style="position:relative"><h3><span>名称：</span>幸福家庭加油包19.9元</h3><div>幸福家庭加油包19.9元，具体包含内容，详见参与活动的介绍。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps142378" class="float-tips" style="position:relative"><h3><span>名称：</span>4G流量共享资费（多终端共享）</h3><h3><span>别名：</span>流量共享,4G多终端共享</h3><div>【业务简介】流量共享资费，办理后成员可以共享主号主套餐中包含的流量。 【收费规则】最多可以增加4个共享成员，每个成员收取10元/月，由主号支付。 【扣费规则】该产品收费按照自然月进行收费，即每月月初进行扣费；取消执行灵活账期。申请当月按实际使用天数计算一次性扣除； 【使用优先级】流量共享成员有上网流量时，优先使用成员的流量套餐，用完后使用共享流量； 【主号停机】主号报停、预拆后，当个账期成员不能再使用主号码的流量。 【注】 主资费外叠加的流量包或活动流量是否可以共享需看各业务规则。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2111091739100133203" class="float-tips" style="position: relative; width: 494.8px; top: -251.2px;"><h3><span>名称：</span>移动高清（爱家TV）</h3><h3><span>别名：</span>爱家TV</h3><div>    爱家TV为宽带叠加的电视业务，与原有IPTV类似；同属山西移动宽带电视业务，启用了206号段，有着相似的办理及安装流程。但与之前不同的点为：基于一条宽带，可办理两个宽带电视。可以是一个IPTV、一个爱家TV；也可以是两个IPTV或者两个爱家TV。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2312181613080192545" class="float-tips" style="position:relative"><h3><span>名称：</span>一号双终端拨测内容</h3><div>暂时无法办理，原因：oppo手表仅支持通过和多号APP办理，但因和多号APP升级维护中，暂无法通过和多号APP办理一号双终端业务。已在和多号app上挂相关暂停公告。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2006241825140143922" class="float-tips" style="position:relative"><h3><span>名称：</span>（自付）家庭网成员1元网内语音2000分钟</h3><h3><span>别名：</span>1元家庭网</h3><div>山西移动三大品牌用户，由家长手机号组建全国版家庭网后添加成员，成员数（含家长）最多40人。组建家庭成功后，家庭网资费每人每月1元，包含家庭内国内主叫国内电话2000分钟。友情提醒：1、短号码选择范围：501-559（不含550、560）。2、40个成员号码限制最多来自15个身份证件。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2403291319030134728" class="float-tips" style="position: relative; width: 494.8px; top: -266.4px;"><h3><span>名称：</span>如何查询赠费余额</h3><div>您好，您可以直接点击 【 https://dx.10086.cn/A/-YqAAQ 】 查询；温馨提示：您查询到的“通用话费账本”为通用余额，“其他话费账本”为赠费余额；赠费余额可以用来支付权益以外的业务。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps1805251838560119590" class="float-tips" style="position:relative"><h3><span>名称：</span>国际/中国港澳台漫游</h3><div>国际/中国港澳台漫游是指中国移动客户在离开中国大陆后，仍可以在与中国移动合作的境外运营商覆盖的国家/地区继续使用中国移动号码进行通信的业务。 目前国际/中国港澳台漫游状态下支持的业务有：通话、短信、彩信、移动数据流量上网。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2401080937340199906" class="float-tips" style="position:relative"><h3><span>名称：</span>电视随心看会员</h3><div>电视随心看会员。 具体包含内容，详见参与活动的介绍。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps1907311125110131215" class="float-tips" style="position: relative; width: 494.8px; top: -246.4px;"><h3><span>名称：</span>太原和教育客服电话</h3></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2204291431100188870" class="float-tips" style="position: relative; width: 494.8px; top: -243.2px;"><h3><span>名称：</span>全家享套餐（2022）129元</h3><div>【收费标准】129元/月 【套餐简介】 在国内接听电话免费，在国内拨打国内电话500分钟内免费，超出后0.15元/分钟；包含国内数据流量30GB，超出后每1GB收取5元，满15元后按照每1GB收取3元进行计费；包含点对点短信500条，超出后0.1元/条；包含国内主叫国际电话100分钟. 【包含业务】来电显示;包含省内短号家庭网（前5人免费）；包含全国家庭亲情网10元资费（免收10元功能费） 【包含权益】宽带权益；支持办理副卡（上限2张，10元/张）；5G优享网络服务、视频彩铃会员、移动云盘（2T个人云空间+2T家庭云空间）、咪咕5G畅玩包（含咪咕视频钻石会员+云游戏）。 【温馨提示】 1、国内电话不包含港澳台电话； 2、免费分钟数包含普通语音及高清视频通话，不包含使用12593、17951等电话产生的基本通信费； 3、全国家庭亲情网10元资费：功能费10元，可免费添加3个亲情网成员，成员间国内语音互打免费。 4、国内主叫国际电话，指在国内（不含港澳台地区）通过直拨方式拨打香港、美国本土、德国、法国、澳大利亚、韩国、新加坡、蒙古、马来西亚九个方向的境外号码，超出后按照0.49元/分钟收取。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2008122050370167201" class="float-tips" style="position:relative"><h3><span>名称：</span>随心听会员</h3><h3><span>别名：</span>随心听会员</h3><div>随心听目前有随心听会员、网易云音乐随心听会员、酷狗随心听会员、酷我随心听会员、喜马拉雅随心听会员、QQ音乐随心听等，订购可获对应定向免流和会员权益。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps180509085049020679" class="float-tips" style="position: relative; width: 494.8px; top: -264px;"><h3><span>名称：</span>韩国</h3></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2201061733060151631" class="float-tips" style="position:relative"><h3><span>名称：</span>无忧行 金蛇贺岁迎新春 境外流量7.99元起活动</h3><h3><span>别名：</span>95折,85折,一折购,无忧行APP---国际漫游流量包（4G）全线6-8折,境外流量8.8元/天</h3><div>2024年12月27日-2025年2月28日，开展“金蛇贺岁迎新春 境外流量7.99元起”活动，活动期间，中国移动客户进入活动页面，可享以下优惠，具体以无忧行App页面最新提示为准。 1. “合家出游，境外流量买1享2”： 1）2024.12.27-2025.2.5：活动期间购买“国漫流量月包”，以互联网方式订购可享“买1享2”优惠。 2）2024.12.27-2025.1.21：活动期间购买11种产品（北美多国流量包、韩国流量包、非洲多国流量包、大洋洲多国流量包、欧洲多国流量包、一带一路多国流量包、RCEP多国流量包、南美多国流量包、阿联酋流量包、日本流量包、出境上网自选包）中的任一产品，以互联网方式订购可享“买1享2”优惠。 2. “新春出行，境外流量8.8元/天”（2025.1.22-2025.2.28） 活动期间购买（共11种产品）中的任一产品，以互联网方式订购可享8.8元/天优惠。 3. 大湾区港澳流量包7.99元起（原价）： 大湾区港澳流量产品7.99元起，围绕“价格优惠”等卖点进行推广。 4. 国际/中国港澳台漫游99资费9.99元起（原价） 国际/中国港澳台漫游99资费9.99元起，围绕“语音优势”等卖点进行推广。 5. 活动期间，客户可点击页面迎春贺岁权益包专区，购买权益包，权益包涵盖流量券、火车票券、门票券、酒店券、机票券等商品权益。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2304282007130113742" class="float-tips" style="position: relative; width: 494.8px; top: -268.8px;"><h3><span>名称：</span>晋城城区金牌服务室--华街营业厅</h3></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2204291447560188905" class="float-tips" style="position:relative"><h3><span>名称：</span>全家享套餐（2022）199元</h3><div>【收费标准】199元/月 【套餐简介】 在国内接听电话免费，在国内拨打国内电话1000分钟内免费，超出后0.15元/分钟；包含国内数据流量60GB，超出后每1GB收取5元，满15元后按照每1GB收取3元进行计费；包含点对点短信1000条，超出后0.1元/条；包含国内主叫国际电话300分钟. 【包含业务】来电显示;包含省内短号家庭网（前5人免费）；包含全国家庭亲情网10元资费（免收10元功能费） 【包含权益】宽带权益；支持办理副卡（上限2张，10元/张）；5G极速网络服务、视频彩铃会员、移动云盘（2T个人云空间+2T家庭云空间）、咪咕5G畅玩包（含咪咕视频钻石会员+云游戏）。 【温馨提示】 1、国内电话不包含港澳台电话； 2、免费分钟数包含普通语音及高清视频通话，不包含使用12593、17951等电话产生的基本通信费； 3、全国家庭亲情网10元资费：功能费10元，可免费添加3个亲情网成员，成员间国内语音互打免费。 4、国内主叫国际电话，指在国内（不含港澳台地区）通过直拨方式拨打香港、美国本土、德国、法国、澳大利亚、韩国、新加坡、蒙古、马来西亚九个方向的境外号码，超出后按照0.49元/分钟收取。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2210011157060146484" class="float-tips" style="position:relative"><h3><span>名称：</span>家庭有线宽带（销户）</h3><h3><span>别名：</span>宽带销户,家宽销户</h3><div>宽带开户30天后可以办理宽带销户。如用户办理的IPTV业务，必须知道IPTV业务密码才可以办理销户。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2006161627280141655" class="float-tips" style="position: relative; width: 494.8px; top: -252.8px;"><h3><span>名称：</span>权益超市黄金会员</h3><h3><span>别名：</span>权益超市会员体系客服文档</h3><div>【收费标准】功能费每月5元（扣费按账期日扣费，取消为当个自然月月底失效 ）。 【优惠内容】每月可领取1GB流量日包1份，领取后实时下发，24小时内有效。若当月未领取，则次月无法补领；还可享受精选5折购／会员优惠购／会员福利社等权益。 【权益领取方式】登录“中国移动”客户端，点击“【我的】页面--【我的权益】-可领取权益”，根据提示进行领取。 【温馨提示】月初权益领取客户较集中，建议错峰领取。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2002191434260196336" class="float-tips" style="position:relative"><h3><span>名称：</span>随心看会员</h3><h3><span>别名：</span>全网权益会员,随订随看更划算,12元5G</h3><div>本产品包含随心看多选包产品和随心看单包产品，具体权益内容请以各产品为准。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2304282007060113684" class="float-tips" style="position: relative; width: 494.8px; top: -260px;"><h3><span>名称：</span>忻州定襄县金牌服务室--定襄县解放路加盟店</h3></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2106041638500179156" class="float-tips" style="position:relative"><h3><span>名称：</span>二次实人认证</h3><h3><span>别名：</span>二次实名认证,待二次实名认证自动停机,工信部睡眠卡整治,“断卡”行动实名实人认证,断卡,断卡行动,管理单停</h3><div>针对需进行二次实人认证的客户在短停前一天下发三条提醒短信，逾期未认证或者未通过认证的，将暂停手机卡功能；停机后的号码也可进行二次实人认证，认证通过后可进行复机。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2308091433230145411" class="float-tips" style="position: relative; width: 494.8px; top: -235.2px;"><h3><span>名称：</span>移动高清增值业务退赔类咨询工单处理流程</h3><h3><span>别名：</span>移动高清,增值业务退赔,退赔</h3><div>    为了进一步压降增值业务投诉，提供查询、退订、退费分级处理方式，增管平台退赔权限将于2025年1月4日起进行调整，本次调整后对于仅咨询的用户结合常用话术解释订购业务、说明所享受的权益和优惠；对于明确退订的用户通过预约退订结束订购；对于明确提出退费诉求的用户发起退赔申请。 一线员工“快速退赔”处理流程：     所有大屏电视增值业务的投诉及费用，全部优先走“快速退赔”流程，系统会进行自动判定。可通过增管平台拉起订单，如不符合快速退赔条件的增值业务，增管平台会显示“不可退”，直接派单。     注：1、如用户只是查询增值业务，没有表示取消或退费，请不要主动引导用户退赔。如查询后用户表示要取消，可通过增管平台订单处理为用户预约退订，若需要立即退订可向后台班组长申请，若需退赔可向团长申请，不要走投诉工单。     解释口径：您好，您反映的问题，我们已通过后台预约退订业务，次月起不再扣费，请您随时关注。     各权限具体操作步骤如下：     （1）订单查询：在线管理-订单查询。 （2）订单查询页面增加“在线问答”功能，提供常用话术，请结合实际情况为用户说明。 （3）订单处理：在线管理-订单处理-输入电视账号-预约退订。   注：若输入账号发现为空，请在订单查询模块确定订购关系是否已经退订。 （4）退赔：订单查询-操作选择-发起查看工单。 重要说明：用户无明确退赔意向，不得主动发起退赔工单！         2、请在工单中写清楚“报错的原因”。         3、如已派投诉工单，无需退订业务，否则会影响投诉处理工单。         4、发起退赔流程后，后台默认预约退订业务，次月起不再扣费，无需单独取消业务。     查询路径：登录新一代客服系统首页-家宽-增管平台-输入206或219帐号点击-订单查询-操作选择—发起查看工单，查询订购****产品/活动。显示“可退“ 投诉处理员处理流程：     接到投诉工单后，就不再走增管平台“快速退赔”流程，执行8010模块退费流程。     注：1、已派投诉工单的，不再走增管平台退赔流程。         2、走投诉工单的坚决不要走不知情订购节点，内容也严禁出现不知情等字。     查询路径：登录新一代客服系统首页-家宽-增管平台--输入206或219帐号点击-订单查询-操作选择-订购过程 其他注意事项：     1、2024年1月上线2小时犹豫期快速退订服务：用户通过电视大屏订购增值业务后，在订购短信中明确“如有疑问请在2小时内回复TD，系统将取消本次业务订购。”     2、针对执行退赔流程不认可且有升级投诉意向的用户，直接派单，无需再走绿色退赔流程。     3、如涉及多类增值业务的投诉，已生成投诉工单，无需再走退赔处理流程进行处理。     4、有退订权限的，建议不要随意点击“立即退订”这样会导致在增管平台无法拉起订单；有冲正权限的，建议不要随意点击，会导致已执行了退陪流程点击冲正出现重复扣费。     5、“短信验证”添加渠道（添加了短信验证后，此类用户后续订购需通过短信验证方式操作）     如遇用户要求屏蔽或变更订购方式，需要通过微信“大屏增值业务和投诉沟通群”填写固定的表格模板（大屏增值业务添加验证码申请表），后台工作人员会在24小时内完成白名单添加。添加成功后用户将收到提醒短信，再办理增值业务时会提示需要输入短信验证码。     注：1576模块功能已关闭，请不要再通过此模块操作。     6、2024年3月9日关闭了“立即退订”和“冲正“的权限，保留预约退订功能，针对通过手机验证码订购大屏增值业务的用户，通过BOSS系统退订增值业务时，提示“该资费只能通过增值业务管理平台退订”的显示，这种情况需通过增管平台查询，如现出现标“桔色”显示，并且订购渠道显示“大屏”的，这是用户参加了合约营销活动，需在合约期结束后进行预约退订。解释口径：尊敬的用户您好，您订购的时候大屏上已经详细说明了活动规则，内容有：”活动合约期为XX个月，第XX个月可预约退订“等，并且是通过您的手机验证码订购的，证明您对活动规则已经详细了解，订购之后也下发了短信说明。请您在活动合约期结束之后再联系我们进行退订处理，感谢您的理解。 注：（1）扫码订购的增值业务是点播类的，不存在退订；参加了合约活动、验证码订购以及用户要求立即取消的才可涉及立即退订操作。     （2）订购过程、验证码短信、订购成功后的短信通过增管平台均可查询到。     （3）系统（大屏）显示截图，请点击：  查看。 截图如下：     7、2024年9月14日，大屏点播屏上验证码订购合约活动退订缴纳违约金功能上线    用户在大屏上通过验证码订购合约活动，针对合约未到期用户，退订时需用户缴纳违约金，在缴纳违约金后进行退订【违约金=优惠金额（标准价格-活动价格）*已履行月份】，通过增管平台在输入用户账号后，点击预约退订，若为活动则显示违约预约退订，会显示产品名称、补交金额等相关信息，点击下发短信验证码，用户会收到短信验证码告知客服人员，输入验证码，点击确定违约预约退订，即可完成。注： 赔付费用将从用户的话费中进行扣除。     解释口径：尊敬的用户您好，您参加的***合约活动，合约期12个月，合约期内产品优惠价为*元，若您在合约期内进行退订，需要按照已享受优惠的费用进行赔付，赔付费用将从您的话费进行扣除，若您不退订，仍可享受当前的优惠价格，感谢您的理解，谢谢！     具体操作手册，请点击： 合约期违约退订操作手册.docx  查看。     注：（1）验证码和扫码订购的增值业务退订时需缴纳违约金。         （2）参与合约活动验证码订购的，提前解约需缴纳违约金。     8、2024年9月27日增管平台自动交费功能上线，可实现所有退赔工单3小时内入账。     9、增管平台无法对副卡、成员卡等进行退赔，此类用户办理了增值业务不能走“退赔流程”，需要派单，派单时请标注“副卡无法退赔”字样。     10、【名医问诊快速退赔退订功能】于2024年10月12日上线增管平台，请大家按以下流程执行：     （1）一线接到名医问诊的关于退费且退订业务的投诉，可通过【增管平台-订单查询-名医问诊融合产品】进行快速处理（校验退赔手机号，输入退赔金额），实现退赔费用处理，不形成投诉单。     （2）同时告知要退订的名医问诊业务在48小时内退订处理，后台系统会统一为客户退订（员工切记不要自己通过1153删除受限）。     注：名医问诊有30元和50元档，目前增管平台仅能处理30元档的，涉及50元档的按原流程处理。     具体操作，请点击：在线退订线下名医问诊产品操作手册.docx  查看。    11、2024年11月25日增管平台支持活动组合资费业务绿色退赔功能，组合资费退赔规则：    （1）活动组合资费支持发起绿色退赔；    （2）发起退赔工单页面展示关联业务订单信息；    （3）退赔鉴权次数限制，业务订单单独校验，其一不通过，不允许发起退赔工单；    （4）退赔工单发起一次记一笔退赔工单信息，可关联活动组合资费下多个业务订单；    （5）退赔工单处理时，退订所有关联的业务订单。     12、如通过会员中心订购的增值业务，增管平台无法发起查看工单，由于无引发订购片源内容，故不能走绿色退赔流程。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps179120" class="float-tips" style="position: relative; width: 494.8px; top: -370.4px;"><h3><span>名称：</span>银信通 山西</h3><h3><span>别名：</span>银行合作业务</h3><div>银信通业务是中国移动与银行合作的业务，可为银行的企业及个人客户提供快捷、及时、准确、安全的账户信息服务。山西移动用户可以通过银行开通、取消银信通业务。目前与山西移动合作的银行有：农业银行、建设银行、交通银行、华夏银行、晋商银行、省信合、长治商行、晋中商行。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2211080921360155735" class="float-tips" style="position:relative"><h3><span>名称：</span>（集团小号）和飞信-专有5元(2017)</h3><div>    5元/月，包含集团V网内本地主叫通话、省内异地主叫通话800分钟，超出后0.1元/分钟。国际及港澳台通话按照相关标准收费，国际及港澳台通话按照相关标准收费。</div></div></div><div style="position:absolute;display:none" class="customClass"><div id="fltps2304170827230107045" class="float-tips" style="position:relative"><h3><span>名称：</span>第二条家庭宽带收费标准</h3><div>1、78元以下和家计划套餐和办理第二条宽带，按宽带标准资费收取。 宽带标准资费：100M 30元/月，300M 90元/月，500M 150元/月，1000M 300元/月； 2、78元及以上和家计划套餐和办理第二条宽带，标准如下：    +30元得300M&nbsp;    +50元得500M&nbsp;    +300元得1000M（原价）</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2401031001500198533" class="float-tips" style="position: relative; width: 494.8px; top: -262.4px;"><h3><span>名称：</span>家庭有线宽带（线上销户）</h3><h3><span>别名：</span>宽带销户,家宽销户</h3><div>家宽销户业务新增“线上终端赔付、线上自主销户、装维上门拆机销户”等功能，为无法前往营业厅办理家宽销户的客户，提供远程和上门办理业务的能力； 客户不方便到营业厅，可以通过拨打10086热线，实现家宽业务的线上销户（包含终端赔付），销户范围包含：融合宽带、融合电视、IMS固话，即融合宽带销户，下带的融合电视、IMS固定也一并销户。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2304282007130113746" class="float-tips" style="position: relative; width: 494.8px; top: -226.4px;"><h3><span>名称：</span>晋城阳城县金牌服务室--滨河东路营业厅</h3></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps1911070810210161499" class="float-tips" style="position: relative; width: 494.8px; top: -190.4px;"><h3><span>名称：</span>5G特惠流量包</h3><h3><span>别名：</span>特惠流量包,5G叠加包,5G流量包,特惠包</h3><div>根据用户月套餐资费，提供不同档次的流量包。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2204291440570188878" class="float-tips" style="position: relative; width: 494.8px; top: -154.4px;"><h3><span>名称：</span>全家享套餐（2022）169元</h3><div>【收费标准】169元/月 【套餐简介】 在国内接听电话免费，在国内拨打国内电话700分钟内免费，超出后0.15元/分钟；包含国内数据流量40GB，超出后每1GB收取5元，满15元后按照每1GB收取3元进行计费；包含点对点短信700条，超出后0.1元/条；包含国内主叫国际电话200分钟. 【包含业务】来电显示;包含省内短号家庭网（前5人免费）；包含全国家庭亲情网10元资费（免收10元功能费） 【包含权益】宽带权益；支持办理副卡（上限2张，10元/张）；5G优享网络服务、视频彩铃会员、移动云盘（2T个人云空间+2T家庭云空间）、咪咕5G畅玩包（含咪咕视频钻石会员+云游戏）。 【温馨提示】 1、国内电话不包含港澳台电话； 2、免费分钟数包含普通语音及高清视频通话，不包含使用12593、17951等电话产生的基本通信费； 3、全国家庭亲情网10元资费：功能费10元，可免费添加3个亲情网成员，成员间国内语音互打免费。 4、国内主叫国际电话，指在国内（不含港澳台地区）通过直拨方式拨打香港、美国本土、德国、法国、澳大利亚、韩国、新加坡、蒙古、马来西亚九个方向的境外号码，超出后按照0.49元/分钟收取。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2008171204000168671" class="float-tips" style="position: relative; width: 494.8px; top: -118.4px;"><h3><span>名称：</span>副卡（总网页）</h3><div>副卡资费介绍</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2301091542270174385" class="float-tips" style="position: relative; width: 494.8px; top: -82.4px;"><h3><span>名称：</span>畅享套餐29元 （2022）</h3><div>【收费标准】29元/月 。 【语音】在国内接听电话免费，国内拨打国内电话100分钟内免费，超出后0.19元/分钟。 【流量】包含国内通用流量5GB，超出后10元/GB（不足10元按0.29元/MB）。 【包含业务】来电显示 。 【结转】流量可以结转。 【共享】流量可以共享（可以做为热点使用）。 【温馨提示】   1、国内电话不包含港澳台电话 。   2、免费分钟数包含普通语音及高清视频通话，不包含使用12593、17951等电话产生的基本通信费。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2301020004380172412" class="float-tips" style="position: relative; width: 494.8px; top: -46.4px;"><h3><span>名称：</span>4.9元新动力自选包</h3><div>4.9元新动力自选包（7选2），4.9元/月，按自然月扣费。月中开通一次性整月扣除。</div></div></div><div style="position: absolute; display: none;" class="customClass"><div id="fltps2309191707250163130" class="float-tips" style="position: relative; width: 494.8px; top: -10.4px;"><h3><span>名称：</span>优质号码业务规则</h3><div>优质号码是指数字按一定方式排列，客户感知较好、数字组合易读、易记、便于客户使用，市场需求较强的码号资源。如尾数为AAAA、ABCD、AAA、AABB等组合方式的号码。</div></div></div></div>
+              <!--单列悬浮 结束-->
+              <!--双列左侧列悬浮 开始-->
+              <div id="floatLeft"></div>
+              <!--双列左侧列悬浮 结束-->
+              <!--双列右侧列悬浮 开始-->
+              <div id="floatRight"></div>
+              <!--双列右侧列悬浮 结束-->
+              <!-- 分页 开始-->
+              <div class="km-page">
+                  <div class="page1 fn-fr noword"><div class="sn-pagination">
+    <!-- <span class="sn-sum-page">
+        共8263条
+    </span> -->
+    <div class="sn-pagebox-right">
+        <a href="javascript:;" class="prev hide"><span class="icon arrow-left"></span></a>
+        <span class="sn-pagination-page">
+             
+            <a href="javascript:;" class="current">1</a>
+  
+            <a href="javascript:;" class="">2</a>
+  
+            <a href="javascript:;" class="">3</a>
+  
+            <a href="javascript:;" class="">4</a>
+  
+            <a href="javascript:;" class="">5</a>
+ 
+        </span>
+        <a href="javascript:;" class="next"><span class="icon arrow-right"></span></a>
+          <!-- 页码跳转 -->
+                        <div class="page-skip">
+                          跳转到第
+                           <input type="text" id="currentValue" class="sn-pagination-input" value="1">
+                                                     页
+                           <a href="javascript:;" id="page-skip-btn">跳转</a>
+                        </div>
+                        <!-- 每页条数 -->
+                                              <div class="per-page">
+                                                <em>每页条数</em>
+                                                <select class="select_per_page">
+                                                  <option value="" hidden=""></option>
+                                                  
+                                                  <option value="20">20</option>
+                                                  <option value="30">30</option>
+                                                  <option value="50">50</option>
+                                                   <option value="100">100</option>
+                                                </select>
+                                                <div>
+                                                  <span class="selectedValue">50</span>
+                                                  <em></em>
+                                                </div>
+                                              </div>
+    </div>
+</div></div>
+                  <div id="totalMessage" class="total-pages">共<span>8263</span>条,166页</div>
+              </div>
+              <!-- 分页 结束-->
+
+              <!--知识对比 开始-->
+              <div class="contrast-vs">
+                  <!-- 对比栏不显示，悬浮球显示，添加no-conlist -->
+                  <div class="constrast-fixed no-conlist">
+                      <span class="contrast-ball" style="cursor:pointer"><em>0</em></span>
+                      <div class="contrast">
+                      </div>
+                  </div>
+              </div>
+              <!--知识对比 结束-->
+          </div>
+
+        </div>
+      </div>
+    </div>
+    </div>
+</div>
+
+<!-- 知识列表 end -->
+<!--对比栏-->
+<!-- 底部对比栏 -->
+<!--<div class ="article-vs-outer">
+  <div class="wrap-inner">
+    <div id="compareCol" class="article-vs" hidden>
+    </div>
+  </div>
+</div>-->
+<!-- footer start -->
+<div class="km-footer">
+<div class="km-footer">
+    <div class="wrap-inner">
+      <!-- 版权所有 &copy; 中移在线服务有限公司 -->
+      ©2022 中移在线服务有限公司 版权所有 豫ICP备15016518号-4
+    </div>
+</div></div>
+<!-- footer end -->
+
+<!-- 注意：以下JS仅为演示所用，并不严谨，项目实施时请开发同学替换！ -->
+<script src="./知识库-知识列表_files/requirejsMain.js.下载"></script>
+<script src="./知识库-知识列表_files/requirejs.min.js.下载" data-main="./js/knowledgeAppNew/kmKnowledgeSecondListNew"></script>
+<script>
+
+    window.console = window.console || (function(){
+            var c = {};
+            c.log = c.warn = c.debug = c.info = c.error = c.time = c.dir = c.profile = c.clear = c.exception = c.trace = c.assert = function(){};
+            return c;
+        })();
+</script>
+
+<a id="tagOpenWin" target="_blank" href="http://ngkm.cs.cmos/prd-ngkm/oss/2308071911110145062_351.html?AWSAccessKeyId=qJIf7px6Wh8PG319&amp;Expires=4100688000&amp;Signature=zVrD1JF81VMrL2m2Z%2FpIrJmkDCI%3D&amp;verNo=V9&amp;url_prefix=/ngkm/src&amp;knwlgId=2308071911110145062&amp;sysCode=ngkm&amp;serviceName=detail-newPage&amp;accessType=1"></a><div class="water-mark-container"></div><div class="water-mark-container"></div><div class="water-mark-container"></div><div class="water-mark-container"></div><div class="water-mark-container"><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 0px; top: 15px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 217px; top: 15px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 434px; top: 15px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 651px; top: 15px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 868px; top: 15px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1085px; top: 15px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1302px; top: 15px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 0px; top: 131px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 217px; top: 131px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 434px; top: 131px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 651px; top: 131px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 868px; top: 131px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1085px; top: 131px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1302px; top: 131px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 0px; top: 247px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 217px; top: 247px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 434px; top: 247px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 651px; top: 247px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 868px; top: 247px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1085px; top: 247px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1302px; top: 247px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 0px; top: 363px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 217px; top: 363px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 434px; top: 363px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 651px; top: 363px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 868px; top: 363px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1085px; top: 363px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1302px; top: 363px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 0px; top: 479px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 217px; top: 479px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 434px; top: 479px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 651px; top: 479px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 868px; top: 479px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1085px; top: 479px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1302px; top: 479px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 0px; top: 595px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 217px; top: 595px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 434px; top: 595px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 651px; top: 595px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 868px; top: 595px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1085px; top: 595px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1302px; top: 595px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 0px; top: 711px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 217px; top: 711px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 434px; top: 711px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 651px; top: 711px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 868px; top: 711px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1085px; top: 711px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div><div class="water-mark-item" style="transform: rotate(-20deg); position: absolute; left: 1302px; top: 711px; overflow: hidden; z-index: 99999; display: block; pointer-events: none; opacity: 0.3; color: rgb(138, 139, 140); white-space: pre-line;">OP796101
+2025.02.04 17:43:09</div></div></body></html>
